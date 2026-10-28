@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>情绪使用说明书 · 完整版</title>
+<style>
+  :root{--bg:#0e1017;--card:#171b26;--line:#28303f;--txt:#eef2f9;--dim:#9aa6ba;
+        --a:#c9a7ff;--b:#8fd3ff;--warm:#ffc08a;--ok:#8fe0b0}
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(120% 80% at 85% -10%,#2a2140 0%,transparent 60%),
+      radial-gradient(100% 70% at 0% 105%,#132b3d 0%,transparent 55%),var(--bg);
+      color:var(--txt);font:16px/1.85 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+      padding:26px 16px 80px}
+  .wrap{max-width:700px;margin:0 auto}
+  h1{font-size:25px;margin:0 0 6px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:20px}
+  .note{background:#1a1f2b;border-left:3px solid var(--warm);border-radius:8px;
+        padding:13px 15px;font-size:13.5px;color:var(--dim);margin:16px 0}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 17px;margin:11px 0}
+  .q p{margin:0 0 11px;font-size:15px}
+  .opts{display:flex;gap:5px}
+  .opts label{flex:1;text-align:center;border:1px solid var(--line);border-radius:8px;
+              padding:8px 0;font-size:12.5px;color:var(--dim);cursor:pointer}
+  .opts input{display:none}
+  .opts label:has(input:checked){background:linear-gradient(135deg,var(--a),var(--b));
+              border-color:transparent;color:#0b0d14;font-weight:700}
+  button{width:100%;margin-top:22px;padding:16px;border:0;border-radius:12px;
+         background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;
+         font-size:17px;font-weight:800;cursor:pointer}
+  button:disabled{opacity:.4}
+  .rep{display:none}
+  h2{font-size:19px;margin:30px 0 10px;color:var(--b)}
+  .hue{font-size:26px;font-weight:800;margin:4px 0 12px;
+       background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;
+       -webkit-text-fill-color:transparent}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;
+        padding:16px 18px;margin:12px 0}
+  .card b{color:var(--warm)}
+  .bar{height:8px;background:#1b2130;border-radius:6px;overflow:hidden;margin:5px 0 14px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--b))}
+  .row{display:flex;justify-content:space-between;font-size:14.5px;color:var(--dim)}
+  .day{display:flex;gap:12px;margin:9px 0}
+  .day em{flex:0 0 62px;white-space:nowrap;color:var(--a);font-style:normal;font-weight:700}
+  .crisis{background:#221a1c;border:1px solid #4d2b31;border-radius:12px;padding:15px;margin-top:22px;font-size:14px}
+  .crisis b{color:#ff9b9b}
+  footer{color:#5d6a7d;font-size:12px;margin-top:34px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>情绪使用说明书 · 完整版</h1>
+  <div class="sub">20 题 · 约 5 分钟 · 不采集、不上传</div>
+
+  <div class="note">
+    这不是诊断，也不是命理预测。它是一份"关于你此刻如何运转"的说明——
+    写给那个太习惯自己扛的人看的。如果现在很难熬，请拨 <b>12356</b>。
+  </div>
+
+  <div id="quiz"></div>
+  <button id="go" disabled>生成完整报告</button>
+  <div class="rep" id="report"></div>
+
+  <footer>
+    本测评为自我觉察工具，题目自编，不构成医学诊断，不替代心理咨询或精神科诊疗。<br>
+    不采集、不上传、不保存任何作答数据。
+  </footer>
+</div>
+
+<script>
+const DIMS={
+  load:'情绪潮汐', energy:'电量续航', boundary:'关系边界', worth:'自我对话'
+};
+const QS=[
+ ['load','最近，我的情绪像是自己会涨潮',false],
+ ['load','有些话我咽下去了，但它们并没有消失',false],
+ ['load','一件小事能在我心里停留很久',false],
+ ['load','我几乎找不到"什么都不用想"的时刻',false],
+ ['load','情绪漫上来时，我知道怎么让自己缓一缓',true],
+
+ ['energy','早上醒来，我常常觉得没睡够',false],
+ ['energy','白天有一段时间我是真的有心力的',true],
+ ['energy','我靠咖啡、烟或者不断刷手机撑过下午',false],
+ ['energy','躺下之后，脑子才开始真正上班',false],
+ ['energy','我最近的作息基本是稳定的',true],
+
+ ['boundary','别人一开口，我就很难说"不"',false],
+ ['boundary','我会因为"没帮上忙"而责怪自己很久',false],
+ ['boundary','我能对不合理的要求说出拒绝',true],
+ ['boundary','我常替别人的情绪负责',false],
+ ['boundary','我有属于自己的、不被打扰的时间',true],
+
+ ['worth','做不好一件事，我会先怪自己这个人',false],
+ ['worth','我觉得自己"不够好"是不需要理由的',false],
+ ['worth','我能把"事没做好"和"我这个人不行"分开',true],
+ ['worth','取得成绩时，我很难真正认可自己',false],
+ ['worth','我对自己的要求，比对朋友严格得多',false]
+];
+const LABELS=['不太像','有点像','挺像的','太像了'];
+const LV=v=> v<1.9?0: v<2.6?1: v<3.3?2:3;   // 0低 1中 2偏高 3高
+
+// 模块化话术：每个维度 4 档 × 3 句，随机取 1 句 → 每次都略有不同
+const TEXT={
+ load:[[
+   '你身上有一种很安静的稳定。潮水来过，也退下去了。',
+   '你不太容易被情绪带走，这让你在别人眼里是"靠得住"的那类人。',
+   '你和情绪之间有一段舒服的距离，这很难得。'],
+  [
+   '你不是情绪化，你只是接收得比别人细。',
+   '有些感受你收得很清楚，只是不太说。',
+   '你心里有几个抽屉一直没打开过，不代表里面没有东西。'],
+  [
+   '你不是脆弱，你是长得比谁都容易被潮水漫过。',
+   '你的敏感不是缺点，它只是没有地方放。',
+   '你常常在别人看不见的时候，一个人消化掉一整天的重量。'],
+  [
+   '你不是"想太多"，你是承载得太多，还没找到出口。',
+   '你的情绪不是问题，它是一封你还没拆的信。',
+   '你已经撑了很久，久到把"撑"当成了常态。']
+ ],
+ energy:[[
+   '你的电量是够的，这让你有余地做点自己喜欢的事。',
+   '你现在的节奏是可持续的，别轻易用熬夜去换它。',
+   '你身上有一种"不慌"的力气，那是被好好休息过的人才有的。'],
+  [
+   '你多数时候还能撑住，只是撑完会有点空。',
+   '你的电不是满的，但还够用——前提是别再加码。',
+   '你学会了很多省电的办法，但省电不等于充电。'],
+  [
+   '你不是懒，你是电量一直没充满过。',
+   '你把"还能撑"当成了"还很好"，这是两件不同的事。',
+   '你习惯用意志力补电，但意志力是最贵的那种电。'],
+  [
+   '这不是累，这是欠了很久的休息在讨债。',
+   '你已经很久没有真正休息过了，睡一觉只是暂停，不是修复。',
+   '你现在的状态，不是"再撑一下就好"，是"该停一停了"。']
+ ],
+ boundary:[[
+   '你的边界是清楚的，这让你不至于被别人的情绪拖走。',
+   '你懂得"这件事不是我的"，这是很多人一辈子学不会的。',
+   '你能区分"帮"和"扛"，这很珍贵。'],
+  [
+   '你多数时候能守住自己，只是偶尔会心软。',
+   '你的边界时松时紧，取决于对面是谁。',
+   '你不太会主动麻烦别人，这其实也是一种边界。'],
+  [
+   '你总是先接住别人，才想起自己也需要被接住。',
+   '你的温柔是有代价的——你替别人扛的每一分，都从自己身上扣。',
+   '你在关系里习惯做那个"托底的人"，但托底的人也需要地面。'],
+  [
+   '你把自己活成了别人的缓冲垫，而缓冲垫是会磨损的。',
+   '你不是不会拒绝，你是害怕拒绝之后被不喜欢。',
+   '你把"被需要"当成了"被爱"，这两件事其实不一样。']
+ ],
+ worth:[[
+   '你对自己是温和的，这在很早就被苛责过的人身上很少见。',
+   '你能接住自己的不完美，这是一种很深的底气。',
+   '你对别人好，对自己也不差，这就够了。'],
+  [
+   '你对自己有点严格，但还没到伤人的程度。',
+   '你偶尔会骂自己两句，但很快就过去了。',
+   '你要求自己"做好"，不过还允许自己"做不好"。'],
+  [
+   '你对别人是软的，对自己是刀。',
+   '你要求自己必须"配得上"，好像不够好就不配被留下。',
+   '你很少允许自己"就这样吧"，可人生大部分时候就是这样。'],
+  [
+   '你把自己当成了需要不断证明的项目，而不是一个本来就值得的人。',
+   '你被喜欢的时候会不安，因为你总觉得那是"借来的"。',
+   '你对自己说的那些话，如果换成别人对你说，你早就翻脸了。']
+ ]
+};
+
+// 功课：取最高维度
+const LESSON={
+ load:'你这辈子在做的功课，可能是「允许自己被看见」——不是永远当那个能消化一切的人。',
+ energy:'你这辈子在做的功课，可能是「学会休息而不内疚」——你不是在为谁省电，你是在为自己续命。',
+ boundary:'你这辈子在做的功课，可能是「分清谁的情绪归谁」——你可以爱一个人，但不必替他活。',
+ worth:'你这辈子在做的功课，可能是「不靠证明也能被留下」——你被喜欢，从来不需要先交出成绩单。'
+};
+// 最容易耗尽的场景：最高维度 + 第二高维度组合
+const SCENE={
+ 'load|boundary':'人多、并且需要你照顾气氛的场合——比如家庭聚会、朋友吵架后的调解现场。',
+ 'load|worth':'犯错被指出的那一刻。事本身不大，但你会在心里复盘一整天。',
+ 'load|energy':'连续几天睡不够之后，一点点小事就能把你推倒。',
+ 'boundary|worth':'有人请你帮忙，而你自己也很累的时候——你几乎一定会答应。',
+ 'boundary|energy':'你要同时应付很多人、又要维持体面的时候。',
+ 'boundary|load':'亲密关系里对方情绪低落时，你会本能地把自己整个交出去。',
+ 'worth|load':'被比较的时候。哪怕对方没有恶意，你也会自动开始打分。',
+ 'worth|boundary':'你拒绝了别人，然后开始怀疑自己是不是太冷漠。',
+ 'worth|energy':'状态不好又没完成计划的那天，你会把这一天定性为"我很废"。',
+ 'energy|load':'连续加班或者熬夜之后，情绪会先崩，而不是身体先崩。',
+ 'energy|boundary':'别人一句"麻烦你了"，你明明很累还是撑起来干了。',
+ 'energy|worth':'计划被打乱的时候，你既没力气重来，又无法原谅自己。'
+};
+const ACTION={
+ load:['今天找出一个"信息入口"，把它关掉 24 小时','给自己十分钟什么都不做，只是坐着','把最想说的那句话，写下来，不发出去'],
+ energy:['今天固定一个时间躺下，不要求自己立刻睡着','把一件"必须做完"的事，改成"明天再说"','下午三点出门走十分钟，不带手机'],
+ boundary:['挑一个人，把"我来"换成"你觉得该怎么办"','延迟回复一次："我看下时间，晚点回你"','今天拒绝一件小事，然后观察世界有没有塌'],
+ worth:['今天做一次"完成即算"：只确认做完，不评价好不好','用你会对朋友说的话，对自己说一遍','把"我不够好"改写成"这件事我还没做好"']
+};
+
+const quiz=document.getElementById('quiz'), ans=new Array(QS.length).fill(0);
+QS.forEach((q,i)=>{
+  const d=document.createElement('div'); d.className='q';
+  d.innerHTML=`<p>${i+1}. ${q[1]}</p><div class="opts">`+
+    LABELS.map((l,j)=>`<label><input type="radio" name="q${i}" value="${j+1}"><span>${l}</span></label>`).join('')+`</div>`;
+  quiz.appendChild(d);
+  d.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+    ans[i]=Number(inp.value);
+    document.getElementById('go').disabled=ans.some(a=>a===0);
+  }));
+});
+
+function pick(arr, seed){ return arr[seed % arr.length]; }
+
+document.getElementById('go').addEventListener('click',()=>{
+  const sum={}, cnt={};
+  QS.forEach((q,i)=>{ const k=q[0]; if(!(k in sum)){sum[k]=0;cnt[k]=0;}
+    sum[k]+= q[2] ? (5-ans[i]) : ans[i]; cnt[k]++; });
+  const avg={}; Object.keys(sum).forEach(k=>avg[k]=sum[k]/cnt[k]);
+  const order=Object.keys(avg).sort((a,b)=>avg[b]-avg[a]);
+  const a1=order[0], a2=order[1];
+  const total=(Object.values(avg).reduce((a,b)=>a+b,0)/order.length);
+  const seed=ans.reduce((a,b)=>a+b*7,0);
+
+  const bars=order.map(k=>{
+    const lv=LV(avg[k]); const pct=Math.round((avg[k]-1)/4*100);
+    const names=['低','中等','偏高','高'];
+    return `<div class="row"><span>${DIMS[k]}</span><span>${names[lv]} · ${avg[k].toFixed(1)}</span></div>
+            <div class="bar"><i style="width:${pct}%"></i></div>`;
+  }).join('');
+
+  const scene = SCENE[a1+'|'+a2] || SCENE[a2+'|'+a1] || '在那些"你必须表现好"的场合里。';
+  const acts = ACTION[a1] || ACTION.load;
+  const week = [
+    ['第 1 天','只做一件事：记录今天情绪最高的一刻，不评价。'],
+    ['第 2 天', acts[0]],
+    ['第 3 天','找一个人，说一句"我最近有点累"，不解释。'],
+    ['第 4 天', acts[1]],
+    ['第 5 天','整理一个让你舒服的角落，哪怕只是换一张桌垫。'],
+    ['第 6 天', acts[2]],
+    ['第 7 天','回看这七天，写下"哪一天最轻松"，那就是你要多留的那种日子。']
+  ].map(d=>`<div class="day"><em>${d[0]}</em><span>${d[1]}</span></div>`).join('');
+
+  const rep=document.getElementById('report');
+  rep.innerHTML=`
+    <h2>你的底色</h2>
+    <div class="hue">${DIMS[a1]}最重的人</div>
+    <div class="card">${pick(TEXT[a1][LV(avg[a1])], seed)}</div>
+
+    <h2>四个维度</h2>
+    ${bars}
+
+    <h2>你这辈子在做的功课</h2>
+    <div class="card">${LESSON[a1]}</div>
+
+    <h2>你最容易在哪里耗尽</h2>
+    <div class="card">${scene}</div>
+
+    <h2>接下来 7 天，慢慢来</h2>
+    <div class="card">${week}</div>
+
+    <h2>写给你的最后一句话</h2>
+    <div class="card">你不是需要被修好的人。你只是需要被允许，偶尔不那么用力。<br>
+    今天也可以只做一半。天不会塌。</div>
+
+    <div class="crisis">
+      <b>如果最近很难熬</b><br>
+      · 连续两周以上睡不好、吃不下、对什么都没兴趣<br>
+      · 出现伤害自己的念头，哪怕只是一闪而过<br>
+      · 靠酒精、药物或不停刷手机才能撑过一天<br><br>
+      <b>全国心理援助热线：12356</b>（免费，24 小时）<br>
+      这份报告帮不了急，但电话那头的人能。
+    </div>`;
+  rep.style.display='block';
+  rep.scrollIntoView({behavior:'smooth'});
+});
+</script>
+</body>
+</html>

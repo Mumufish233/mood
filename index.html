@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>你的情绪底色 · 3 分钟小测</title>
+<style>
+  :root{--bg:#0e1017;--card:#171b26;--line:#28303f;--txt:#eef2f9;--dim:#9aa6ba;
+        --a:#c9a7ff;--b:#8fd3ff;--warm:#ffc08a}
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(120% 80% at 80% -10%,#2a2140 0%,transparent 60%),
+      radial-gradient(100% 70% at 0% 100%,#132b3d 0%,transparent 55%),var(--bg);
+      color:var(--txt);font:16px/1.8 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+      padding:26px 16px 70px}
+  .wrap{max-width:680px;margin:0 auto}
+  h1{font-size:27px;margin:0 0 8px;letter-spacing:.5px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:22px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
+  .q p{margin:0 0 12px;font-size:15.5px}
+  .opts{display:flex;gap:6px}
+  .opts label{flex:1;text-align:center;border:1px solid var(--line);border-radius:9px;
+              padding:9px 0;font-size:13px;color:var(--dim);cursor:pointer}
+  .opts input{display:none}
+  .opts label:has(input:checked){background:linear-gradient(135deg,var(--a),var(--b));
+              border-color:transparent;color:#0b0d14;font-weight:700}
+  button{width:100%;margin-top:24px;padding:16px;border:0;border-radius:12px;
+         background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;
+         font-size:17px;font-weight:800;cursor:pointer}
+  button:disabled{opacity:.4}
+  .rep{display:none}
+  .hue{font-size:30px;font-weight:800;margin:6px 0 4px;
+       background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;
+       -webkit-text-fill-color:transparent}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+  .card b{color:var(--warm)}
+  .soft{color:var(--dim);font-size:14px}
+  .cta{background:linear-gradient(135deg,#241a38,#13283a);border:1px solid #3a3352;
+       border-radius:14px;padding:20px;margin-top:22px}
+  .cta h3{margin:0 0 8px;font-size:18px}
+  .crisis{background:#221a1c;border:1px solid #4d2b31;border-radius:12px;padding:14px;margin-top:18px;font-size:14px}
+  .crisis b{color:#ff9b9b}
+  footer{color:#5d6a7d;font-size:12px;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+  .numgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+  .num{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+       border:1px solid var(--line);border-radius:14px;font-size:22px;font-weight:700;
+       color:var(--dim);cursor:pointer;background:var(--card);transition:.15s}
+  .num:hover{border-color:var(--a);color:var(--txt)}
+  .num.on{background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;border-color:transparent}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>你的情绪底色</h1>
+  <div class="sub">8 题 · 约 3 分钟 · 不采集、不上传，全在你这台手机里算完</div>
+
+  <!-- 仪式：先选一个数字 -->
+  <div id="ritual">
+    <div class="card">
+      <b>先选一个数字吧。</b><br>
+      <span class="soft">不用想，凭直觉，1 到 8 选一个。</span>
+    </div>
+    <div class="numgrid" id="numgrid"></div>
+    <button id="startBtn" disabled>就它了，开始</button>
+  </div>
+
+  <div id="quizWrap" class="hidden">
+    <div id="quiz"></div>
+    <button id="go" disabled>看看我的底色</button>
+  </div>
+
+  <div class="rep" id="report"></div>
+
+  <footer>
+    这是自我觉察小测，不是诊断，也不替代专业帮助。<br>
+    如果你现在很难受，请拨 <b>12356</b>（全国心理援助热线，24 小时免费）。
+  </footer>
+</div>
+
+<script>
+const QS = [
+  ['load','最近，我的情绪像是自己会涨潮',false],
+  ['load','有些话我咽下去了，但没消失',false],
+  ['energy','我最近靠一口气撑着许多事',false],
+  ['energy','躺下之后，脑子才开始真正上班',false],
+  ['boundary','别人一句"你帮我看看"，我就很难说不',false],
+  ['boundary','我常替别人难受，比替自己还多',false],
+  ['worth','做不好一件事，我会先怪自己这个人',false],
+  ['worth','我很少允许自己"就这样吧"',false]
+];
+const LABELS=['不太像','有点像','挺像的','太像了'];
+
+// 四种底色（主类型）
+const HUES = {
+  load:{name:'潮汐型',
+        line:'你不是情绪化，你只是长得比谁都容易被潮水漫过。',
+        body:'你身上有一种很细的接收力。别人一句话的尾音、房间里突然安静的那两秒，你都会收进来。'},
+  energy:{name:'省电型',
+        line:'你不是懒，你是电量一直没充满过。',
+        body:'你习惯把"还能撑"当成"还很好"。可撑和好，是两件不同的事。'},
+  boundary:{name:'海绵型',
+        line:'你总是先接住别人，才想起自己也需要被接住。',
+        body:'你的温柔是有代价的——你替别人扛的每一分，都从自己的力气里扣。'},
+  worth:{name:'刻刀型',
+        line:'你对别人是软的，对自己是刀。',
+        body:'你要求自己必须"配得上"，好像不够好就不配被留下。可你被喜欢，从来不需要先证明什么。'}
+};
+
+// 五个生活领域（广覆盖但都用"可能/也许"，不下断语）
+const DOMAINS = {
+  emotion:{name:'情绪', t:[
+    '你最近可能有一段时间，情绪来得比平时快。',
+    '你也许会在某个不相关的瞬间，突然想起一件旧事。',
+    '你可能习惯了把难受先压着，等忙完再说。']},
+  relation:{name:'关系', t:[
+    '在关系里，你可能常常是先退一步的那个。',
+    '你大概不太会主动提要求，怕麻烦别人。',
+    '你也许会把自己"不需要被照顾"演得很像真的。']},
+  work:{name:'事业 / 学业', t:[
+    '你也许正处在一个"使不上劲"的阶段，不是不会，是没电。',
+    '你可能是那种别人看着挺稳、自己心里没底的人。',
+    '你大概已经很久没有因为一件小事真心高兴过了。']},
+  body:{name:'身体与精力', t:[
+    '你的身体可能比你以为的更早发出信号（睡不好、肩颈紧、没胃口）。',
+    '你也许靠咖啡、手机或者不停做事来维持"还行"的状态。',
+    '你可能很久没有真正休息过，睡一觉只是暂停。']},
+  self:{name:'自我对话', t:[
+    '你对自己说的话，如果换成别人对你说，你可能早就不高兴了。',
+    '你也许把"被喜欢"和"有用"绑得有点紧。',
+    '你可能不太允许自己"只做一半"。']}
+};
+
+const ACTIONS = {
+  load:'今天给自己留十分钟什么都不用想的时间，不刷手机，只是坐着。',
+  energy:'今晚把一件"必须做完"的事，改成"明天再说"，看看天会不会塌。',
+  boundary:'今天挑一个人，把"我来"换成"你觉得该怎么办"，然后闭嘴听。',
+  worth:'今天做一次"完成即算"：只确认做完了，不评价好不好。'
+};
+
+// ---- 仪式 ----
+let chosen = null;
+const grid = document.getElementById('numgrid');
+for (let i = 1; i <= 8; i++) {
+  const d = document.createElement('div');
+  d.className = 'num'; d.textContent = i;
+  d.onclick = () => {
+    chosen = i;
+    [...grid.children].forEach(c => c.classList.remove('on'));
+    d.classList.add('on');
+    document.getElementById('startBtn').disabled = false;
+  };
+  grid.appendChild(d);
+}
+document.getElementById('startBtn').onclick = () => {
+  document.getElementById('ritual').classList.add('hidden');
+  document.getElementById('quizWrap').classList.remove('hidden');
+};
+
+// ---- 题目 ----
+const quiz=document.getElementById('quiz'), ans=new Array(QS.length).fill(0);
+QS.forEach((q,i)=>{
+  const d=document.createElement('div'); d.className='q';
+  d.innerHTML=`<p>${i+1}. ${q[1]}</p><div class="opts">`+
+    LABELS.map((l,j)=>`<label><input type="radio" name="q${i}" value="${j+1}"><span>${l}</span></label>`).join('')+`</div>`;
+  quiz.appendChild(d);
+  d.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+    ans[i]=Number(inp.value);
+    document.getElementById('go').disabled=ans.some(a=>a===0);
+  }));
+});
+
+function pick(arr, seed){ return arr[seed % arr.length]; }
+
+document.getElementById('go').addEventListener('click',()=>{
+  const sum={},cnt={};
+  QS.forEach((q,i)=>{ if(!(q[0] in sum)){sum[q[0]]=0;cnt[q[0]]=0;} sum[q[0]]+=ans[i];cnt[q[0]]++; });
+  const avg={}; Object.keys(sum).forEach(k=>avg[k]=sum[k]/cnt[k]);
+  const order=Object.keys(avg).sort((a,b)=>avg[b]-avg[a]);
+  const top=order[0];
+  const h=HUES[top];
+  const seed=(chosen||0)*17 + ans.reduce((a,b)=>a+b,0)*7;
+  const total=(Object.values(avg).reduce((a,b)=>a+b,0)/order.length).toFixed(1);
+
+  const domainHtml = Object.keys(DOMAINS).map((k, idx) => {
+    const d = DOMAINS[k];
+    return `<div class="card"><b>${d.name}</b><br>${pick(d.t, seed + idx * 13)}</div>`;
+  }).join('');
+
+  const rep=document.getElementById('report');
+  rep.innerHTML=`
+    <div class="soft">你选的是 ${chosen} 号 · 你的情绪底色是</div>
+    <div class="hue">${h.name}</div>
+    <div class="card"><b>${h.line}</b></div>
+    <div class="card">${h.body}</div>
+
+    <h2 style="font-size:18px;margin:26px 0 8px;color:var(--b)">五个方面，看看有没有对得上的</h2>
+    ${domainHtml}
+
+    <div class="card"><b>今天可以做的第一件小事：</b><br>${ACTIONS[top]}</div>
+    <div class="soft" style="text-align:center">整体强度 ${total} / 4</div>
+
+    <div class="cta">
+      <h3>想看得更细一点吗？</h3>
+      <p class="soft">简版告诉你"你是哪种底色"；
+      完整版会写到：<b>你这辈子在做的那个功课</b>、你最容易在哪种关系里耗尽、
+      以及接下来 7 天可以怎么过。</p>
+      <p class="soft">前 100 位 <b>6.9 元</b>（原价 29.9）。测完不满意，直接退。</p>
+    </div>
+
+    <div class="card">
+      <b>7 天后再来测一次吧。</b><br>
+      <span class="soft">同一个人，不同时候，会测出不一样的结果。
+      那才是你真正在变化的地方。</span>
+    </div>
+
+    <div class="crisis">
+      <b>如果最近很难熬</b>：连续两周睡不好、吃不下、对什么都没兴趣，或者出现伤害自己的念头——
+      请立刻拨 <b>12356</b>，或告诉一个你信得过的人。这个页面帮不了急，真人能。
+    </div>`;
+  rep.style.display='block';
+  rep.scrollIntoView({behavior:'smooth'});
+});
+</script>
+</body>
+</html>
