@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Emotional Weather — a 3-minute check-in</title>
+<meta name="description" content="A 3-minute self check-in: how are you actually holding up? No sign-up, no tracking, nothing stored.">
+<meta name="keywords" content="emotional check-in, self test, burnout test, mood quiz, mental health self care">
+<meta property="og:title" content="Your Emotional Weather — a 3-minute check-in">
+<meta property="og:description" content="8 questions. No sign-up. No tracking. Just a mirror for how you are actually doing.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mumufish233.github.io/mood/en/">
+<style>
+  :root{--bg:#0e1017;--card:#171b26;--line:#28303f;--txt:#eef2f9;--dim:#9aa6ba;
+        --a:#c9a7ff;--b:#8fd3ff;--warm:#ffc08a}
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(120% 80% at 80% -10%,#2a2140 0%,transparent 60%),
+      radial-gradient(100% 70% at 0% 100%,#132b3d 0%,transparent 55%),var(--bg);
+      color:var(--txt);font:17px/1.75 -apple-system,"Segoe UI",Inter,Roboto,sans-serif;
+      padding:26px 16px 70px}
+  .wrap{max-width:680px;margin:0 auto}
+  h1{font-size:28px;margin:0 0 8px;letter-spacing:.3px}
+  .sub{color:var(--dim);font-size:14.5px;margin-bottom:22px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0}
+  .q p{margin:0 0 12px;font-size:16px}
+  .opts{display:flex;gap:6px}
+  .opts label{flex:1;text-align:center;border:1px solid var(--line);border-radius:9px;
+              padding:10px 0;font-size:12.5px;color:var(--dim);cursor:pointer}
+  .opts input{display:none}
+  .opts label:has(input:checked){background:linear-gradient(135deg,var(--a),var(--b));
+              border-color:transparent;color:#0b0d14;font-weight:700}
+  button{width:100%;margin-top:24px;padding:16px;border:0;border-radius:12px;
+         background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;
+         font-size:17px;font-weight:800;cursor:pointer}
+  button:disabled{opacity:.4}
+  .rep{display:none}
+  .hue{font-size:31px;font-weight:800;margin:6px 0 4px;
+       background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;
+       -webkit-text-fill-color:transparent}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+  .card b{color:var(--warm)}
+  .soft{color:var(--dim);font-size:14.5px}
+  .cta{background:linear-gradient(135deg,#241a38,#13283a);border:1px solid #3a3352;
+       border-radius:14px;padding:20px;margin-top:22px}
+  .cta h3{margin:0 0 8px;font-size:18px}
+  .crisis{background:#221a1c;border:1px solid #4d2b31;border-radius:12px;padding:15px;margin-top:18px;font-size:14px}
+  .crisis b{color:#ff9b9b}
+  footer{color:#5d6a7d;font-size:12.5px;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+  .numgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+  .num{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+       border:1px solid var(--line);border-radius:14px;font-size:22px;font-weight:700;
+       color:var(--dim);cursor:pointer;background:var(--card);transition:.15s}
+  .num:hover{border-color:var(--a);color:var(--txt)}
+  .num.on{background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;border-color:transparent}
+  .hidden{display:none}
+  .lang{font-size:13px;color:var(--dim);margin-bottom:14px}
+  .lang a{color:var(--b);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang"><a href="/mood/">中文</a> · <b>English</b></div>
+  <h1>Your Emotional Weather</h1>
+  <div class="sub">8 questions · about 3 minutes · nothing is stored, nothing leaves your phone</div>
+
+  <div id="ritual">
+    <div class="card">
+      <b>First, pick a number.</b><br>
+      <span class="soft">Don't overthink it. Just go with your gut — 1 to 8.</span>
+    </div>
+    <div class="numgrid" id="numgrid"></div>
+    <button id="startBtn" disabled>That one. Let's start.</button>
+  </div>
+
+  <div id="quizWrap" class="hidden">
+    <div id="quiz"></div>
+    <button id="go" disabled>See my result</button>
+  </div>
+
+  <div class="rep" id="report"></div>
+
+  <footer>
+    This is a self-reflection tool, not a diagnosis, and not a replacement for professional help.<br>
+    If you are in crisis, please contact your local emergency number or a crisis line in your country.
+  </footer>
+</div>
+
+<script>
+const QS = [
+  ['load','Lately my feelings rise like a tide I did not choose.',false],
+  ['load','There are things I swallowed that never really went away.',false],
+  ['energy','I have been running on willpower for a while now.',false],
+  ['energy','My mind only clocks in once I lie down.',false],
+  ['boundary','When someone says "can you take a look", I almost never say no.',false],
+  ['boundary','I feel other people\'s pain more than my own.',false],
+  ['worth','When I fail at something, I blame who I am, not what I did.',false],
+  ['worth','I rarely let myself say "this is good enough".',false]
+];
+const LABELS=['Not really','A bit','Quite','That\'s me'];
+
+const HUES = {
+  load:{name:'The Tide',
+        line:"You're not overly emotional. You're just built to feel more than most.",
+        body:"You notice the tail end of a sentence, the two seconds a room goes quiet. You take it all in."},
+  energy:{name:'Low Battery',
+        line:"You're not lazy. Your battery just hasn't been full in a long time.",
+        body:"You've been calling 'I can still push through' the same thing as 'I'm fine'. Those are different."},
+  boundary:{name:'The Sponge',
+        line:"You always catch other people first — and only then remember you needed catching too.",
+        body:"Your kindness has a price, and the price is paid out of your own energy every single day."},
+  worth:{name:'The Blade',
+        line:"You're soft with everyone else and brutal with yourself.",
+        body:"You believe you have to earn your place. But being liked was never something you had to qualify for."}
+};
+
+const DOMAINS = {
+  emotion:{name:'Feelings', t:[
+    "You may have noticed emotions arriving faster than usual lately.",
+    "Maybe something old resurfaces at completely unrelated moments.",
+    "You might be in the habit of setting pain aside until after you're done."]},
+  relation:{name:'Relationships', t:[
+    "In relationships, you're probably the one who steps back first.",
+    "You might rarely ask for things, because it feels like trouble for others.",
+    "You may have become very good at pretending you don't need looking after."]},
+  work:{name:'Work / Study', t:[
+    "You might be in a phase where effort doesn't translate into results. Not skill — fuel.",
+    "You may be the person everyone thinks is steady, while you privately feel unsure.",
+    "It's probably been a while since something small genuinely made you happy."]},
+  body:{name:'Body & Energy', t:[
+    "Your body may have been signalling earlier than you noticed — sleep, shoulders, appetite.",
+    "You might be running on coffee, scrolling, or doing to keep the 'I'm fine' running.",
+    "You haven't really rested in a while. Sleep has been a pause, not a repair."]},
+  self:{name:'Self-talk', t:[
+    "If someone said to you what you say to yourself, you'd probably leave the conversation.",
+    "You may tie 'being liked' and 'being useful' together more tightly than you should.",
+    "You might not allow yourself to do something 'only halfway'."]}
+};
+
+const ACTIONS = {
+  load:'Give yourself ten minutes today with nothing to think about. No phone. Just sit.',
+  energy:'Tonight, move one thing from "must finish" to "tomorrow" — and see if the sky falls.',
+  boundary:'Pick one person today. Replace "I\'ll do it" with "what\'s your plan?" — then stay quiet.',
+  worth:'Do one "done is done" today: confirm it\'s finished, without rating how good it was.'
+};
+
+let chosen = null;
+const grid = document.getElementById('numgrid');
+for (let i = 1; i <= 8; i++) {
+  const d = document.createElement('div');
+  d.className = 'num'; d.textContent = i;
+  d.onclick = () => {
+    chosen = i;
+    [...grid.children].forEach(c => c.classList.remove('on'));
+    d.classList.add('on');
+    document.getElementById('startBtn').disabled = false;
+  };
+  grid.appendChild(d);
+}
+document.getElementById('startBtn').onclick = () => {
+  document.getElementById('ritual').classList.add('hidden');
+  document.getElementById('quizWrap').classList.remove('hidden');
+};
+
+const quiz=document.getElementById('quiz'), ans=new Array(QS.length).fill(0);
+QS.forEach((q,i)=>{
+  const d=document.createElement('div'); d.className='q';
+  d.innerHTML=`<p>${i+1}. ${q[1]}</p><div class="opts">`+
+    LABELS.map((l,j)=>`<label><input type="radio" name="q${i}" value="${j+1}"><span>${l}</span></label>`).join('')+`</div>`;
+  quiz.appendChild(d);
+  d.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+    ans[i]=Number(inp.value);
+    document.getElementById('go').disabled=ans.some(a=>a===0);
+  }));
+});
+
+function pick(arr, seed){ return arr[seed % arr.length]; }
+
+document.getElementById('go').addEventListener('click',()=>{
+  const sum={},cnt={};
+  QS.forEach((q,i)=>{ if(!(q[0] in sum)){sum[q[0]]=0;cnt[q[0]]=0;} sum[q[0]]+=ans[i];cnt[q[0]]++; });
+  const avg={}; Object.keys(sum).forEach(k=>avg[k]=sum[k]/cnt[k]);
+  const order=Object.keys(avg).sort((a,b)=>avg[b]-avg[a]);
+  const top=order[0];
+  const h=HUES[top];
+  const seed=(chosen||0)*17 + ans.reduce((a,b)=>a+b,0)*7;
+  const total=(Object.values(avg).reduce((a,b)=>a+b,0)/order.length).toFixed(1);
+
+  const domainHtml = Object.keys(DOMAINS).map((k, idx) =>
+    `<div class="card"><b>${DOMAINS[k].name}</b><br>${pick(DOMAINS[k].t, seed + idx * 13)}</div>`).join('');
+
+  const rep=document.getElementById('report');
+  rep.innerHTML=`
+    <div class="soft">You picked ${chosen} · your emotional weather is</div>
+    <div class="hue">${h.name}</div>
+    <div class="card"><b>${h.line}</b></div>
+    <div class="card">${h.body}</div>
+    <h2 style="font-size:18px;margin:26px 0 8px;color:var(--b)">Five areas — see what lands</h2>
+    ${domainHtml}
+    <div class="card"><b>One small thing you can do today:</b><br>${ACTIONS[top]}</div>
+    <div class="soft" style="text-align:center">Overall intensity ${total} / 4</div>
+
+    <div class="cta">
+      <h3>Three things you could do next</h3>
+      <p class="soft">1. Send this to one person you care about — it's better read together.</p>
+      <p class="soft">2. Come back in 7 days and take it again. Same person, different weather.</p>
+      <p class="soft">3. Save your result as an image and keep it somewhere you'll see it.</p>
+    </div>
+
+    <div class="card">
+      <b>Take it again in 7 days.</b><br>
+      <span class="soft">The same person measures differently on different days. That difference is the interesting part.</span>
+    </div>
+
+    <button id="saveBtn" style="margin-top:18px">Save my result as an image</button>
+
+    <div class="crisis">
+      <b>If things are really heavy right now</b><br>
+      · More than two weeks of not sleeping, not eating, or losing interest in everything<br>
+      · Any thought of hurting yourself, even briefly<br>
+      · Needing alcohol, meds, or endless scrolling just to get through a day<br><br>
+      <b>Please reach out to a local crisis line or emergency service.</b>
+      This page cannot help in an emergency. A real person can.
+    </div>
+
+    <div class="card">
+      <b>Want to send it to someone?</b><br>
+      <span class="soft">No explanation needed. Just drop the link.</span>
+      <button id="shareBtn" style="margin-top:14px;padding:12px;font-size:15px">Share this check-in</button>
+    </div>`;
+  window.__mumuResult = { hue: h.name, line: h.line,
+    domains: Object.keys(DOMAINS).slice(0,3).map(k => ({
+      name: DOMAINS[k].name,
+      text: pick(DOMAINS[k].t, seed + (Object.keys(DOMAINS).indexOf(k)) * 13)
+    })) };
+  rep.style.display='block';
+  rep.scrollIntoView({behavior:'smooth'});
+});
+</script>
+
+<script>
+function wrapLines(text, maxW, ctx) {
+  const out = []; let cur = '';
+  for (const ch of text) {
+    if (ctx.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function drawResultCard(data) {
+  const c = document.createElement('canvas');
+  c.width = 1080; c.height = 1440;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 1080, 1440);
+  g.addColorStop(0, '#1a1530'); g.addColorStop(0.6, '#241a38'); g.addColorStop(1, '#12222f');
+  x.fillStyle = g; x.fillRect(0, 0, 1080, 1440);
+  const rg = x.createRadialGradient(880, 120, 20, 880, 120, 520);
+  rg.addColorStop(0, 'rgba(150,120,255,.35)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = rg; x.fillRect(0, 0, 1080, 900);
+  x.fillStyle = '#9aa6ba'; x.font = '34px Inter,system-ui,sans-serif';
+  x.fillText('My emotional weather is', 80, 140);
+  x.fillStyle = '#c9a7ff'; x.font = 'bold 84px Inter,system-ui,sans-serif';
+  x.fillText(data.hue, 80, 250);
+  x.fillStyle = '#eef2f9'; x.font = 'bold 44px Inter,system-ui,sans-serif';
+  wrapLines(data.line, 920, x).forEach((ln, i) => x.fillText(ln, 80, 350 + i * 60));
+  let y = 620;
+  data.domains.forEach(d => {
+    x.fillStyle = '#8fd3ff'; x.font = '36px Inter,system-ui,sans-serif';
+    x.fillText(d.name, 80, y);
+    x.fillStyle = '#d6ddea'; x.font = '32px Inter,system-ui,sans-serif';
+    const lines = wrapLines(d.text, 920, x);
+    lines.slice(0, 2).forEach((ln, i) => x.fillText(ln, 80, y + 44 + i * 42));
+    y += 44 + Math.min(lines.length, 2) * 42 + 40;
+  });
+  x.fillStyle = 'rgba(255,255,255,.10)'; x.fillRect(0, 1240, 1080, 200);
+  x.fillStyle = '#ffc08a'; x.font = 'bold 34px Inter,system-ui,sans-serif';
+  x.fillText('A 3-minute check-in · no sign-up, no tracking', 80, 1310);
+  x.fillStyle = '#8fd3ff'; x.font = '28px Inter,system-ui,sans-serif';
+  x.fillText('mumufish233.github.io/mood/en', 80, 1370);
+  return c;
+}
+document.addEventListener('click', (e) => {
+  if (!e.target) return;
+  if (e.target.id === 'saveBtn') {
+    if (!window.__mumuResult) return;
+    const c = drawResultCard(window.__mumuResult);
+    const a = document.createElement('a');
+    a.download = 'my-emotional-weather.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+    e.target.textContent = 'Saved — check your downloads';
+  }
+  if (e.target.id === 'shareBtn') {
+    const url = 'https://mumufish233.github.io/mood/en/';
+    const data = { title: 'Your Emotional Weather', text: 'A 3-minute check-in', url };
+    if (navigator.share) { navigator.share(data).catch(()=>{}); return; }
+    navigator.clipboard.writeText(url).then(() => {
+      e.target.textContent = 'Link copied';
+    }).catch(() => { e.target.textContent = url; });
+  }
+});
+</script>
+</body>
+</html>
