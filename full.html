@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="3 分钟情绪自测：看看你最近是怎么撑过来的。不注册、不上传、不采集。">
+<meta name="keywords" content="情绪测试,压力自测,情绪底色,自我觉察,心理健康自测">
+<meta property="og:title" content="你的情绪底色 · 3 分钟小测">
+<meta property="og:description" content="8 道题，测你最近的情绪底色。不注册、不上传。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mumufish233.github.io/mood/">
 <title>情绪使用说明书 · 完整版</title>
 <style>
   :root{--bg:#0e1017;--card:#171b26;--line:#28303f;--txt:#eef2f9;--dim:#9aa6ba;
@@ -266,7 +272,13 @@ document.getElementById('go').addEventListener('click',()=>{
     <div class="card">你不是需要被修好的人。你只是需要被允许，偶尔不那么用力。<br>
     今天也可以只做一半。天不会塌。</div>
 
-    <div class="crisis">
+        <div class="card">
+      <b>测出来的结果，可以发给一个你在意的人。</b><br>
+      <span class="soft">不用多说，就丢给他，让他也测一下。
+      两个人一起看，比一个人看有意思。</span><br>
+      <button id="shareBtn" style="margin-top:14px;padding:12px;font-size:15px">把这个测试发给朋友</button>
+    </div>
+<div class="crisis">
       <b>如果最近很难熬</b><br>
       · 连续两周以上睡不好、吃不下、对什么都没兴趣<br>
       · 出现伤害自己的念头，哪怕只是一闪而过<br>
@@ -276,6 +288,21 @@ document.getElementById('go').addEventListener('click',()=>{
     </div>`;
   rep.style.display='block';
   rep.scrollIntoView({behavior:'smooth'});
+});
+</script>
+<script>
+document.addEventListener('click', async (e) => {
+  if (e.target && e.target.id === 'shareBtn') {
+    const url = 'https://mumufish233.github.io/mood/';
+    const data = { title: '你的情绪底色 · 3 分钟小测', text: '测完会给你一句话', url };
+    try {
+      if (navigator.share) { await navigator.share(data); return; }
+      await navigator.clipboard.writeText(url);
+      e.target.textContent = '链接已复制，去粘贴给朋友吧';
+    } catch (err) {
+      e.target.textContent = url;
+    }
+  }
 });
 </script>
 </body>
