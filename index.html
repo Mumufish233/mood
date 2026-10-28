@@ -227,10 +227,16 @@ document.getElementById('go').addEventListener('click',()=>{
       两个人一起看，比一个人看有意思。</span><br>
       <button id="shareBtn" style="margin-top:14px;padding:12px;font-size:15px">把这个测试发给朋友</button>
     </div>
+    <button id="saveBtn" style="margin-top:18px">保存这张结果（存图去发）</button>
 <div class="crisis">
       <b>如果最近很难熬</b>：连续两周睡不好、吃不下、对什么都没兴趣，或者出现伤害自己的念头——
       请立刻拨 <b>12356</b>，或告诉一个你信得过的人。这个页面帮不了急，真人能。
     </div>`;
+  window.__mumuResult = { hue: h.name, line: h.line,
+    domains: Object.keys(DOMAINS).slice(0,3).map(k => ({
+      name: DOMAINS[k].name,
+      text: pick(DOMAINS[k].t, seed + (Object.keys(DOMAINS).indexOf(k)) * 13)
+    })) };
   rep.style.display='block';
   rep.scrollIntoView({behavior:'smooth'});
 });
@@ -248,6 +254,84 @@ document.addEventListener('click', async (e) => {
       e.target.textContent = url;
     }
   }
+});
+</script>
+
+<script>
+function drawResultCard(data) {
+  const c = document.createElement('canvas');
+  c.width = 1080; c.height = 1440;
+  const x = c.getContext('2d');
+  // 背景
+  const g = x.createLinearGradient(0, 0, 1080, 1440);
+  g.addColorStop(0, '#1a1530'); g.addColorStop(0.6, '#241a38'); g.addColorStop(1, '#12222f');
+  x.fillStyle = g; x.fillRect(0, 0, 1080, 1440);
+  // 顶部光晕
+  const rg = x.createRadialGradient(880, 120, 20, 880, 120, 520);
+  rg.addColorStop(0, 'rgba(150,120,255,.35)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = rg; x.fillRect(0, 0, 1080, 900);
+
+  x.fillStyle = '#9aa6ba';
+  x.font = '34px system-ui,"Microsoft YaHei",sans-serif';
+  x.fillText('我的情绪底色是', 80, 140);
+
+  x.fillStyle = '#c9a7ff';
+  x.font = 'bold 84px system-ui,"Microsoft YaHei",sans-serif';
+  x.fillText(data.hue, 80, 250);
+
+  // 一句话
+  x.fillStyle = '#eef2f9';
+  x.font = 'bold 44px system-ui,"Microsoft YaHei",sans-serif';
+  wrap(x, data.line, 80, 350, 920, 64);
+
+  // 三个领域
+  let y = 620;
+  x.font = '36px system-ui,"Microsoft YaHei",sans-serif';
+  data.domains.forEach(d => {
+    x.fillStyle = '#8fd3ff';
+    x.fillText(d.name, 80, y);
+    x.fillStyle = '#d6ddea';
+    x.font = '32px system-ui,"Microsoft YaHei",sans-serif';
+    const lines = wrapLines(d.text, 920, x);
+    lines.slice(0, 2).forEach((ln, i) => x.fillText(ln, 80, y + 44 + i * 42));
+    x.font = '36px system-ui,"Microsoft YaHei",sans-serif';
+    y += 44 + Math.min(lines.length, 2) * 42 + 40;
+  });
+
+  // 底部
+  x.fillStyle = 'rgba(255,255,255,.10)';
+  x.fillRect(0, 1240, 1080, 200);
+  x.fillStyle = '#ffc08a';
+  x.font = 'bold 34px system-ui,"Microsoft YaHei",sans-serif';
+  x.fillText('3 分钟测你的情绪底色 · 不注册不上传', 80, 1310);
+  x.fillStyle = '#8fd3ff';
+  x.font = '28px system-ui,"Microsoft YaHei",sans-serif';
+  x.fillText('mumufish233.github.io/mood', 80, 1370);
+  return c;
+}
+function wrapLines(text, maxW, ctx) {
+  const out = []; let cur = '';
+  for (const ch of text) {
+    if (ctx.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function wrap(ctx, text, x, y, maxW, lh) {
+  const lines = wrapLines(text, maxW, ctx);
+  lines.forEach((ln, i) => ctx.fillText(ln, x, y + i * lh));
+  return lines.length;
+}
+document.addEventListener('click', (e) => {
+  if (!e.target || e.target.id !== 'saveBtn') return;
+  if (!window.__mumuResult) return;
+  const c = drawResultCard(window.__mumuResult);
+  const a = document.createElement('a');
+  a.download = '我的情绪底色.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+  e.target.textContent = '已保存，去相册看看';
 });
 </script>
 </body>
