@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mumufish233.github.io/mood/sitemap.xml
