@@ -188,7 +188,8 @@ function showResult() {
   }
 
   html += '<div class="row"><button id="again">再抽一次</button>'
-    + '<button class="ghost" id="share">发给朋友</button></div>';
+    + '<button class="ghost" id="share">发给朋友</button></div>'
+    + '<div class="row"><button id="saveCard">保存这张结果图</button></div>';
 
   const box = $('resultBox');
   box.innerHTML = html;
@@ -213,6 +214,97 @@ function showResult() {
     } catch (err) { e.target.textContent = url; }
   };
 }
+
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im); im.onerror = rej; im.src = src;
+  });
+}
+function wrapLines(ctx, text, maxW) {
+  const out = []; let cur = '';
+  for (const ch of text) {
+    if (ctx.measureText(cur + ch).width > maxW) { out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+async function buildCardImage() {
+  const c0 = picked[0];
+  const W = 1080, H = 1440;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const g = x.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#1a1530'); g.addColorStop(0.6, '#241a38'); g.addColorStop(1, '#12222f');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+
+  // 右侧卡面图
+  const cw = 340, ch = 531;
+  const cx0 = W - 70 - cw, cy0 = 110;
+  const imgPath = 'cards/' + String(c0.n).padStart(2,'0') + '.png';
+  try {
+    const im = await loadImage(imgPath);
+    x.save();
+    if (c0.isRev) {
+      x.translate(cx0 + cw/2, cy0 + ch/2);
+      x.rotate(Math.PI);
+      x.translate(-(cx0 + cw/2), -(cy0 + ch/2));
+    }
+    x.drawImage(im, cx0, cy0, cw, ch);
+    x.restore();
+  } catch (e) {}
+
+  const LEFT_W = 520;
+  x.fillStyle = '#9aa6ba'; x.font = '32px "Microsoft YaHei",sans-serif';
+  x.fillText('我抽到的牌', 80, 120);
+  x.fillStyle = '#c9a7ff'; x.font = 'bold 84px "Microsoft YaHei",sans-serif';
+  x.fillText(c0.name, 80, 226);
+  x.fillStyle = '#8fd3ff'; x.font = '30px "Microsoft YaHei",sans-serif';
+  x.fillText(c0.en + ' · ' + (c0.isRev ? '逆位' : '正位'), 80, 282);
+  const kw = (c0.isRev ? c0.kw_rev : c0.kw_up).join(' · ');
+  x.fillStyle = '#93a2b8'; x.font = '26px "Microsoft YaHei",sans-serif';
+  x.fillText(kw, 80, 336);
+
+  const line = c0.isRev ? c0.rev : c0.up;
+  x.fillStyle = '#eef2f9'; x.font = 'bold 40px "Microsoft YaHei",sans-serif';
+  wrapLines(x, line, LEFT_W).forEach((ln, i) => x.fillText(ln, 80, 420 + i * 56));
+
+  // 牌面故事（小字，左侧）
+  x.fillStyle = 'rgba(147,162,184,.85)'; x.font = '24px "Microsoft YaHei",sans-serif';
+  wrapLines(x, c0.story, LEFT_W).slice(0, 5).forEach((ln, i) => x.fillText(ln, 80, 640 + i * 38));
+
+  // 建议（整宽，位于图下方）
+  x.fillStyle = '#ffc08a'; x.font = 'bold 30px "Microsoft YaHei",sans-serif';
+  x.fillText('可以做的一件事', 80, 860);
+  x.fillStyle = '#d6ddea'; x.font = '30px "Microsoft YaHei",sans-serif';
+  const adv = c0.isRev ? c0.adv_rev : c0.adv_up;
+  wrapLines(x, adv, 920).forEach((ln, i) => x.fillText(ln, 80, 912 + i * 44));
+
+  // 底部
+  x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(0, 1240, W, 200);
+  x.fillStyle = '#ffc08a'; x.font = 'bold 32px "Microsoft YaHei",sans-serif';
+  x.fillText('深海塔罗 · 22 张大阿卡纳', 80, 1310);
+  x.fillStyle = '#8fd3ff'; x.font = '26px "Microsoft YaHei",sans-serif';
+  x.fillText('mumufish233.github.io/mood/tarot', 80, 1364);
+  return cv;
+}
+document.addEventListener('click', async (e) => {
+  if (!e.target || e.target.id !== 'saveCard') return;
+  if (!picked.length) return;
+  e.target.textContent = '生成中…';
+  try {
+    const cv = await buildCardImage();
+    const a = document.createElement('a');
+    a.download = '塔罗-' + picked[0].name + '.png';
+    a.href = cv.toDataURL('image/png');
+    a.click();
+    e.target.textContent = '已保存，去相册看看';
+  } catch (err) {
+    e.target.textContent = '生成失败：' + err.message;
+  }
+});
 </script>
 </body>
 </html>
