@@ -70,6 +70,7 @@
   <div id="modeBox">
     <button class="mode" data-mode="1"><b>抽一张</b><span>心里想一件事，看看现在是什么状态</span></button>
     <button class="mode" data-mode="3"><b>抽三张</b><span>过去 · 现在 · 未来（更完整，也更有意思）</span></button>
+    <button class="mode" data-mode="daily"><b>今日一抽</b><span>每天一张，同一天打开还是这张</span></button>
   </div>
 
   <div id="shuffleBox" class="hidden">
@@ -103,11 +104,32 @@ let mode = 1, pool = [], picked = [];
 function $(id){ return document.getElementById(id); }
 const DOMNAME = {emotion:'情绪', relation:'关系', work:'工作/学业', body:'身体与精力', self:'自我对话'};
 
+function dailySeed() {
+  const d = new Date();
+  const k = 'tarot-daily-' + d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  const saved = localStorage.getItem(k);
+  if (saved) return {key: k, seed: parseInt(saved)};
+  const seed = Math.floor(Math.random() * 1000000);
+  localStorage.setItem(k, String(seed));
+  return {key: k, seed};
+}
+
 document.querySelectorAll('.mode').forEach(b => {
   b.onclick = () => {
-    mode = Number(b.dataset.mode);
+    const m = b.dataset.mode;
     picked = [];
     $('modeBox').classList.add('hidden');
+    if (m === 'daily') {
+      mode = 1;
+      const {seed} = dailySeed();
+      const idx = seed % CARDS.length;
+      const rev = (Math.floor(seed / 97) % 100) < 42;
+      picked = [{...CARDS[idx], isRev: rev}];
+      $('resultBox').innerHTML = '<div class="hint" style="margin:18px 0 6px">今天这张，明天可以再来抽一张</div>';
+      showResult();
+      return;
+    }
+    mode = Number(m);
     $('shuffleBox').classList.remove('hidden');
     setTimeout(() => {
       $('deck').classList.remove('shuffling');
