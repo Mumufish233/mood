@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>深海塔罗 · 抽一张看看</title>
+<meta name="description" content="22 张大阿卡纳，抽一张看看你最近卡在哪里。不是预测未来，是把你现在的状态说出来。不注册、不上传。">
+<style>
+  :root{--bg:#0b0d14;--card:#151a26;--line:#2a3346;--txt:#eef2f9;--dim:#93a2b8;
+        --a:#c9a7ff;--b:#8fd3ff;--warm:#ffc08a}
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(120% 80% at 80% -10%,#1e1a38 0%,transparent 60%),
+      radial-gradient(100% 70% at 0% 100%,#10222f 0%,transparent 55%),var(--bg);
+      color:var(--txt);font:16px/1.8 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+      padding:24px 16px 70px;-webkit-tap-highlight-color:transparent}
+  .wrap{max-width:680px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.5px}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:18px}
+  .note{color:var(--dim);font-size:12.5px;background:#141a26;border-left:3px solid var(--warm);
+        padding:10px 12px;border-radius:6px;margin-bottom:18px}
+  button{font:inherit;cursor:pointer;border:0;border-radius:12px}
+  .mode{width:100%;padding:15px;margin:10px 0;background:var(--card);color:var(--txt);
+        border:1px solid var(--line);text-align:left;font-size:16px}
+  .mode b{display:block;font-size:17px;margin-bottom:2px}
+  .mode span{color:var(--dim);font-size:13px}
+  .mode:active{border-color:var(--a)}
+  .hidden{display:none}
+  .deck{display:flex;justify-content:center;gap:0;height:300px;align-items:center;margin:26px 0;
+        position:relative}
+  .stack{width:150px;height:234px;border-radius:12px;overflow:hidden;position:absolute;
+         box-shadow:0 10px 30px rgba(0,0,0,.45);transition:transform .2s}
+  .stack img{width:100%;height:100%;object-fit:cover;display:block}
+  .shuffling .stack:nth-child(1){animation:sh1 1.2s ease-in-out infinite}
+  .shuffling .stack:nth-child(2){animation:sh2 1.2s ease-in-out infinite}
+  .shuffling .stack:nth-child(3){animation:sh3 1.2s ease-in-out infinite}
+  @keyframes sh1{0%,100%{transform:translate(-6px,0) rotate(-4deg)}50%{transform:translate(46px,-14px) rotate(7deg)}}
+  @keyframes sh2{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-40px,-8px) rotate(-6deg)}}
+  @keyframes sh3{0%,100%{transform:translate(6px,0) rotate(4deg)}50%{transform:translate(10px,16px) rotate(2deg)}}
+  .pickgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:20px 0}
+  .pick{aspect-ratio:2/3;border:1px solid var(--line);border-radius:8px;background:var(--card);
+        display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--dim);font-size:14px}
+  .pick:hover,.pick.on{border-color:var(--a);color:var(--txt)}
+  .pick.used{opacity:.28;pointer-events:none}
+  .hint{text-align:center;color:var(--dim);font-size:14px;margin:14px 0}
+  .flip{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0 4px}
+  .slot{width:170px;text-align:center}
+  .slot .pos{color:var(--dim);font-size:13px;margin-bottom:6px}
+  .slot img{width:100%;border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  .rep{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}
+  .rep b{color:var(--warm)}
+  .hue{font-size:24px;font-weight:800;margin:2px 0 8px;
+       background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .adv{background:#1a2130;border:1px dashed #3a4a66;border-radius:12px;padding:14px;margin-top:10px}
+  .row{display:flex;gap:10px;margin-top:14px}
+  .row button{flex:1;padding:13px;background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;font-weight:800}
+  .row button.ghost{background:var(--card);color:var(--txt);border:1px solid var(--line);font-weight:600}
+  footer{color:#5a677d;font-size:12px;margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>深海塔罗</h1>
+  <div class="sub">22 张大阿卡纳 · 不注册 · 不上传 · 结果只在你手机上</div>
+  <div class="note">
+    这不是预测。它不会告诉你未来会发生什么。<br>
+    它只是把牌面当成一面镜子，说说你现在可能卡在哪里。
+  </div>
+
+  <!-- 选模式 -->
+  <div id="modeBox">
+    <button class="mode" data-mode="1">
+      <b>抽一张</b><span>心里想一件事，看看现在是什么状态</span>
+    </button>
+    <button class="mode" data-mode="3">
+      <b>抽三张</b><span>过去 · 现在 · 未来（更完整，也更有意思）</span>
+    </button>
+  </div>
+
+  <!-- 洗牌 -->
+  <div id="shuffleBox" class="hidden">
+    <div class="hint" id="shuffleHint">洗牌中…心里想一件事</div>
+    <div class="deck shuffling" id="deck">
+      <div class="stack"><img src="cards/back.png" alt=""></div>
+      <div class="stack"><img src="cards/back.png" alt=""></div>
+      <div class="stack"><img src="cards/back.png" alt=""></div>
+    </div>
+  </div>
+
+  <!-- 选牌 -->
+  <div id="pickBox" class="hidden">
+    <div class="hint" id="pickHint">选一张牌（剩下的交给直觉）</div>
+    <div class="pickgrid" id="pickGrid"></div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="resultBox" class="hidden"></div>
+
+  <footer>
+    这是一个免费的小游戏，用来陪你说说话。<br>
+    如果你最近真的很难熬（连续两周睡不好/吃不下/对什么都没兴趣，或出现伤害自己的念头），
+    请优先联系专业帮助，或拨打 12356（全国心理援助热线）。
+  </footer>
+</div>
+
+<script>
+const CARDS = [{"n": 0, "roman": "0", "name": "愚人", "en": "The Fool", "kw_up": ["开始", "轻盈", "尝试"], "kw_rev": ["鲁莽", "逃避", "不敢开始"], "up": "你正站在一个还没被定义的路口，脚下没有地图，但也没有包袱。", "rev": "你想动，却一直在等一个完全准备好的时刻——那个时刻不会来。", "adv_up": "先做一件小到不可能失败的事，让身体先动起来。", "adv_rev": "把最坏的结果写下来，你会发现大部分担忧没有对应的事实。", "hint": "开始"}, {"n": 1, "roman": "I", "name": "魔术师", "en": "The Magician", "kw_up": ["行动", "资源", "表达"], "kw_rev": ["空转", "藏着不用", "自我怀疑"], "up": "你手上的东西比你以为的多：会的事、认识的人、能用的工具。", "rev": "你不是没能力，是把能力收得太紧，怕用出来被评价。", "adv_up": "挑一件一直说等有空再做的小事，今天做第一步。", "adv_rev": "允许自己表现得不完美一次，看看会发生什么。", "hint": "资源"}, {"n": 2, "roman": "II", "name": "女祭司", "en": "The High Priestess", "kw_up": ["直觉", "沉默", "内在"], "kw_rev": ["压住声音", "过度分析"], "up": "有些答案你其实已经知道了，只是还没允许自己承认。", "rev": "你一直在用讲道理盖过心里那个声音。", "adv_up": "今天有个决定，先别问别人，写下你自己的第一反应。", "adv_rev": "给自己十分钟什么都不分析，只听身体的感受。", "hint": "直觉"}, {"n": 3, "roman": "III", "name": "女皇", "en": "The Empress", "kw_up": ["滋养", "丰盛", "身体"], "kw_rev": ["耗尽", "过度付出", "忽视自己"], "up": "你身上有让东西生长的能力——但前提是，你自己也得被浇灌。", "rev": "你把滋养都给了别人，自己那份一直是欠着的。", "adv_up": "今天给自己一次无用的照顾：好好吃一顿、睡一觉、晒会太阳。", "adv_rev": "列出你最近照顾过的三个人，然后问：谁在照顾我？", "hint": "滋养"}, {"n": 4, "roman": "IV", "name": "皇帝", "en": "The Emperor", "kw_up": ["秩序", "边界", "掌控"], "kw_rev": ["僵化", "控制", "被压住"], "up": "你需要一点结构：规则、时间表、明确的「不行」。", "rev": "你把撑住一切当成了责任，但那是控制，不是负责。", "adv_up": "给这周定一条硬边界，比如十一点后不看工作消息。", "adv_rev": "把一件你想控制的事交出去，观察它有没有真的塌。", "hint": "边界"}, {"n": 5, "roman": "V", "name": "教皇", "en": "The Hierophant", "kw_up": ["师承", "规则", "共同体"], "kw_rev": ["盲从", "被规训", "想脱离"], "up": "你需要参照系：前人怎么做、行业规矩是什么。", "rev": "你在用别人的标准衡量自己，而那套标准可能本来就不适合你。", "adv_up": "找一个人请教——不是求答案，是看他怎么思考。", "adv_rev": "问自己：这个「应该」是谁的声音？", "hint": "标准"}, {"n": 6, "roman": "VI", "name": "恋人", "en": "The Lovers", "kw_up": ["选择", "联结", "对齐"], "kw_rev": ["摇摆", "不一致", "依赖"], "up": "这不是爱不爱的题，是要不要真的选的题。", "rev": "你两边都想要，所以两边都没站稳。", "adv_up": "把选项写下来，删到只剩一个，然后承认它。", "adv_rev": "先允许自己暂时不选——但别骗自己说还在考虑。", "hint": "选择"}, {"n": 7, "roman": "VII", "name": "战车", "en": "The Chariot", "kw_up": ["推进", "意志", "方向"], "kw_rev": ["硬撑", "失控", "方向不明"], "up": "你现在有推进力，关键是把力气使在同一个方向上。", "rev": "你在用力，但两匹马往不同方向拉——越用力越散。", "adv_up": "这周只保留一个主目标，其他都降级。", "adv_rev": "停下来问：我是在前进，还是在原地加速？", "hint": "方向"}, {"n": 8, "roman": "VIII", "name": "力量", "en": "Strength", "kw_up": ["温柔", "耐心", "驯服"], "kw_rev": ["自我压抑", "硬扛", "内耗"], "up": "真正的力量不是压住情绪，是和它共处。", "rev": "你对自己的情绪用了太大力气——压住了，但没消化。", "adv_up": "对一个反复出现的情绪说：我知道你在。不用赶走它。", "adv_rev": "把「我必须坚强」改成「我可以先软下来一次」。", "hint": "情绪"}, {"n": 9, "roman": "IX", "name": "隐者", "en": "The Hermit", "kw_up": ["独处", "内省", "放慢"], "kw_rev": ["孤立", "逃避社交", "闷住"], "up": "你需要一段不被打扰的时间，不是为了效率，是为了听见自己。", "rev": "独处已经变成躲避——你不是在休息，是在撤退。", "adv_up": "今天留一小时，不刷手机、不回消息，只做一件慢事。", "adv_rev": "找一个你信的人说一句话，不用解释太多。", "hint": "独处"}, {"n": 10, "roman": "X", "name": "命运之轮", "en": "Wheel of Fortune", "kw_up": ["转折", "周期", "变化"], "kw_rev": ["卡住", "重复", "时机未到"], "up": "有些东西正在变，不由你控制，但你可以选择怎么迎接。", "rev": "你困在同一个循环里，因为每次都在同一个地方做同样的选择。", "adv_up": "接受一件已经变了的事，别再假装它没变。", "adv_rev": "找出这个循环里，唯一一个你能改变的动作。", "hint": "变化"}, {"n": 11, "roman": "XI", "name": "正义", "en": "Justice", "kw_up": ["权衡", "诚实", "因果"], "kw_rev": ["自我审判", "失衡", "回避"], "up": "该算清的账，终于要算清了——包括你对自己的那笔。", "rev": "你在用最严的标准审判自己，对别人却宽容得多。", "adv_up": "把一件事的责任分成我的部分和不在我控制内的部分。", "adv_rev": "写下一句「我已经尽力了」，然后允许它成立。", "hint": "公平"}, {"n": 12, "roman": "XII", "name": "倒吊人", "en": "The Hanged Man", "kw_up": ["暂停", "换角度", "等待"], "kw_rev": ["拖延", "白白消耗", "不肯放手"], "up": "有些事现在不该推进，该换个角度看。", "rev": "你的再等等已经不是等待，是不敢决定。", "adv_up": "把问题写下来，然后问自己：如果我是旁观者，会怎么做？", "adv_rev": "给等待设一个期限，到期就做一个决定，哪怕不完美。", "hint": "暂停"}, {"n": 13, "roman": "XIII", "name": "死神", "en": "Death", "kw_up": ["结束", "清空", "重生"], "kw_rev": ["拖着不放", "恐惧结束"], "up": "有些东西该结束了。结束不是失败，是让它不再消耗你。", "rev": "你知道该结束，但一直在给它续命。", "adv_up": "今天正式结束一件小事：退一个群、删一个习惯、说完一句话。", "adv_rev": "问自己：我留着它，是在等它变好，还是怕空下来？", "hint": "结束"}, {"n": 14, "roman": "XIV", "name": "节制", "en": "Temperance", "kw_up": ["平衡", "调和", "节奏"], "kw_rev": ["过度", "失衡", "极端"], "up": "你需要的不是更用力，是更均匀。", "rev": "你在某件事上投入过头，另一边已经空了。", "adv_up": "把一个习惯调小一半，看效果是否反而更好。", "adv_rev": "列出你最近过量的那件事，从今天减一成。", "hint": "节奏"}, {"n": 15, "roman": "XV", "name": "恶魔", "en": "The Devil", "kw_up": ["执念", "依赖", "被绑住"], "kw_rev": ["松绑", "看清", "戒断"], "up": "有一件事你在做，但你并不真的想做——它绑住了你。", "rev": "你开始看清那条链子了，虽然还戴着，但知道它在哪儿。", "adv_up": "写下那件「我知道不好但停不下来」的事，只写，不评判。", "adv_rev": "今天给它设一个小障碍，比如把 App 从首屏挪走。", "hint": "执念"}, {"n": 16, "roman": "XVI", "name": "高塔", "en": "The Tower", "kw_up": ["崩塌", "真相", "被迫改变"], "kw_rev": ["硬撑", "延迟崩塌", "恐惧"], "up": "有些东西正在塌，塌掉的多半是本来就不牢的。", "rev": "你在拼命扶一堵要倒的墙——耗的是你自己。", "adv_up": "先保住最重要的那一样：人、健康、底线，其余让它塌。", "adv_rev": "问自己：如果它塌了，我最怕失去什么？那才是真正要保的。", "hint": "崩塌"}, {"n": 17, "roman": "XVII", "name": "星星", "en": "The Star", "kw_up": ["希望", "疗愈", "微光"], "kw_rev": ["失望", "看不见希望", "耗尽"], "up": "在最糟之后，会有一点点光回来——很小，但是真的。", "rev": "你不是没有希望，是暂时看不见，因为你太累了。", "adv_up": "写下一件明天会变好一点点的具体小事。", "adv_rev": "今天只做最小的恢复动作：喝水、洗澡、睡够。", "hint": "希望"}, {"n": 18, "roman": "XVIII", "name": "月亮", "en": "The Moon", "kw_up": ["模糊", "焦虑", "潜意识"], "kw_rev": ["看清", "散去", "释怀"], "up": "现在看不清全貌，你看到的多半是影子。", "rev": "雾开始散了，你之前担心的某些事，其实没那么严重。", "adv_up": "别在这几天做重大决定，先收集信息。", "adv_rev": "把担心的事写下来，标记哪些已确认、哪些只是想象。", "hint": "迷雾"}, {"n": 19, "roman": "XIX", "name": "太阳", "en": "The Sun", "kw_up": ["明亮", "坦然", "被看见"], "kw_rev": ["疲惫", "笑不出来", "硬撑开心"], "up": "你身上有光，而且这次不需要靠证明来换。", "rev": "你在笑，但那不是真的开心。", "adv_up": "做一件让你真的开心的小事，不为任何人。", "adv_rev": "对一个人说「我今天不太好」，看看会怎样。", "hint": "坦然"}, {"n": 20, "roman": "XX", "name": "审判", "en": "Judgement", "kw_up": ["清算", "觉醒", "回顾"], "kw_rev": ["自责", "卡在过去", "不肯原谅"], "up": "你在总结过去，并且第一次愿意承认某些错误。", "rev": "你在反复审判自己，但从来不给自己判决后的释放。", "adv_up": "写下三件过去做错但已经学到的事，然后翻页。", "adv_rev": "把「我怎么这么蠢」改成「当时的我只有那些选择」。", "hint": "回顾"}, {"n": 21, "roman": "XXI", "name": "世界", "en": "The World", "kw_up": ["完成", "整合", "走到这里"], "kw_rev": ["差一步", "不敢收尾"], "up": "有个阶段真的走完了，值得被承认，而不是马上奔下一个。", "rev": "你离完成只差一口气，但那口气你一直没给自己。", "adv_up": "今天正式承认一次「我做到了」，不谦虚、不转折。", "adv_rev": "把最后一步拆到最小，只做那 10 分钟。", "hint": "完成"}];
+const TPL = {"emotion": ["情绪上，你可能正处在「{kw}」的阶段。", "最近的情绪关键词是「{kw}」——它不一定舒服，但它是真的。"], "relation": ["关系里，这件事可能和「{kw}」有关。", "你和别人的互动里，「{kw}」这个主题可能反复出现。"], "work": ["工作或学业上，「{kw}」可能正在发生。", "你手上的事，卡点在「{kw}」这里。"], "body": ["身体与精力上，注意「{kw}」带来的消耗。", "你的身体可能在提示你「{kw}」这件事。"], "self": ["你对自己的态度里，藏着「{kw}」。", "自我对话里，「{kw}」这个词可能一直没被说出来。"]};
+
+const REVERSED_CHANCE = 0.42;
+let mode = 1, picks = [], pool = [], picked = [];
+
+function $(id){ return document.getElementById(id); }
+
+document.querySelectorAll('.mode').forEach(b => {
+  b.onclick = () => {
+    mode = Number(b.dataset.mode);
+    picks = []; picked = [];
+    $('modeBox').classList.add('hidden');
+    $('shuffleBox').classList.remove('hidden');
+    // 洗牌动画 1.8 秒
+    setTimeout(() => {
+      $('deck').classList.remove('shuffling');
+      $('shuffleBox').classList.add('hidden');
+      startPick();
+    }, 1800);
+  };
+});
+
+// 洗牌：打乱 22 张，再随机挑 12 张作为可选（避免一眼看完 22 张）
+function startPick() {
+  pool = CARDS.map(c => ({...c, rev: Math.random() < REVERSED_CHANCE}));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  pool = pool.slice(0, 12);
+  const g = $('pickGrid');
+  g.innerHTML = '';
+  pool.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'pick'; d.textContent = i + 1;
+    d.onclick = () => choose(i, d);
+    g.appendChild(d);
+  });
+  $('pickBox').classList.remove('hidden');
+  $('pickHint').textContent = mode === 1 ? '选一张牌（剩下的交给直觉）'
+    : `选第 ${picked.length + 1} 张（共 ${mode} 张）`;
+}
+
+const POS = ['过去', '现在', '未来'];
+
+function choose(i, el) {
+  if (el.classList.contains('used')) return;
+  el.classList.add('used');
+  picked.push(pool[i]);
+  if (picked.length < mode) {
+    $('pickHint').textContent = `选第 ${picked.length + 1} 张（共 ${mode} 张）`;
+    return;
+  }
+  $('pickBox').classList.add('hidden');
+  showResult();
+}
+
+function domainsFor(card, seed) {
+  const keys = Object.keys(TPL);
+  const out = [];
+  const used = new Set();
+  for (let k = 0; k < 3; k++) {
+    let idx = (seed + k * 3) % keys.length;
+    let guard = 0;
+    while (used.has(idx) && guard++ < 10) idx = (idx + 1) % keys.length;
+    used.add(idx);
+    const key = keys[idx];
+    const arr = TPL[key];
+    out.push({name: {emotion:'情绪', relation:'关系', work:'工作/学业', body:'身体与精力', self:'自我对话'}[key],
+              text: arr[(seed + k) % arr.length].replace('{kw}', card.hint)});
+  }
+  return out;
+}
+
+function showResult() {
+  const now = new Date();
+  const seed = now.getDate() + now.getHours() + picked.reduce((a, c) => a + c.n, 0);
+  let html = '<div class="flip">';
+  picked.forEach((c, i) => {
+    const pos = mode === 1 ? '' : `<div class="pos">${POS[i]}</div>`;
+    const img = `cards/${String(c.n).padStart(2,'0')}.png`;
+    html += `<div class="slot">${pos}<img src="${img}" alt="${c.name}"
+      style="${c.rev ? 'transform:rotate(180deg)' : ''}"></div>`;
+  });
+  html += '</div>';
+
+  picked.forEach((c, i) => {
+    const pos = mode === 1 ? '这张牌说' : POS[i];
+    const main = c.rev ? c.rev : c.up;
+    const adv = c.rev ? c.adv_rev : c.adv_up;
+    const kw = (c.rev ? c.kw_rev : c.kw_up).join(' · ');
+    html += `<div class="rep">
+      <div class="sub" style="margin-bottom:4px">${pos} · ${c.rev ? '逆位' : '正位'}</div>
+      <div class="hue">${c.name} <span style="font-size:14px;color:var(--dim)">${c.en}</span></div>
+      <div style="color:var(--dim);font-size:13.5px;margin-bottom:8px">${kw}</div>
+      <div>${main}</div>
+      <div class="adv"><b>可以做的一件事：</b><br>${adv}</div>
+    </div>`;
+  });
+
+  if (mode === 1) {
+    const c = picked[0];
+    html += '<div class="rep"><b>换个角度看三个地方</b>' +
+      domainsFor(c, seed).map(d => `<div style="margin-top:10px"><b>${d.name}</b><br>${d.text}</div>`).join('') +
+      '</div>';
+  } else {
+    html += `<div class="rep"><b>三张牌连起来看</b><br>
+      过去那张说的是你怎么走到这里的，现在这张是你此刻的位置，未来那张不是预言，
+      而是"如果按现在的方式走下去，大概率会到的地方"。<br><br>
+      你随时可以改方向。</div>`;
+  }
+
+  html += `<div class="row">
+    <button id="again">再抽一次</button>
+    <button class="ghost" id="share">发给朋友</button>
+  </div>`;
+
+  const box = $('resultBox');
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+  box.scrollIntoView({behavior:'smooth'});
+
+  $('again').onclick = () => {
+    picked = [];
+    box.classList.add('hidden');
+    $('modeBox').classList.remove('hidden');
+  };
+  $('share').onclick = async (e) => {
+    const url = 'https://mumufish233.github.io/mood/tarot/';
+    const text = mode === 1
+      ? `我抽到「${picked[0].name}」（${picked[0].rev?'逆位':'正位'}）：${picked[0].rev?picked[0].rev:picked[0].up}`
+      : `我抽了三张牌：${picked.map(c=>c.name).join(' · ')}`;
+    try {
+      if (navigator.share) { await navigator.share({title:'深海塔罗', text, url}); return; }
+      await navigator.clipboard.writeText(text + '\n' + url);
+      e.target.textContent = '已复制，去粘贴吧';
+    } catch (err) { e.target.textContent = url; }
+  };
+}
+</script>
+
+<script>
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelector('.mode[data-mode="3"]').click();
+    setTimeout(() => {
+      const picks = document.querySelectorAll('#pickGrid .pick');
+      if (picks.length < 3) { document.title = 'ERR picks=' + picks.length; return; }
+      picks[1].click(); picks[5].click(); picks[9].click();
+      setTimeout(() => {
+        const rep = document.querySelectorAll('#resultBox .rep');
+        document.title = 'OK reps=' + rep.length;
+        document.querySelector('#modeBox').style.display='none';
+        window.scrollTo(0, 0);
+      }, 600);
+    }, 2400);
+  }, 400);
+});
+</script></body>
+</html>

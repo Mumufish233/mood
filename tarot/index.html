@@ -129,7 +129,7 @@ document.querySelectorAll('.mode').forEach(b => {
 
 // 洗牌：打乱 22 张，再随机挑 12 张作为可选（避免一眼看完 22 张）
 function startPick() {
-  pool = CARDS.map(c => ({...c, rev: Math.random() < REVERSED_CHANCE}));
+  pool = CARDS.map(c => ({...c, isRev: Math.random() < REVERSED_CHANCE}));
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -187,17 +187,17 @@ function showResult() {
     const pos = mode === 1 ? '' : `<div class="pos">${POS[i]}</div>`;
     const img = `cards/${String(c.n).padStart(2,'0')}.png`;
     html += `<div class="slot">${pos}<img src="${img}" alt="${c.name}"
-      style="${c.rev ? 'transform:rotate(180deg)' : ''}"></div>`;
+      style="${c.isRev ? 'transform:rotate(180deg)' : ''}"></div>`;
   });
   html += '</div>';
 
   picked.forEach((c, i) => {
     const pos = mode === 1 ? '这张牌说' : POS[i];
-    const main = c.rev ? c.rev : c.up;
-    const adv = c.rev ? c.adv_rev : c.adv_up;
-    const kw = (c.rev ? c.kw_rev : c.kw_up).join(' · ');
+    const main = c.isRev ? c.rev : c.up;
+    const adv = c.isRev ? c.adv_rev : c.adv_up;
+    const kw = (c.isRev ? c.kw_rev : c.kw_up).join(' · ');
     html += `<div class="rep">
-      <div class="sub" style="margin-bottom:4px">${pos} · ${c.rev ? '逆位' : '正位'}</div>
+      <div class="sub" style="margin-bottom:4px">${pos} · ${c.isRev ? '逆位' : '正位'}</div>
       <div class="hue">${c.name} <span style="font-size:14px;color:var(--dim)">${c.en}</span></div>
       <div style="color:var(--dim);font-size:13.5px;margin-bottom:8px">${kw}</div>
       <div>${main}</div>
@@ -235,7 +235,7 @@ function showResult() {
   $('share').onclick = async (e) => {
     const url = 'https://mumufish233.github.io/mood/tarot/';
     const text = mode === 1
-      ? `我抽到「${picked[0].name}」（${picked[0].rev?'逆位':'正位'}）：${picked[0].rev?picked[0].rev:picked[0].up}`
+      ? `我抽到「${picked[0].name}」（${picked[0].isRev?'逆位':'正位'}）：${picked[0].isRev?picked[0].rev:picked[0].up}`
       : `我抽了三张牌：${picked.map(c=>c.name).join(' · ')}`;
     try {
       if (navigator.share) { await navigator.share({title:'深海塔罗', text, url}); return; }
