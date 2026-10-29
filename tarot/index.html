@@ -70,7 +70,14 @@
   <div id="modeBox">
     <button class="mode" data-mode="1"><b>抽一张</b><span>心里想一件事，看看现在是什么状态</span></button>
     <button class="mode" data-mode="3"><b>抽三张</b><span>过去 · 现在 · 未来（更完整，也更有意思）</span></button>
+    <button class="mode" data-mode="ab"><b>二选一</b><span>两个选择拿不定？各抽一张，看它们分别长什么样</span></button>
     <button class="mode" data-mode="daily"><b>今日一抽</b><span>每天一张，同一天打开还是这张</span></button>
+  </div>
+
+  <div id="abBox" class="hidden">
+    <button class="mode" data-ab="A" style="margin-bottom:8px"><b>A：第一个选择</b><span>你心里那个选项</span></button>
+    <button class="mode" data-ab="B"><b>B：第二个选择</b><span>另一个选项</span></button>
+    <div class="hint" style="margin-top:12px">不用写出来，心里装着它就行</div>
   </div>
 
   <div id="shuffleBox" class="hidden">
@@ -114,11 +121,17 @@ function dailySeed() {
   return {key: k, seed};
 }
 
+let abChoice = null;
 document.querySelectorAll('.mode').forEach(b => {
   b.onclick = () => {
     const m = b.dataset.mode;
     picked = [];
     $('modeBox').classList.add('hidden');
+    if (m === 'ab') {
+      mode = 2;
+      $('abBox').classList.remove('hidden');
+      return;
+    }
     if (m === 'daily') {
       mode = 1;
       const {seed} = dailySeed();
@@ -169,6 +182,85 @@ function choose(i, el) {
   }
   $('pickBox').classList.add('hidden');
   showResult();
+}
+
+
+document.querySelectorAll('[data-ab]').forEach(b => {
+  b.onclick = () => {
+    abChoice = b.dataset.ab;
+    $('abBox').classList.add('hidden');
+    $('shuffleBox').classList.remove('hidden');
+    setTimeout(() => {
+      $('deck').classList.remove('shuffling');
+      $('shuffleBox').classList.add('hidden');
+      startAB();
+    }, 1500);
+  };
+});
+
+function startAB() {
+  pool = CARDS.map(c => ({...c, isRev: Math.random() < REVERSED_CHANCE}));
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  pool = pool.slice(0, 12);
+  picked = [];
+  const g = $('pickGrid');
+  g.innerHTML = '';
+  pool.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'pick'; d.textContent = i + 1;
+    d.onclick = () => {
+      if (d.classList.contains('used')) return;
+      d.classList.add('used');
+      picked.push(pool[i]);
+      if (picked.length < 2) {
+        $('pickHint').textContent = '再抽一张（给另一个选择）';
+        return;
+      }
+      $('pickBox').classList.add('hidden');
+      showAB();
+    };
+    g.appendChild(d);
+  });
+  $('pickBox').classList.remove('hidden');
+  $('pickHint').textContent = '先给「' + abChoice + '」抽一张';
+}
+
+function showAB() {
+  let html = '<div class="flip">';
+  picked.forEach((c, i) => {
+    const pos = '<div class="pos">' + (i === 0 ? 'A' : 'B') + '</div>';
+    const img = 'cards/' + String(c.n).padStart(2,'0') + '.png';
+    const rot = c.isRev ? 'transform:rotate(180deg)' : '';
+    html += '<div class="slot">' + pos + '<img src="' + img + '" alt="' + c.name + '" style="' + rot + '"></div>';
+  });
+  html += '</div>';
+  picked.forEach((c, i) => {
+    const label = i === 0 ? 'A' : 'B';
+    const long = c.isRev ? c.rev_long : c.up_long;
+    const adv = c.isRev ? c.adv_rev : c.adv_up;
+    html += '<div class="rep">'
+      + '<div class="sub" style="margin-bottom:4px">' + label + ' · ' + c.name + ' · ' + (c.isRev ? '逆位' : '正位') + '</div>'
+      + '<div style="white-space:pre-line">' + long + '</div>'
+      + '<div class="adv"><b>如果选它，可以先做：</b><br>' + adv + '</div>'
+      + '</div>';
+  });
+  const a = picked[0], b = picked[1];
+  const rough = (c) => (c.isRev ? 1 : 2) + (['太阳','星星','世界','女皇','战车'].includes(c.name) ? 1 : 0);
+  const ra = rough(a), rb = rough(b);
+  let verdict = '两张牌没有谁“更好”。A 说的是「' + a.hint + '」，B 说的是「' + b.hint + '」。';
+  if (ra > rb) verdict += '<br><br>如果一定要选：<b>A 现在更顺一点</b>，但代价你可能也看到了。';
+  else if (rb > ra) verdict += '<br><br>如果一定要选：<b>B 现在更顺一点</b>，但代价你可能也看到了。';
+  else verdict += '<br><br>两张势均力敌——那说明真正的答案不在牌里，在你能承担哪个后果。';
+  html += '<div class="rep"><b>两个放在一起看</b><br>' + verdict + '</div>';
+  html += '<div class="row"><button id="again">重新抽</button></div>';
+  const box = $('resultBox');
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+  box.scrollIntoView({behavior:'smooth'});
+  $('again').onclick = () => { picked = []; box.classList.add('hidden'); $('modeBox').classList.remove('hidden'); };
 }
 
 function showResult() {
