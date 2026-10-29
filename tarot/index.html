@@ -116,6 +116,7 @@ const CARDS = [{"n": 0, "roman": "0", "name": "愚人", "en": "The Fool", "kw_up
 const REVERSED_CHANCE = 0.42;
 const POS = ['过去', '现在', '未来'];
 let mode = 1, pool = [], picked = [];
+let deckPrefix = 'cards/';
 
 function $(id){ return document.getElementById(id); }
 const DOMNAME = {emotion:'情绪', relation:'关系', work:'工作/学业', body:'身体与精力', self:'自我对话'};
@@ -241,7 +242,7 @@ function showAB() {
   let html = '<div class="flip">';
   picked.forEach((c, i) => {
     const pos = '<div class="pos">' + (i === 0 ? 'A' : 'B') + '</div>';
-    const img = 'cards/' + String(c.n).padStart(2,'0') + '.png';
+    const img = deckPrefix + String(c.n).padStart(2,'0') + '.png';
     const rot = c.isRev ? 'transform:rotate(180deg)' : '';
     html += '<div class="slot">' + pos + '<img src="' + img + '" alt="' + c.name + '" style="' + rot + '"></div>';
   });
@@ -276,7 +277,7 @@ function showResult() {
   let html = '<div class="flip">';
   picked.forEach((c, i) => {
     const pos = mode === 1 ? '' : '<div class="pos">' + POS[i] + '</div>';
-    const img = 'cards/' + String(c.n).padStart(2,'0') + '.png';
+    const img = deckPrefix + String(c.n).padStart(2,'0') + '.png';
     const rot = c.isRev ? 'transform:rotate(180deg)' : '';
     html += '<div class="slot">' + pos + '<img src="' + img + '" alt="' + c.name + '" style="' + rot + '"></div>';
   });
@@ -312,7 +313,8 @@ function showResult() {
 
   html += '<div class="row"><button id="again">再抽一次</button>'
     + '<button class="ghost" id="share">发给朋友</button></div>'
-    + '<div class="row"><button id="saveCard">保存这张结果图</button></div>';
+    + '<div class="row"><button id="saveCard">保存这张结果图</button>'
+    + '<button class="ghost" id="switchDeck">换个画风</button></div>';
 
   const box = $('resultBox');
   box.innerHTML = html;
@@ -366,7 +368,7 @@ async function buildCardImage() {
   // 右侧卡面图
   const cw = 340, ch = 531;
   const cx0 = W - 70 - cw, cy0 = 110;
-  const imgPath = 'cards/' + String(c0.n).padStart(2,'0') + '.png';
+  const imgPath = deckPrefix + String(c0.n).padStart(2,'0') + '.png';
   try {
     const im = await loadImage(imgPath);
     x.save();
@@ -413,6 +415,18 @@ async function buildCardImage() {
   x.fillText('mumufish233.github.io/mood/tarot', 80, 1364);
   return cv;
 }
+document.addEventListener('click', (e) => {
+  if (!e.target || e.target.id !== 'switchDeck') return;
+  deckPrefix = (deckPrefix === 'cards/') ? 'cards-q/' : 'cards/';
+  document.querySelectorAll('.flip img').forEach((im, i) => {
+    const c = picked[i];
+    if (!c) return;
+    im.src = deckPrefix + String(c.n).padStart(2,'0') + '.png';
+  });
+  e.target.textContent = (deckPrefix === 'cards/') ? '换个画风' : '换回插画版';
+  if (e.target.id === 'saveCard') return;
+});
+
 document.addEventListener('click', async (e) => {
   if (!e.target || e.target.id !== 'saveCard') return;
   if (!picked.length) return;
