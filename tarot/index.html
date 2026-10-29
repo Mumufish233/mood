@@ -185,7 +185,7 @@ function showResult() {
   let html = '<div class="flip">';
   picked.forEach((c, i) => {
     const pos = mode === 1 ? '' : `<div class="pos">${POS[i]}</div>`;
-    const img = `cards/${String(c.n).padStart(2,'0')}-${c.name}.png`;
+    const img = `cards/${String(c.n).padStart(2,'0')}.png`;
     html += `<div class="slot">${pos}<img src="${img}" alt="${c.name}"
       style="${c.rev ? 'transform:rotate(180deg)' : ''}"></div>`;
   });
