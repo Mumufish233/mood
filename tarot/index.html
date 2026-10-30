@@ -177,7 +177,8 @@ const CARDS = [{"n": 0, "roman": "0", "name": "愚人", "en": "The Fool", "kw_up
 const SPREADS = [{"key": "one", "name": "单张指引", "count": 1, "desc": "一句话的问题，一张牌回答。", "positions": [{"label": "这张牌说", "prompt": "此刻最需要被看见的部分"}]}, {"key": "three", "name": "三张：过去·现在·未来", "count": 3, "desc": "最经典的时间线。", "positions": [{"label": "过去", "prompt": "这件事的根源"}, {"label": "现在", "prompt": "你此刻的位置"}, {"label": "未来", "prompt": "按现在的走法会到的地方"}]}, {"key": "body", "name": "三张：身·心·灵", "count": 3, "desc": "日常自我觉察，看哪一层失衡。", "positions": [{"label": "身", "prompt": "身体与物质状态"}, {"label": "心", "prompt": "情绪与感受"}, {"label": "灵", "prompt": "精神与方向"}]}, {"key": "rel", "name": "三张：你·关系·对方", "count": 3, "desc": "一段关系的三个视角。", "positions": [{"label": "你", "prompt": "你的真实状态"}, {"label": "关系", "prompt": "你们之间的纽带本质"}, {"label": "对方", "prompt": "对方的真实状态"}]}, {"key": "ab", "name": "三张：A·关键·B", "count": 3, "desc": "两难时用，中间是决定性变量。", "positions": [{"label": "选择A", "prompt": "选A会怎样"}, {"label": "关键因素", "prompt": "真正影响决策的变量"}, {"label": "选择B", "prompt": "选B会怎样"}]}, {"key": "act", "name": "三张：情境·行动·结果", "count": 3, "desc": "问题解决型，给具体下一步。", "positions": [{"label": "情境", "prompt": "你现在的处境"}, {"label": "行动", "prompt": "该采取的策略"}, {"label": "结果", "prompt": "照做之后的走向"}]}, {"key": "adv", "name": "三张：优势·建议·结果", "count": 3, "desc": "需要行动方案时用。", "positions": [{"label": "优势", "prompt": "你有的资源和条件"}, {"label": "建议", "prompt": "给你的行动指导"}, {"label": "结果", "prompt": "照做可能得到什么"}]}];
 const REV = 0.42;
 const DECKS = ['cards/', 'cards-db/', 'cards-q/'];
-let deckStyle = 1, deckPrefix = DECKS[1];  // 默认牌面（不标出处）
+let deckStyle = 1, deckPrefix = DECKS[1];
+const IMG_V = '?v=1030a';   // 换图后改这里，避免浏览器缓存旧图  // 默认牌面（不标出处）
 let spread = null, pool = [], picked = [];
 const $ = id => document.getElementById(id);
 const byKey = k => SPREADS.find(s => s.key === k);
@@ -252,7 +253,7 @@ function pickOne(el, i) {
 
 function imgTag(c, style) {
   const n = String(c.n).padStart(2, '0');
-  return '<img src="' + deckPrefix + n + '.png" style="' + style + '" alt="" ' +
+  return '<img src="' + deckPrefix + n + '.png' + IMG_V + '" style="' + style + '" alt="" ' +
          'onerror="this.onerror=null;this.src=&#39;cards/' + n + '.png&#39;">';
 }
 
@@ -315,7 +316,7 @@ function render(list) {
       if (!items[i]) return;
       const n = String(items[i].c.n).padStart(2, '0');
       im.onerror = function () { this.onerror = null; this.src = 'cards/' + n + '.png'; };
-      im.src = deckPrefix + n + '.png';
+      im.src = deckPrefix + n + '.png' + IMG_V;
     });
     // 画风命名：cards=抽象版；cards-db=不提名字；cards-q=自绘版
     const NAMES = { 'cards/': '换个画风（抽象版）', 'cards-db/': '换个画风', 'cards-q/': '换个画风（自绘线稿）' };
@@ -390,7 +391,7 @@ async function buildCardImage(items){
   x.restore();
   const n = String(c0.n).padStart(2, '0');
   try {
-    const im = await loadImage(deckPrefix + n + '.png');
+    const im = await loadImage(deckPrefix + n + '.png' + IMG_V);
     x.save();
     roundRect(x, cx, cy, cw, ch, 18); x.clip();
     if (c0.isRev) {
