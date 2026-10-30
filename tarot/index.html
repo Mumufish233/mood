@@ -509,12 +509,11 @@ function showDaily() {
 
 
 
-// ===== 环境音 v3：轻灵版（三家 AI 参数合并）=====
-// 依据：Secret Garden / Enya 类 New Age
-//  调式：D 多利亚五声（D F G A C）· BPM 感 60-66 · 琶音 180-260ms 不重叠
-//  关键：低音不进混响（400Hz 高通）、250Hz 挖 −3dB、8kHz +2dB
+// ===== 环境音 v4：梦花园式「留白」=====
+// 核心不是"音符多"，是"音与音之间有大段空气"。
+// 参考 Secret Garden：小提琴长音 + 钢琴分解 + 极慢和声 + 长混响，几乎无节奏。
 const AMBIENT = (() => {
-  let ctx = null, master = null, arpTimer = null, muted = false;
+  let ctx = null, master = null, muted = false, timers = [];
 
   function makeIR(sec) {
     const rate = ctx.sampleRate, len = Math.floor(rate * sec);
@@ -522,7 +521,7 @@ const AMBIENT = (() => {
     for (let ch = 0; ch < 2; ch++) {
       const d = buf.getChannelData(ch);
       for (let i = 0; i < len; i++) {
-        const env = Math.exp(-(i / rate) / 0.9);
+        const env = Math.exp(-(i / rate) / 1.6);   // 衰减更慢 = 尾巴更长
         d[i] = (Math.random() * 2 - 1) * env;
       }
     }
@@ -535,85 +534,95 @@ const AMBIENT = (() => {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain(); master.gain.value = 0.0001; master.connect(ctx.destination);
 
-      // 总线 EQ：250Hz 挖、8kHz 提 —— 决定"灵"还是"闷"
       const eqMid = ctx.createBiquadFilter();
       eqMid.type = 'peaking'; eqMid.frequency.value = 250; eqMid.Q.value = 0.9; eqMid.gain.value = -3;
       const eqAir = ctx.createBiquadFilter();
-      eqAir.type = 'highshelf'; eqAir.frequency.value = 8000; eqAir.gain.value = 2;
+      eqAir.type = 'highshelf'; eqAir.frequency.value = 7000; eqAir.gain.value = 1;
       eqMid.connect(eqAir); eqAir.connect(master);
 
-      // 混响：3.2s，湿 35%，且低音不进混响（400Hz 高通）
-      const conv = ctx.createConvolver(); conv.buffer = makeIR(3.2);
-      const revHP = ctx.createBiquadFilter(); revHP.type = 'highpass'; revHP.frequency.value = 400;
-      const wet = ctx.createGain(); wet.gain.value = 0.35;
+      // 混响 4.5 秒（比 v3 更长），低音仍不进混响
+      const conv = ctx.createConvolver(); conv.buffer = makeIR(4.5);
+      const revHP = ctx.createBiquadFilter(); revHP.type = 'highpass'; revHP.frequency.value = 350;
+      const wet = ctx.createGain(); wet.gain.value = 0.5;      // 湿声更多 = 更空
       revHP.connect(conv); conv.connect(wet); wet.connect(eqMid);
 
-      // Pad：D3 / A3 / D4，triangle 各 detune ±7 cents，低通 + 呼吸 LFO
+      // ---- Pad：只有两个长音，音量极低，慢呼吸 ----
       const padLP = ctx.createBiquadFilter();
-      padLP.type = 'lowpass'; padLP.frequency.value = 2600; padLP.Q.value = 1.0;
+      padLP.type = 'lowpass'; padLP.frequency.value = 1100; padLP.Q.value = 0.8;
       padLP.connect(eqMid); padLP.connect(revHP);
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.08;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 220;
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.05;
+      const lfoG = ctx.createGain(); lfoG.gain.value = 140;
       lfo.connect(lfoG); lfoG.connect(padLP.frequency); lfo.start();
-      [146.83, 220.00, 293.66].forEach((f, i) => {
-        [-7, 7].forEach(c => {
+      [146.83, 220.00].forEach((f, i) => {
+        [-6, 6].forEach(c => {
           const o = ctx.createOscillator();
           o.type = 'triangle';
           o.frequency.value = f * Math.pow(2, c / 1200);
-          const g = ctx.createGain(); g.gain.value = 0.055 / (i + 1);
+          const g = ctx.createGain(); g.gain.value = 0.030 / (i + 1);
           o.connect(g); g.connect(padLP); o.start();
         });
       });
 
-      // 延迟：341ms（3/16 @66BPM），feedback 0.33，支路过滤
-      const dly = ctx.createDelay(1.0); dly.delayTime.value = 0.341;
-      const fb = ctx.createGain(); fb.gain.value = 0.33;
-      const dlyLP = ctx.createBiquadFilter(); dlyLP.type = 'lowpass'; dlyLP.frequency.value = 3500;
-      const dlyHP = ctx.createBiquadFilter(); dlyHP.type = 'highpass'; dlyHP.frequency.value = 500;
-      const dlyWet = ctx.createGain(); dlyWet.gain.value = 0.20;
-      dly.connect(dlyLP); dlyLP.connect(dlyHP); dlyHP.connect(fb); fb.connect(dly);
-      dlyHP.connect(dlyWet); dlyWet.connect(eqMid);
-
-      // 琶音：D 多利亚五声，单音短促不重叠
-      const PENTA = [587.33, 698.46, 783.99, 880.00, 1046.50]; // D5 F5 G5 A5 C6
-      function pluck() {
+      // ---- 长音旋律：每 3–6 秒一个音，持续 2.4–3.6 秒 ----
+      const PENTA = [293.66, 349.23, 392.00, 440.00, 523.25, 587.33]; // D4 F4 G4 A4 C5 D5
+      let melIdx = 2;
+      function longNote() {
         if (!ctx || muted) return;
-        const f = PENTA[Math.floor(Math.random() * PENTA.length)];
         const t = ctx.currentTime;
+        // 缓慢游走：每次 ±1~2 度
+        melIdx = Math.max(0, Math.min(PENTA.length - 1, melIdx + (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.7 ? 1 : 2)));
+        const f = PENTA[melIdx];
+        const dur = 2.4 + Math.random() * 1.2;
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        // 轻微颤音
+        const vib = ctx.createOscillator(); vib.frequency.value = 4.6;
+        const vibG = ctx.createGain(); vibG.gain.value = f * 0.004;
+        vib.connect(vibG); vibG.connect(o.frequency); vib.start(t); vib.stop(t + dur);
+        const g = ctx.createGain();
+        const peak = 0.045 + Math.random() * 0.02;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(peak, t + 0.6);        // 慢起音，像拉弓
+        g.gain.setTargetAtTime(0.0001, t + dur, 0.7);          // 慢收
+        o.connect(g); g.connect(eqMid); g.connect(revHP);
+        o.start(t); o.stop(t + dur + 3);
+        timers.push(setTimeout(longNote, (3 + Math.random() * 3) * 1000));
+      }
+
+      // ---- 极轻的钟点音：每 9–16 秒一次，制造"远处有光" ----
+      function bell() {
+        if (!ctx || muted) return;
+        const t = ctx.currentTime;
+        const f = [1046.50, 1174.66, 1318.51][Math.floor(Math.random() * 3)];
         const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
         const g = ctx.createGain();
-        const peak = 0.05 + Math.random() * 0.03;
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-        g.gain.setTargetAtTime(0.0001, t + 0.05, 0.30);   // 指数衰减，模拟拨弦
-        o.connect(g); g.connect(eqMid); g.connect(revHP); g.connect(dly);
-        o.start(t); o.stop(t + 2.2);
+        g.gain.exponentialRampToValueAtTime(0.022, t + 0.01);
+        g.gain.setTargetAtTime(0.0001, t + 0.05, 0.9);
+        o.connect(g); g.connect(revHP);
+        o.start(t); o.stop(t + 5);
+        timers.push(setTimeout(bell, (9 + Math.random() * 7) * 1000));
       }
-      const loop = () => {
-        pluck();
-        if (Math.random() < 0.35) setTimeout(pluck, 90);   // 偶尔两连音，像露珠
-        arpTimer = setTimeout(loop, 180 + Math.random() * 80);
-      };
-      loop();
 
-      master.gain.linearRampToValueAtTime(0.10, ctx.currentTime + 4);
+      master.gain.linearRampToValueAtTime(0.085, ctx.currentTime + 6);   // 6 秒才升上来
+      timers.push(setTimeout(longNote, 1500));
+      timers.push(setTimeout(bell, 5000));
     } catch (e) {}
   }
 
   function fade(sec) {
     if (!ctx || !master) return;
-    try { master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + (sec || 3)); } catch (e) {}
+    try { master.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + (sec || 4)); } catch (e) {}
   }
   function toggle() {
     if (!ctx) { start(); muted = false; return true; }
     try {
       muted = !muted;
-      master.gain.linearRampToValueAtTime(muted ? 0.0001 : 0.10, ctx.currentTime + 0.8);
+      master.gain.linearRampToValueAtTime(muted ? 0.0001 : 0.085, ctx.currentTime + 1.2);
       return !muted;
     } catch (e) { return !muted; }
   }
   function stop() {
-    if (arpTimer) clearTimeout(arpTimer);
+    timers.forEach(t => clearTimeout(t)); timers = [];
     if (ctx) { try { ctx.close(); } catch (e) {} ctx = null; }
   }
   return { start, fade, toggle, stop };
