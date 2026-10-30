@@ -285,7 +285,8 @@ function render(list) {
   html += '<div class="rep"><b>今天给你的话</b><br>' + items[items.length - 1].c.affirmation + '</div>';
   html += '<div class="row"><button id="again">再抽一次</button>' +
     '<button class="ghost" id="switchDeck">换个画风</button></div>' +
-    '<div class="row"><button class="ghost" id="saveCard">保存这张结果图</button></div>';
+    '<div class="row"><button class="ghost" id="saveCard">保存结果图</button>' +
+    '<button class="ghost" id="shareText">复制分享文案</button></div>';
 
   const rb = $('resultBox');
   rb.innerHTML = html;
@@ -313,11 +314,22 @@ function render(list) {
     try {
       const cv = await buildCardImage(items);
       const a = document.createElement('a');
-      a.download = '塔罗-' + items[0].c.name + '.png';
+      a.download = '深海塔罗-' + items[0].c.name + '.png';
       a.href = cv.toDataURL('image/png');
       a.click();
       e.target.textContent = '已保存';
-    } catch (err) { e.target.textContent = '失败：' + err.message; }
+    } catch (err) { e.target.textContent = '失败'; }
+  };
+  $('shareText').onclick = async (e) => {
+    const c = items[0].c;
+    const kw = (c.isRev ? c.kw_rev : c.kw_up).join(' · ');
+    const txt = `我在深海塔罗抽到「${c.name}·${c.isRev ? '逆位' : '正位'}」\n${kw}\n\n${c.isRev ? c.rev : c.up}\n\n你也来抽一张：https://mumufish233.github.io/mood/tarot/`;
+    try {
+      await navigator.clipboard.writeText(txt);
+      e.target.textContent = '已复制';
+    } catch (err) {
+      prompt('复制这段：', txt);
+    }
   };
 }
 
@@ -336,36 +348,100 @@ function showDaily() {
 function loadImage(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});}
 function wrapLines(ctx,text,maxW){const out=[];let cur='';for(const ch of text){if(ctx.measureText(cur+ch).width>maxW){out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
 async function buildCardImage(items){
-  const c0 = items[0].c, W=1080, H=1440;
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  const x=cv.getContext('2d');
-  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'#1a1530');g.addColorStop(.6,'#241a38');g.addColorStop(1,'#12222f');
-  x.fillStyle=g;x.fillRect(0,0,W,H);
-  const cw=340,ch=531,cx0=W-70-cw,cy0=110;
-  const n=String(c0.n).padStart(2,'0');
-  try{
-    const im=await loadImage(deckPrefix+n+'.png');
+  const c0 = items[0].c, W = 1080, H = 1350;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+
+  // 背景：深紫→深蓝渐变 + 顶部光晕
+  const g = x.createLinearGradient(0, 0, W*0.7, H);
+  g.addColorStop(0, '#1b1433'); g.addColorStop(0.55, '#150f28'); g.addColorStop(1, '#0c1119');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const halo = x.createRadialGradient(W*0.5, H*0.28, 40, W*0.5, H*0.28, W*0.62);
+  halo.addColorStop(0, 'rgba(180,150,255,.22)'); halo.addColorStop(1, 'rgba(180,150,255,0)');
+  x.fillStyle = halo; x.fillRect(0, 0, W, H);
+
+  // 顶部小标题
+  x.fillStyle = 'rgba(200,190,240,.75)';
+  x.font = '30px "Microsoft YaHei",sans-serif';
+  x.fillText('深 海 塔 罗', 72, 96);
+  x.fillStyle = 'rgba(160,175,200,.55)';
+  x.font = '24px "Microsoft YaHei",sans-serif';
+  x.fillText('22 张大阿卡纳 · 抽一张看看', 72, 136);
+
+  // 牌面（居中放大，带圆角阴影）
+  const cw = 420, ch = Math.round(cw * 1.5);
+  const cx = (W - cw) / 2, cy = 176;
+  x.save();
+  x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 40; x.shadowOffsetY = 18;
+  x.fillStyle = '#0d1020';
+  roundRect(x, cx, cy, cw, ch, 18); x.fill();
+  x.restore();
+  const n = String(c0.n).padStart(2, '0');
+  try {
+    const im = await loadImage(deckPrefix + n + '.png');
     x.save();
-    if(c0.isRev){x.translate(cx0+cw/2,cy0+ch/2);x.rotate(Math.PI);x.translate(-(cx0+cw/2),-(cy0+ch/2));}
-    x.drawImage(im,cx0,cy0,cw,ch);x.restore();
-  }catch(e){}
-  x.fillStyle='#9aa6ba';x.font='32px "Microsoft YaHei",sans-serif';x.fillText('我抽到的牌',80,120);
-  x.fillStyle='#c9a7ff';x.font='bold 84px "Microsoft YaHei",sans-serif';x.fillText(c0.name,80,226);
-  x.fillStyle='#8fd3ff';x.font='30px "Microsoft YaHei",sans-serif';
-  x.fillText(c0.en+' · '+(c0.isRev?'逆位':'正位'),80,282);
-  x.fillStyle='#93a2b8';x.font='26px "Microsoft YaHei",sans-serif';
-  x.fillText((c0.isRev?c0.kw_rev:c0.kw_up).join(' · '),80,336);
-  x.fillStyle='#eef2f9';x.font='bold 40px "Microsoft YaHei",sans-serif';
-  wrapLines(x,(c0.isRev?c0.rev:c0.up),520).forEach((ln,i)=>x.fillText(ln,80,420+i*56));
-  x.fillStyle='rgba(147,162,184,.85)';x.font='24px "Microsoft YaHei",sans-serif';
-  wrapLines(x,c0.story,520).slice(0,5).forEach((ln,i)=>x.fillText(ln,80,640+i*38));
-  x.fillStyle='#ffc08a';x.font='bold 30px "Microsoft YaHei",sans-serif';x.fillText('可以做的一件事',80,860);
-  x.fillStyle='#d6ddea';x.font='30px "Microsoft YaHei",sans-serif';
-  wrapLines(x,(c0.isRev?c0.adv_rev:c0.adv_up),920).forEach((ln,i)=>x.fillText(ln,80,912+i*44));
-  x.fillStyle='rgba(255,255,255,.08)';x.fillRect(0,1240,W,200);
-  x.fillStyle='#ffc08a';x.font='bold 32px "Microsoft YaHei",sans-serif';x.fillText('深海塔罗 · 22 张大阿卡纳',80,1310);
-  x.fillStyle='#8fd3ff';x.font='26px "Microsoft YaHei",sans-serif';x.fillText('mumufish233.github.io/mood/tarot',80,1364);
+    roundRect(x, cx, cy, cw, ch, 18); x.clip();
+    if (c0.isRev) {
+      x.translate(cx + cw/2, cy + ch/2); x.rotate(Math.PI);
+      x.translate(-(cx + cw/2), -(cy + ch/2));
+    }
+    x.drawImage(im, cx, cy, cw, ch);
+    x.restore();
+  } catch (e) {}
+
+  // 牌名
+  x.textAlign = 'center';
+  x.fillStyle = '#f4eeff';
+  x.font = 'bold 76px "Microsoft YaHei",serif';
+  x.fillText(c0.name, W/2, cy + ch + 96);
+  x.fillStyle = 'rgba(190,175,230,.85)';
+  x.font = '30px "Microsoft YaHei",sans-serif';
+  x.fillText((c0.en || '') + ' · ' + (c0.isRev ? '逆位' : '正位'), W/2, cy + ch + 142);
+
+  // 关键词胶囊
+  const kws = (c0.isRev ? c0.kw_rev : c0.kw_up).slice(0, 3);
+  x.font = '28px "Microsoft YaHei",sans-serif';
+  let totalW = 0;
+  const pads = kws.map(k => { const w = x.measureText(k).width + 44; totalW += w + 16; return w; });
+  let px = W/2 - (totalW - 16) / 2;
+  const py = cy + ch + 172;
+  kws.forEach((k, i) => {
+    x.fillStyle = 'rgba(150,130,220,.20)';
+    roundRect(x, px, py, pads[i], 52, 26); x.fill();
+    x.fillStyle = '#d9ccff';
+    x.fillText(k, px + pads[i]/2, py + 36);
+    px += pads[i] + 16;
+  });
+
+  // 一句解读
+  x.textAlign = 'left';
+  x.fillStyle = 'rgba(232,238,250,.92)';
+  x.font = '34px "Microsoft YaHei",sans-serif';
+  const body = (c0.isRev ? c0.rev : c0.up) || '';
+  wrapLines(x, body, 920).slice(0, 2).forEach((ln, i) => {
+    x.fillText(ln, 90, py + 108 + i * 50);
+  });
+
+  // 底部
+  x.fillStyle = 'rgba(255,255,255,.06)';
+  x.fillRect(0, H - 150, W, 150);
+  x.fillStyle = 'rgba(255,196,138,.9)';
+  x.font = 'bold 30px "Microsoft YaHei",sans-serif';
+  x.fillText('你也来抽一张', 90, H - 92);
+  x.fillStyle = 'rgba(150,170,210,.85)';
+  x.font = '26px "Microsoft YaHei",sans-serif';
+  x.fillText('mumufish233.github.io/mood/tarot', 90, H - 48);
   return cv;
+}
+
+function roundRect(ctx, x0, y0, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x0 + r, y0);
+  ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r);
+  ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+  ctx.arcTo(x0, y0 + h, x0, y0, r);
+  ctx.arcTo(x0, y0, x0 + w, y0, r);
+  ctx.closePath();
 }
 </script>
 </body>
