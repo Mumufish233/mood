@@ -120,6 +120,30 @@
   .chain-hint{margin-top:10px;font-size:15px;font-weight:700;color:#ffc08a}
   .chain-end{margin-top:8px;font-size:13.5px;color:#8b96ab}
 
+
+  #flipBox{position:fixed;inset:0;z-index:9997;background:#06070cf2;display:flex;
+           align-items:center;justify-content:center}
+  #flipBox.hidden{display:none}
+  .flip-wrap{perspective:1200px;text-align:center}
+  .flip-card{width:min(52vw,300px);aspect-ratio:.62;position:relative;
+             transform-style:preserve-3d;transition:transform 1.05s cubic-bezier(.2,.7,.2,1)}
+  .flip-card.flipped{transform:rotateY(180deg)}
+  .flip-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:12px;
+             overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.65)}
+  .flip-face img{width:100%;height:100%;object-fit:cover;display:block}
+  .flip-front{transform:rotateY(180deg)}
+  .flip-hint{margin-top:22px;color:#8b96ab;font-size:14px;letter-spacing:.24em}
+
+  /* 选牌格用牌背图案 */
+  .pick{background-image:url('cards-webp/back.webp');background-size:cover;
+        background-position:center;position:relative;color:#fff;
+        text-shadow:0 2px 8px rgba(0,0,0,.9), 0 0 2px #000;
+        font-weight:700;font-size:17px}
+  .pick:after{content:'';position:absolute;inset:0;border-radius:inherit;
+              background:rgba(8,10,18,.35);transition:background .2s}
+  .pick:hover:after{background:rgba(180,150,255,.20)}
+  .pick.used{opacity:.28;filter:grayscale(.6)}
+  .pick:not(.used):active{transform:scale(.96)}
   /* ===== 仪式过场 ===== */
   #ritual{position:fixed;inset:0;z-index:9998;background:#06070c;
           display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -136,9 +160,20 @@
           background:radial-gradient(circle,rgba(160,140,240,.42),transparent 68%);
           animation:breathe 10s ease-in-out infinite}
   @keyframes breathe{0%,100%{transform:scale(.82);opacity:.55}45%{transform:scale(1.12);opacity:1}}
-  .skip{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);
+  .skip{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
         background:transparent;border:1px solid rgba(160,170,200,.28);color:#8b96ab;
         padding:8px 18px;border-radius:20px;font-size:13px}
+
+  .r-dots{display:flex;gap:8px;margin:22px 0 6px}
+  .r-dots.hidden{display:none}
+  .r-dots i{width:8px;height:8px;border-radius:50%;background:rgba(160,170,200,.28);
+            transition:background .4s,box-shadow .4s}
+  .r-dots i.on{background:#c9a7ff;box-shadow:0 0 10px rgba(200,167,255,.8)}
+  .r-mute{position:absolute;top:22px;right:22px;width:38px;height:38px;border-radius:50%;
+          background:rgba(255,255,255,.06);border:1px solid rgba(160,170,200,.22);
+          color:#cfd8e8;font-size:16px;line-height:1}
+  .skip{bottom:38px;padding:11px 26px;font-size:14px;color:#cfd8e8;
+        border-color:rgba(190,180,255,.45);background:rgba(120,110,200,.14)}
   /* 正逆位区分 */
   .slot.rev img{transform:rotate(180deg)}
   .slot.rev .pos:after{content:" · 逆";color:#ff9b9b}
@@ -179,12 +214,23 @@
 </head>
 <body>
 
+<div id="flipBox" class="hidden">
+  <div class="flip-wrap">
+    <div class="flip-card" id="flipCard">
+      <div class="flip-face flip-back"><img src="cards-webp/back.webp" alt=""></div>
+      <div class="flip-face flip-front"><img id="flipFront" src="" alt=""></div>
+    </div>
+    <div class="flip-hint">翻开</div>
+  </div>
+</div>
 <div id="ritual" class="hidden">
   <div class="r-line" id="r1">先停一下</div>
   <div class="breath" id="rbreath" style="display:none"></div>
   <div class="r-line" id="r2">跟着它呼吸 · 吸气 4 秒 · 呼气 6 秒</div>
   <div class="r-line" id="r3">在心里把问题说清楚<br><span class="r-dim">不急着要答案</span></div>
-  <button class="skip" id="skipRitual">跳过</button>
+  <div class="r-dots hidden" id="rDots"><i></i><i></i><i></i></div>
+  <button class="r-mute" id="ritualMute" title="环境音">🔊</button>
+  <button class="skip" id="skipRitual">先跳过，直接抽</button>
 </div>
 
 <div class="wrap">
@@ -365,13 +411,32 @@ function pickOne(el, i) {
   el.classList.add('used');
   picked.push(pool[i]);
   TRACK.ev('pick_card');
+
   if (picked.length < spread.count) {
     $('pickHint').textContent = '选第 ' + (picked.length + 1) + ' 张（' +
       spread.positions[picked.length].label + '）';
     return;
   }
+
+  // ★ 翻牌仪式：牌背 → 翻面 → 停顿 0.7 秒 → 出结果
   $('pickBox').classList.add('hidden');
-  render();
+  const box = $('flipBox');
+  box.classList.remove('hidden');
+  const cardEl = $('flipCard');
+  cardEl.classList.remove('flipped');
+  const lastC = picked[picked.length - 1];
+  const fn = String(lastC.n).padStart(2, '0');
+  $('flipFront').src = deckPrefix + fn + '.webp' + IMG_V;
+  TRACK.ev('flip_start');
+  setTimeout(() => {
+    cardEl.classList.add('flipped');
+    AMBIENT.chime();          // 翻牌音效
+    TRACK.ev('flip_open');
+  }, 520);
+  setTimeout(() => {
+    box.classList.add('hidden');
+    render();
+  }, 1900);
 }
 
 function imgTag(c, style) {
@@ -626,7 +691,8 @@ const AMBIENT = (() => {
       wetIn = revHP;
 
       // 持续低音（pedal point）：D2 + A2，轻微不谐和
-      [[D2, 0.030], [A2, 0.016], [D2 * Math.pow(2, 4 / 1200), 0.012]].forEach(([f, v], i) => {
+      // 手机外放几乎听不到 73Hz → 主低音抬到 146.83(D3)，73Hz 只作极小衬底
+      [[146.83, 0.030], [220.00, 0.018], [D2, 0.012], [146.83 * Math.pow(2, 4 / 1200), 0.010]].forEach(([f, v], i) => {
         const o = ctx.createOscillator(); o.type = i === 2 ? 'sine' : 'triangle';
         o.frequency.value = f;
         const g = ctx.createGain(); g.gain.value = v;
@@ -683,11 +749,21 @@ const AMBIENT = (() => {
       return !muted;
     } catch (e) { return !muted; }
   }
+  // 翻牌音效：一声短钟
+  function chime() {
+    if (!ctx) return;
+    try {
+      const t = ctx.currentTime + 0.02;
+      const f = 587.33;                       // D5
+      bell(f, t, 0.055);
+      bell(f * 1.5, t + 0.06, 0.030);         // 五度泛音，像"叮"的尾音
+    } catch (e) {}
+  }
   function stop() {
     timers.forEach(t => clearTimeout(t)); timers = [];
     if (ctx) { try { ctx.close(); } catch (e) {} ctx = null; }
   }
-  return { start, fade, toggle, stop };
+  return { start, fade, toggle, stop, chime };
 })();
 
 // ===== 仪式过场：先停一下 → 呼吸 → 默念 → 洗牌 =====
@@ -703,11 +779,22 @@ function runRitual(done) {
     setTimeout(() => { box.classList.add('hidden'); box.classList.remove('fade'); done(); }, 700);
   };
   box.classList.remove('hidden');
+  // 进度点
+  const dots = $('rDots');
+  if (dots) dots.classList.remove('hidden');
+  const setDot = (n) => { if (!dots) return; [...dots.children].forEach((d, i) => d.classList.toggle('on', i <= n)); };
+  setDot(0);
   r1.classList.add('on');
-  timers.push(setTimeout(() => { r1.classList.remove('on'); br.style.display = 'block'; r2.classList.add('on'); }, 3000));
-  timers.push(setTimeout(() => { r2.classList.remove('on'); br.style.display = 'none'; r3.classList.add('on'); }, 12000));
-  timers.push(setTimeout(finish, 21000));
+  AMBIENT.start();
+  timers.push(setTimeout(() => { r1.classList.remove('on'); br.style.display = 'block'; r2.classList.add('on'); setDot(1); }, 2000));
+  timers.push(setTimeout(() => { r2.classList.remove('on'); br.style.display = 'none'; r3.classList.add('on'); setDot(2); }, 7000));
+  timers.push(setTimeout(finish, 12000));
   skip.onclick = finish;
+  const mute = $('ritualMute');
+  if (mute) mute.onclick = (e) => {
+    const on = AMBIENT.toggle();
+    e.target.textContent = on ? '🔊' : '🔇';
+  };
 }
 
 // ===== 三张牌串联：把三张单牌讲成一个故事 =====
