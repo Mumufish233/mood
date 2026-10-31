@@ -201,6 +201,11 @@
   .slot.rev img{transform:rotate(180deg)}
   .slot.rev .pos:after{content:" · 逆";color:#ff9b9b}
   .slot.rev{filter:saturate(.82) brightness(.9)}
+  .rephead{color:var(--dim);font-size:12.5px;margin-bottom:2px}
+  .revhead{color:#ffb4b4}
+  .revsum{background:rgba(255,120,120,.08);border:1px solid rgba(255,140,140,.28);
+          border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#ffd0d0}
+  .revsum span{display:block;margin-top:4px;font-size:12.5px;color:#b8a0a8}
   .revflag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:10px;
            font-size:12px;font-weight:700;color:#ffb4b4;
            background:rgba(255,90,90,.12);border:1px solid rgba(255,120,120,.3)}
@@ -495,7 +500,17 @@ function imgTag(c, style) {
 function render(list) {
   const items = list || picked.map((c, i) => ({c, label: spread.positions[i].label,
                                                prompt: spread.positions[i].prompt}));
-  let html = '<div class="flip">';
+  let html = '';
+  // 正逆位统计（≥2 张时显示）
+  if (items.length > 1) {
+    const nRev = items.filter(it => it.c.isRev).length;
+    const nUp = items.length - nRev;
+    if (nRev > 0) {
+      html += '<div class="revsum">本次 ' + items.length + ' 张：正位 ' + nUp + ' 张 · <b>逆位 ' + nRev + ' 张</b>' +
+              '<span>逆位不是"坏"，是这张牌的能量在另一个方向上。</span></div>';
+    }
+  }
+  html += '<div class="flip">';
   items.forEach(it => {
     const rot = it.c.isRev ? 'transform:rotate(180deg)' : '';
     html += '<div class="slot"><div class="pos">' + it.label + '</div>' + imgTag(it.c, rot) + '</div>';
@@ -505,7 +520,8 @@ function render(list) {
   items.forEach((it, idx) => {
     const c = it.c, rev = c.isRev;
     html += '<div class="rep">' +
-      '<div style="color:var(--dim);font-size:12.5px">' + it.label + ' · ' + it.prompt + '</div>' +
+      '<div class="rephead' + (rev ? ' revhead' : '') + '">' + it.label + ' · ' + it.prompt +
+        (rev ? ' <b style="color:#ffb4b4">逆位</b>' : '') + '</div>' +
       '<div class="hue">' + c.name +
       '<span style="font-size:13px;color:var(--dim)"> ' + c.en + '</span>' +
       (rev ? '<span class="revflag">逆位</span>' : '') + '</div>' +
