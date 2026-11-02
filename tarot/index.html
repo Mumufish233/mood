@@ -28,6 +28,7 @@
  "offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},
  "inLanguage":"zh-CN"}
 </script>
+<link rel="preload" as="image" href="cards-webp/back.webp">
 <link rel="canonical" href="https://mumufish233.github.io/mood/tarot/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%94%AE%3C/text%3E%3C/svg%3E">
 <style>
@@ -249,6 +250,14 @@
            background:transparent;border:1px solid rgba(150,160,200,.28);color:#93a2b8}
   .sec{margin-top:9px;font-size:14px;color:#cfd8e8}
   .sec b{color:var(--b)}
+
+  .nudge{margin-top:14px;padding:14px 16px;border-radius:14px;font-size:14px;line-height:1.7;
+         background:linear-gradient(135deg,rgba(201,167,255,.14),rgba(143,211,255,.12));
+         border:1px solid rgba(180,170,255,.30);color:#e8eeff}
+  .nudge b{color:#ffd9b0}
+  .nudge span{color:#9fb0c8;font-size:12.5px}
+  .nudge button{margin-left:10px;padding:4px 12px;border-radius:12px;font-size:12.5px;
+                background:rgba(255,255,255,.08);border:1px solid rgba(180,190,220,.25);color:#cfd8e8}
   .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   .row button{flex:1;min-width:120px;padding:13px;
               background:linear-gradient(135deg,var(--a),var(--b));color:#0b0d14;font-weight:800}
@@ -512,7 +521,7 @@ function pickOne(el, i) {
 
 function imgTag(c, style) {
   const n = String(c.n).padStart(2, '0');
-  return '<img src="' + deckPrefix + n + '.webp' + IMG_V + '" style="' + style + '" alt="" ' +
+  return '<img loading="lazy" decoding="async" src="' + deckPrefix + n + '.webp' + IMG_V + '" style="' + style + '" alt="" ' +
          'onerror="this.onerror=null;this.src=&#39;cards-db/' + n + '.png&#39;">';
 }
 
@@ -663,6 +672,7 @@ function render(list) {
       a.click();
       e.target.textContent = '已保存';
       TRACK.ev('save_image');
+      showShareNudge();
     } catch (err) { e.target.textContent = '失败'; }
   };
   const s3 = $('saveThree');
@@ -676,6 +686,7 @@ function render(list) {
       a.click();
       e.target.textContent = '已保存';
       TRACK.ev('save_three');
+      showShareNudge();
     } catch (err) { e.target.textContent = '失败'; }
   };
   $('shareText').onclick = async (e) => {
@@ -1137,6 +1148,23 @@ async function buildThreeImage(items) {
   x.font = '22px "Microsoft YaHei",sans-serif';
   x.fillText('deep deep & seek seek', W / 2, H - 100);
   return cv;
+}
+
+
+// 分享后回访引导（把"发出去的人"变成"回来的人"）
+function showShareNudge() {
+  if (document.getElementById('shareNudge')) return;
+  const d = document.createElement('div');
+  d.id = 'shareNudge';
+  d.className = 'nudge';
+  d.innerHTML = '发出去之后，回来跟我说一声——<b>我免费帮你解一句</b>。' +
+                '<br><span>（截图发我，或者把牌名和正逆位发我）</span>' +
+                '<button id="nudgeClose" aria-label="关闭">知道了</button>';
+  const rb = document.getElementById('resultBox');
+  if (rb) rb.appendChild(d);
+  const b = document.getElementById('nudgeClose');
+  if (b) b.onclick = () => d.remove();
+  TRACK.ev('share_nudge_shown');
 }
 
 async function buildCardImage(items){
