@@ -548,7 +548,7 @@ function render(list) {
   items.forEach((it, idx) => {
     const c = it.c, rev = c.isRev;
     html += '<div class="rep">' +
-      '<div class="rephead' + (rev ? ' revhead' : '') + '">' + it.label + ' · ' + it.prompt +
+      '<div class="rephead' + (rev ? ' revhead' : '') + '">' + (it.label || '') + (it.prompt ? ' · ' + it.prompt : '') +
         (rev ? ' <b style="color:#ffb4b4">逆位</b>' : '') + '</div>' +
       '<div class="hue">' + c.name +
       '<span style="font-size:13px;color:var(--dim)"> ' + c.en + '</span>' +
