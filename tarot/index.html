@@ -581,6 +581,7 @@ function render(list) {
   html += '<div class="row"><button id="again">再抽一次</button></div>' +
     '<div class="row"><button class="ghost" id="ambientBtn">🔊 环境音</button></div>' +
     '<div class="row"><button class="ghost" id="saveCard">保存结果图</button>' +
+    (items.length > 1 ? '<button class="ghost" id="saveThree">保存三张长图</button>' : '') +
     '<button class="ghost" id="shareText">复制分享文案</button></div>';
 
   const rb = $('resultBox');
@@ -643,6 +644,19 @@ function render(list) {
       a.click();
       e.target.textContent = '已保存';
       TRACK.ev('save_image');
+    } catch (err) { e.target.textContent = '失败'; }
+  };
+  const s3 = $('saveThree');
+  if (s3) s3.onclick = async (e) => {
+    e.target.textContent = '生成中…';
+    try {
+      const cv = await buildThreeImage(items);
+      const a = document.createElement('a');
+      a.download = '深海塔罗-三张-' + items.map(it => it.c.name).join('-') + '.png';
+      a.href = cv.toDataURL('image/png');
+      a.click();
+      e.target.textContent = '已保存';
+      TRACK.ev('save_three');
     } catch (err) { e.target.textContent = '失败'; }
   };
   $('shareText').onclick = async (e) => {
@@ -996,6 +1010,116 @@ function buildChain(items) {
 // ---- 存图 ----
 function loadImage(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=src;});}
 function wrapLines(ctx,text,maxW){const out=[];let cur='';for(const ch of text){if(ctx.measureText(cur+ch).width>maxW){out.push(cur);cur=ch;}else cur+=ch;}if(cur)out.push(cur);return out;}
+
+// ===== 三张长图（1080x1920，适合发群/朋友圈）=====
+async function buildThreeImage(items) {
+  const W = 1080, H = 1920;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  const g = x.createLinearGradient(0, 0, W * 0.7, H);
+  g.addColorStop(0, '#1b1433'); g.addColorStop(0.5, '#150f28'); g.addColorStop(1, '#0b1017');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const halo = x.createRadialGradient(W * 0.5, H * 0.22, 40, W * 0.5, H * 0.22, W * 0.7);
+  halo.addColorStop(0, 'rgba(180,150,255,.20)'); halo.addColorStop(1, 'rgba(180,150,255,0)');
+  x.fillStyle = halo; x.fillRect(0, 0, W, H);
+
+  x.fillStyle = 'rgba(255,214,170,.95)';
+  x.font = '700 46px "Microsoft YaHei",sans-serif';
+  x.textAlign = 'center';
+  x.fillText('深海塔罗 · 三张牌', W / 2, 100);
+  x.font = '28px "Microsoft YaHei",sans-serif';
+  x.fillStyle = 'rgba(190,200,220,.8)';
+  x.fillText('不预测，只说你现在卡在哪', W / 2, 150);
+
+  // 三张牌并排
+  const cw = 260, gap = 30;
+  const totalW = cw * 3 + gap * 2;
+  let bx = (W - totalW) / 2;
+  const cyTop = 210;
+  for (let i = 0; i < Math.min(3, items.length); i++) {
+    const it = items[i], c = it.c;
+    const im = await loadImage(deckPrefix + String(c.n).padStart(2, '0') + '.webp' + IMG_V);
+    const ch = cw * im.height / im.width;
+    x.save();
+    if (c.isRev) { x.translate(bx + cw / 2, cyTop + ch / 2); x.rotate(Math.PI); x.translate(-(bx + cw / 2), -(cyTop + ch / 2)); }
+    x.drawImage(im, bx, cyTop, cw, ch);
+    x.restore();
+    x.strokeStyle = 'rgba(200,170,255,.35)'; x.lineWidth = 2; x.strokeRect(bx, cyTop, cw, ch);
+    x.fillStyle = c.isRev ? 'rgba(255,178,178,.95)' : 'rgba(255,214,170,.95)';
+    x.font = '700 26px "Microsoft YaHei",sans-serif';
+    x.fillText(c.name + (c.isRev ? '·逆' : '·正'), bx + cw / 2, cyTop + ch + 40);
+    bx += cw + gap;
+  }
+
+  // 每张一句
+  let ty = cyTop + 470;
+  for (let i = 0; i < Math.min(3, items.length); i++) {
+    const it = items[i], c = it.c;
+    const line = (c.isRev ? (c.zha_rev || c.zha) : c.zha) || '';
+    x.textAlign = 'left';
+    x.fillStyle = 'rgba(150,162,184,.9)';
+    x.font = '600 26px "Microsoft YaHei",sans-serif';
+    x.fillText((it.label || '') + '  ' + c.name, 90, ty);
+    ty += 44;
+    x.fillStyle = 'rgba(240,244,252,.96)';
+    x.font = '700 32px "Microsoft YaHei",sans-serif';
+    const lines = wrapLines(x, line, W - 180).slice(0, 2);
+    for (const ln of lines) { x.fillText(ln, 90, ty); ty += 46; }
+    ty += 30;
+  }
+
+  // 连接句
+  const names = items.map(it => it.c.name);
+  let story = '';
+  if (items.length === 3 && typeof CHAIN !== 'undefined') {
+    for (const cb of (CHAIN.combos || [])) {
+      if ((cb.cards || []).join('') === names.join('') ||
+          [...cb.cards].sort().join('') === [...names].sort().join('')) { story = cb.story || ''; break; }
+    }
+  }
+  x.textAlign = 'center';
+  x.fillStyle = 'rgba(201,167,255,.9)';
+  x.font = '600 28px "Microsoft YaHei",sans-serif';
+  x.fillText('连起来看', W / 2, ty + 30);
+  x.fillStyle = 'rgba(230,236,248,.95)';
+  x.font = '32px "Microsoft YaHei",sans-serif';
+  const sl = wrapLines(x, story || (names.join(' → ') + '：这不是三个结论，是一条线的三段。'), W - 200).slice(0, 3);
+  let sy = ty + 86;
+  for (const ln of sl) { x.fillText(ln, W / 2, sy); sy += 48; }
+
+  // 今晚做的一件小事（用第一张牌的 song）
+  sy += 40;
+  const c0 = items[0].c;
+  const song = (c0.isRev ? (c0.song_rev || c0.song) : c0.song) || '';
+  if (song) {
+    x.fillStyle = 'rgba(201,167,255,.9)';
+    x.font = '600 28px "Microsoft YaHei",sans-serif';
+    x.fillText('今晚可以做的一件小事', W / 2, sy);
+    sy += 56;
+    x.fillStyle = 'rgba(242,246,252,.95)';
+    x.font = '32px "Microsoft YaHei",sans-serif';
+    for (const ln of wrapLines(x, song, W - 200).slice(0, 3)) {
+      x.fillText(ln, W / 2, sy); sy += 46;
+    }
+    sy += 24;
+  }
+  // 分界线
+  x.strokeStyle = 'rgba(120,130,155,.28)'; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(140, H - 250); x.lineTo(W - 140, H - 250); x.stroke();
+
+  // 底部
+  x.fillStyle = 'rgba(160,172,196,.85)';
+  x.font = '26px "Microsoft YaHei",sans-serif';
+  x.fillText('你也来抽一张', W / 2, H - 190);
+  x.fillStyle = 'rgba(201,167,255,.9)';
+  x.font = '600 26px "Microsoft YaHei",sans-serif';
+  x.fillText('mumufish233.github.io/mood/tarot', W / 2, H - 148);
+  x.fillStyle = 'rgba(120,130,150,.8)';
+  x.font = '22px "Microsoft YaHei",sans-serif';
+  x.fillText('deep deep & seek seek', W / 2, H - 100);
+  return cv;
+}
+
 async function buildCardImage(items){
   const c0 = items[0].c, W = 1080, H = 1350;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
