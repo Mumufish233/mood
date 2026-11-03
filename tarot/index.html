@@ -266,9 +266,86 @@
   footer{color:#55617a;font-size:12px;margin:30px 0 0;border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
   footer a{color:#7f8ca6}
   .fold{cursor:pointer;color:#7f8ca6;text-decoration:underline}
+
+/* ===== 心情入口（一进来先问） ===== */
+#moodScreen{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 30%,#1b1433,#0c1119 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;
+  transition:opacity .45s ease,visibility .45s}
+#moodScreen.hide{opacity:0;visibility:hidden;pointer-events:none}
+#moodScreen h2{font-size:19px;font-weight:600;color:#e8eef8;letter-spacing:.5px;text-align:center}
+#moodScreen .sub{font-size:12.5px;color:#93a2b8;text-align:center;margin-top:-8px}
+.moodGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(360px,92vw);margin-top:6px}
+.moodCard{border:1px solid rgba(150,165,200,.22);background:rgba(20,26,40,.72);border-radius:14px;
+  padding:12px 6px;cursor:pointer;transition:transform .18s ease,border-color .18s ease;text-align:center}
+.moodCard:hover{transform:translateY(-2px);border-color:rgba(190,205,235,.45)}
+.moodCard .act{font-size:13px;color:#e8eef8;line-height:1.3}
+.moodCard .emo{font-size:10.5px;color:#8d9bb3;margin-top:4px;letter-spacing:.5px}
+.moodCard[data-mood="happy"]{box-shadow:inset 0 0 0 1px rgba(242,193,78,.18)}
+.moodCard[data-mood="sad"]{box-shadow:inset 0 0 0 1px rgba(124,147,173,.18)}
+.moodCard[data-mood="angry"]{box-shadow:inset 0 0 0 1px rgba(180,70,47,.18)}
+.moodCard[data-mood="fear"]{box-shadow:inset 0 0 0 1px rgba(110,98,128,.18)}
+.moodCard[data-mood="hate"]{box-shadow:inset 0 0 0 1px rgba(122,138,91,.18)}
+.moodCard[data-mood="meh"]{box-shadow:inset 0 0 0 1px rgba(110,116,128,.18)}
+.moodSkip{background:none;border:0;color:#7d8aa1;font-size:12.5px;cursor:pointer;text-decoration:underline;
+  text-underline-offset:3px;margin-top:6px}
+
+/* ===== 页宠符号层（纯 CSS 画，不换图）===== */
+#petSym{position:absolute;inset:0;pointer-events:none}
+#petSym i{position:absolute;display:none}
+/* 星星（快乐） */
+.sym-star{width:8px;height:8px;background:#f2c14e;border-radius:2px;transform:rotate(45deg);
+  box-shadow:0 0 10px #f2c14e}
+/* 泪滴（悲伤） */
+.sym-tear{width:7px;height:10px;background:rgba(124,190,220,.85);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  box-shadow:0 0 8px rgba(124,190,220,.6)}
+/* 怒气井字（愤怒） */
+.sym-angry{width:22px;height:22px}
+.sym-angry:before,.sym-angry:after{content:'';position:absolute;background:#e04b2a;border-radius:2px}
+.sym-angry:before{left:2px;top:9px;width:18px;height:3px;transform:rotate(45deg)}
+.sym-angry:after{left:2px;top:9px;width:18px;height:3px;transform:rotate(-45deg)}
+/* 汗滴（恐惧） */
+.sym-sweat{width:6px;height:9px;background:rgba(190,215,235,.9);border-radius:50% 50% 50% 50%/70% 70% 30% 30%}
+/* 灰云（有点闷） */
+.sym-cloud{width:26px;height:12px;background:rgba(150,160,180,.55);border-radius:12px;
+  box-shadow:8px 4px 0 -2px rgba(150,160,180,.55), -8px 4px 0 -3px rgba(150,160,180,.45)}
+
+/* 心情态：显示对应符号 + 动效分化（一套 keyframes 靠变量） */
+#petWrap{--dur:3.6s;--dist:3px;--tilt:0deg}
+@keyframes petDrift{0%,100%{transform:translateY(0) rotate(var(--tilt))}50%{transform:translateY(calc(var(--dist)*-1)) rotate(calc(var(--tilt)*-1))}}
+@keyframes petShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+@keyframes petSit{0%,100%{transform:translateY(2px) scaleY(.97)}50%{transform:translateY(3px) scaleY(.96)}}
+@keyframes symFall{0%{top:18px;opacity:0}30%{opacity:1}100%{top:52px;opacity:0}}
+@keyframes symSpin{0%{transform:rotate(0) scale(.9);opacity:.6}50%{transform:rotate(180deg) scale(1.1);opacity:1}100%{transform:rotate(360deg) scale(.9);opacity:.6}}
+
+#petWrap[data-mood="happy"] .sym-star{display:block;animation:symSpin 2.4s linear infinite}
+#petWrap[data-mood="sad"] .sym-tear{display:block;animation:symFall 2.2s ease-in infinite}
+#petWrap[data-mood="angry"] .sym-angry{display:block}
+#petWrap[data-mood="fear"] .sym-sweat{display:block;animation:symFall 1.6s ease-in infinite}
+#petWrap[data-mood="meh"] .sym-cloud{display:block}
+#petWrap[data-mood="happy"] #petImg{animation:petDrift 2s ease-in-out infinite}
+#petWrap[data-mood="sad"] #petImg{animation:petSit 2.8s ease-in-out infinite}
+#petWrap[data-mood="angry"] #petImg{animation:petShake .28s linear infinite}
+#petWrap[data-mood="fear"] #petImg{animation:petDrift 1.1s ease-in-out infinite alternate}
+#petWrap[data-mood="meh"] #petImg{animation:petDrift 5s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#petWrap #petImg{animation:none!important}}
 </style>
 </head>
 <body>
+
+<div id="moodScreen">
+  <h2>今天想让我怎么陪你？</h2>
+  <div class="sub">此刻更接近哪一种？没有正确答案，也可以跳过</div>
+  <div class="moodGrid">
+    <div class="moodCard" data-mood="happy"><div class="act">扇颗星给你</div><div class="emo">快乐</div></div>
+    <div class="moodCard" data-mood="meh"><div class="act">就这么待着</div><div class="emo">有点闷</div></div>
+    <div class="moodCard" data-mood="angry"><div class="act">替我气一下</div><div class="emo">愤怒</div></div>
+    <div class="moodCard" data-mood="sad"><div class="act">陪我坐会儿</div><div class="emo">悲伤</div></div>
+    <div class="moodCard" data-mood="fear"><div class="act">别看我了</div><div class="emo">恐惧</div></div>
+    <div class="moodCard" data-mood="hate"><div class="act">抽张牌吧</div><div class="emo">厌恶</div></div>
+  </div>
+  <button class="moodSkip" id="moodSkip">先跳过</button>
+</div>
+
 
 <div id="flipBox" class="hidden">
   <div class="flip-wrap">
@@ -340,7 +417,7 @@
   <div id="resultBox" class="hidden"></div>
 
   <footer>
-    免费小游戏，用来陪你说说话。牌义结构参考 taluo.net，文字为自写。<br>
+    免费小游戏，用来陪你说说话。牌义依据传统塔罗（Rider-Waite 公共领域体系）自行编写。<br>
     <span id="crisisTip">如果你最近真的很难熬，请优先联系专业帮助，或拨打 12356（全国心理援助热线）。</span>
   </footer>
 </div>
@@ -430,16 +507,22 @@ $('moreBtn').onclick = (e) => {
 function startSpread(s) {
   spread = s; picked = [];
   TRACK.ev('spread_' + (s.key || 'unknown'), {name: s.name});
-  AMBIENT.start();          // 需要用户手势后才能起音，点击抽牌刚好
+  // 音频在无手势/被浏览器拦截时会抛错，绝不能让它打断抽牌流程
+  try { AMBIENT.start(); } catch (err) { console.warn('ambient start failed:', err && err.message); }
   $('home').classList.add('hidden');
   $('resultBox').classList.add('hidden');
   runRitual(() => {
+    // 用真实定时器推进，并加一路兜底：万一动画回调被清掉，8 秒后强制出牌
     $('shuffleBox').classList.remove('hidden');
-    setTimeout(() => {
+    const go = () => {
       $('deck').classList.remove('shuffling');
       $('shuffleBox').classList.add('hidden');
+      const fb = $('fanBox');
+      if (fb && fb.children.length) return;   // 已经出过了
       startPick();
-    }, 1600);
+    };
+    setTimeout(go, 1200);
+    setTimeout(() => { const fb = $('fanBox'); if (!fb || !fb.children.length) go(); }, 8000);
   });
 }
 
@@ -606,6 +689,7 @@ function render(list) {
     html += '<div class="rep" style="color:#93a2b8;font-size:13.5px">这是你在这里的第 ' +
             HISTORY.count() + ' 次抽牌。同一件事隔三天再抽，往往能看到变化。</div>';
   }
+  html += '<div class="row"><button class="ghost" id="petEntry">这张牌让我不太舒服</button></div>';
   html += '<div class="row"><button id="again">再抽一次</button></div>' +
     '<div class="row"><button class="ghost" id="ambientBtn">🔊 环境音</button></div>' +
     '<div class="row"><button class="ghost" id="saveCard">保存结果图</button>' +
@@ -929,9 +1013,9 @@ function runRitual(done) {
   setDot(0);
   r1.classList.add('on');
   AMBIENT.start();
-  timers.push(setTimeout(() => { r1.classList.remove('on'); br.style.display = 'block'; r2.classList.add('on'); setDot(1); }, 2000));
-  timers.push(setTimeout(() => { r2.classList.remove('on'); br.style.display = 'none'; r3.classList.add('on'); setDot(2); }, 7000));
-  timers.push(setTimeout(finish, 12000));
+  timers.push(setTimeout(() => { r1.classList.remove('on'); br.style.display = 'block'; r2.classList.add('on'); setDot(1); }, 1200));
+  timers.push(setTimeout(() => { r2.classList.remove('on'); br.style.display = 'none'; r3.classList.add('on'); setDot(2); }, 3200));
+  timers.push(setTimeout(finish, 5500));
   skip.onclick = finish;
   const mute = $('ritualMute');
   if (mute) mute.onclick = (e) => {
@@ -1263,6 +1347,166 @@ function roundRect(ctx, x0, y0, w, h, r) {
   ctx.arcTo(x0, y0, x0 + w, y0, r);
   ctx.closePath();
 }
+</script>
+
+<style>
+#petWrap{position:fixed;right:18px;bottom:18px;z-index:60;display:none;align-items:flex-end;gap:10px}
+#petWrap.show{display:flex}
+#petBubble{max-width:210px;background:#1e2434;border:1px solid #5e6886;border-radius:16px;
+  padding:12px 14px;color:#e8eef8;font-size:14px;line-height:1.5;position:relative}
+#petBubble b{font-size:16px;display:block;margin-bottom:4px}
+#petBubble:after{content:'';position:absolute;right:-7px;bottom:16px;width:14px;height:14px;
+  background:#1e2434;border-right:1px solid #5e6886;border-top:1px solid #5e6886;transform:rotate(45deg)}
+#petImg{width:96px;height:96px;border-radius:50%;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.45);
+  animation:petBreath 3.6s ease-in-out infinite}
+@keyframes petBreath{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.03)}}
+#petImg.hug{animation:petHug .7s ease-in-out 1}
+@keyframes petHug{0%{transform:scale(1)}40%{transform:scale(1.14) rotate(-3deg)}100%{transform:scale(1)}}
+#petClose{position:absolute;right:-6px;top:-10px;background:#2a3348;color:#9fb0c8;border:0;
+  border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px}
+@media (prefers-reduced-motion: reduce){#petImg{animation:none}}
+</style>
+<div id="petWrap">
+  <div id="petBubble"><b id="petTitle">我在。</b><span id="petLine">不用急着好起来。</span>
+    <button id="petClose" aria-label="关闭">×</button></div>
+  <div id="petSym">
+    <i class="sym-star" style="left:44px;top:-6px"></i>
+    <i class="sym-star" style="left:8px;top:26px"></i>
+    <i class="sym-star" style="left:82px;top:30px"></i>
+    <i class="sym-tear" style="left:26px;top:24px"></i>
+    <i class="sym-tear" style="left:64px;top:18px;animation-delay:.7s"></i>
+    <i class="sym-angry" style="right:-4px;top:-4px"></i>
+    <i class="sym-sweat" style="right:10px;top:16px"></i>
+    <i class="sym-cloud" style="left:36px;top:-10px"></i>
+  </div>
+  <img id="petImg" src="assets/pet.png" alt="页宠" />
+</div>
+<script>
+(function(){
+  const LINES = [
+    ['我在。','不用急着好起来。'],
+    ['不用解释。','坐一会儿也行。'],
+    ['今天不用表现得很行。','你可以先不做决定。']
+  ];
+  let idx = 0;
+  const wrap = () => document.getElementById('petWrap');
+
+  // 用事件委托：结果区会被重绘，直接绑按钮会绑到不存在的节点上
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if (!t) return;
+
+    if (t.id === 'petEntry') { openPet(); return; }
+    if (t.id === 'petClose') {
+      const w = wrap(); if (w) w.classList.remove('show');
+      sessionStorage.setItem('petClosed','1');
+      if (window.TRACK) TRACK.ev('pet_close');
+      return;
+    }
+    if (t.id === 'petImg') {
+      const arr = MOOD_LINES[currentMood] || LINES.map(x => x[0]);
+      idx = (idx + 1) % arr.length;
+      const tt = document.getElementById('petTitle');
+      const ll = document.getElementById('petLine');
+      if (tt) tt.textContent = arr[idx];
+      if (ll) ll.textContent = '';
+      if (window.TRACK) TRACK.ev('pet_poke');
+      if (window.TRACK) TRACK.ev('pet_poke');
+      return;
+    }
+  });
+
+  document.addEventListener('mouseover', function(e){
+    if (e.target && e.target.id === 'petImg') {
+      e.target.classList.add('hug');
+      setTimeout(() => e.target.classList.remove('hug'), 700);
+    }
+  });
+
+
+/* ===== 心情：选择 + 应用到页宠 ===== */
+const MOOD_LINES = {
+  happy: ['人开心呀！那木木也开心！','今天的运气，先记在账上。','人笑一下，木木就转一圈。'],
+  sad:   ['人不用说话。木木坐着。','难过就先难过，木木不催。','要不要抱一下？不抱也行。'],
+  angry: ['人别气，木木替你气！……这个糖是刚才就放着的。','木木很生气的！（嚼嚼）真的很生气！','谁惹人了？木木记下了……记完吃点啥呢。'],
+  fear:  ['别怕，木木先去看看……看完了，没事。','人跟着木木走，木木在前面。','木木也怕，但木木陪着人。'],
+  hate:  ['人，不要讨厌木木呀！','人抽牌嘛！人抽嘛！','木木可以更可爱一点的，真的。'],
+  meh:   ['说不清也没关系。','木木就待着。','闷着也可以抽一张。']
+};
+let currentMood = 'meh';
+
+function applyMood(m){
+  currentMood = m;
+  localStorage.setItem('mood', m);
+  const w = document.getElementById('petWrap');
+  if (w) w.dataset.mood = m;
+  const t = document.getElementById('petTitle');
+  const l = document.getElementById('petLine');
+  if (t && l) { t.textContent = MOOD_LINES[m][0]; l.textContent = ''; }
+}
+
+document.addEventListener('click', function(e){
+  const card = e.target.closest && e.target.closest('.moodCard');
+  if (card){
+    applyMood(card.dataset.mood);
+    const ms = document.getElementById('moodScreen');
+    if (ms) ms.classList.add('hide');
+    if (window.TRACK) TRACK.ev('mood_' + card.dataset.mood);
+    return;
+  }
+  if (e.target && e.target.id === 'moodSkip'){
+    applyMood('meh');
+    const ms = document.getElementById('moodScreen');
+    if (ms) ms.classList.add('hide');
+    if (window.TRACK) TRACK.ev('mood_skip');
+  }
+}, true);
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){
+    const ms = document.getElementById('moodScreen');
+    if (ms && !ms.classList.contains('hide')){
+      applyMood('meh'); ms.classList.add('hide');
+    }
+  }
+});
+
+// 初始化：上次选过就直接应用；没选过则显示入口
+(function(){
+  const saved = localStorage.getItem('mood');
+  const ms = document.getElementById('moodScreen');
+  if (saved && MOOD_LINES[saved]){
+    applyMood(saved);
+    if (ms) ms.classList.add('hide');
+  } else if (ms){
+    ms.classList.remove('hide');
+  }
+})();
+
+
+  let openTries = 0;
+  function openPet(){
+    if (sessionStorage.getItem('petClosed') === '1') return;
+    const w = document.getElementById('petWrap');
+    if (!w){                       // 结果区还没渲染完：最多重试 8 次（1.6s）
+      if (openTries++ < 8) setTimeout(openPet, 200);
+      return;
+    }
+    openTries = 0;
+    w.classList.add('show');
+    idx = 0; paint();
+    if (window.TRACK) TRACK.ev('pet_open');
+  }
+
+  function paint(){
+    const a = document.getElementById('petTitle');
+    const b = document.getElementById('petLine');
+    const arr = (typeof MOOD_LINES !== 'undefined' && MOOD_LINES[currentMood]) || null;
+    if (arr){ if (a) a.textContent = arr[0]; if (b) b.textContent = ''; return; }
+    if (a) a.textContent = LINES[idx][0];
+    if (b) b.textContent = LINES[idx][1];
+  }
+})();
 </script>
 </body>
 </html>

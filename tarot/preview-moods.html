@@ -1,0 +1,118 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>页宠六态预览</title>
+<style>
+body{margin:0;background:#0c1119;color:#e8eef8;font-family:"Microsoft YaHei",sans-serif;padding:28px}
+h1{font-size:22px;margin:0 0 6px}
+.sub{color:#93a2b8;font-size:13px;margin-bottom:22px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:980px}
+.card{background:#141a28;border:1px solid rgba(150,165,200,.18);border-radius:16px;padding:16px;text-align:center}
+.wrap{position:relative;width:96px;height:96px;margin:0 auto 10px}
+img{width:96px;height:96px;border-radius:50%;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.sym{position:absolute;inset:0;pointer-events:none}
+.sym i{position:absolute;display:none}
+.star{width:8px;height:8px;background:#f2c14e;border-radius:2px;transform:rotate(45deg);box-shadow:0 0 10px #f2c14e}
+.tear{width:7px;height:10px;background:rgba(124,190,220,.85);border-radius:50% 50% 50% 50%/60% 60% 40% 40%}
+.angry{width:22px;height:22px}
+.angry:before,.angry:after{content:'';position:absolute;background:#e04b2a;border-radius:2px;left:2px;top:9px;width:18px;height:3px}
+.angry:before{transform:rotate(45deg)}.angry:after{transform:rotate(-45deg)}
+.sweat{width:6px;height:9px;background:rgba(190,215,235,.9);border-radius:50% 50% 50% 50%/70% 70% 30% 30%}
+.cloud{width:26px;height:12px;background:rgba(150,160,180,.55);border-radius:12px;box-shadow:8px 4px 0 -2px rgba(150,160,180,.55),-8px 4px 0 -3px rgba(150,160,180,.45)}
+.act{font-size:14px;margin-top:2px}
+.emo{font-size:11px;color:#8d9bb3;margin-top:2px}
+.line{margin-top:10px;font-size:13px;color:#cfdaea;background:#1e2434;border-radius:12px;padding:8px 10px;min-height:34px}
+</style></head><body>
+<h1>页宠六态预览（一张图 + 符号层）</h1>
+<div class="sub">动作名 + 情绪小字；符号纯 CSS 画；不生成新图</div>
+<div class="grid">
+<div class="card">
+  <div class="wrap" data-mood="happy">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">扇颗星给你</div><div class="emo">快乐</div>
+  <div class="line">人开心呀！那木木也开心！</div>
+</div>
+<div class="card">
+  <div class="wrap" data-mood="meh">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">就这么待着</div><div class="emo">有点闷</div>
+  <div class="line">说不清也没关系。</div>
+</div>
+<div class="card">
+  <div class="wrap" data-mood="angry">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">替我气一下</div><div class="emo">愤怒</div>
+  <div class="line">木木很生气的！（嚼嚼）真的很生气！</div>
+</div>
+<div class="card">
+  <div class="wrap" data-mood="sad">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">陪我坐会儿</div><div class="emo">悲伤</div>
+  <div class="line">人不用说话。木木坐着。</div>
+</div>
+<div class="card">
+  <div class="wrap" data-mood="fear">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">别看我了</div><div class="emo">恐惧</div>
+  <div class="line">别怕，木木先去看看……看完了，没事。</div>
+</div>
+<div class="card">
+  <div class="wrap" data-mood="hate">
+    <img src="D:/mumu-workspace/github/mood-site/tarot/assets/pet.png" alt="">
+    <div class="sym">
+      <i class="star" style="left:44px;top:-6px"></i><i class="star" style="left:8px;top:26px"></i><i class="star" style="left:82px;top:30px"></i>
+      <i class="tear" style="left:26px;top:24px"></i><i class="tear" style="left:64px;top:18px"></i>
+      <i class="angry" style="right:-4px;top:-4px"></i>
+      <i class="sweat" style="right:10px;top:16px"></i>
+      <i class="cloud" style="left:36px;top:-10px"></i>
+    </div>
+  </div>
+  <div class="act">抽张牌吧</div><div class="emo">厌恶</div>
+  <div class="line">人，不要讨厌木木呀！</div>
+</div>
+</div>
+<script>
+const show = {happy:['star'], sad:['tear'], angry:['angry'], fear:['sweat'], meh:['cloud'], hate:[]};
+document.querySelectorAll('.wrap').forEach(w=>{
+  (show[w.dataset.mood]||[]).forEach(c=>{
+    w.querySelectorAll('.'+c).forEach(el=>el.style.display='block');
+  });
+});
+</script></body></html>
