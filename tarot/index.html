@@ -328,6 +328,30 @@
 #petWrap[data-mood="fear"] #petImg{animation:petDrift 1.1s ease-in-out infinite alternate}
 #petWrap[data-mood="meh"] #petImg{animation:petDrift 5s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){#petWrap #petImg{animation:none!important}}
+
+/* ===== 页宠：会动、会反应 ===== */
+@keyframes petPop{0%{transform:scale(1)}45%{transform:scale(1.18) rotate(-4deg)}100%{transform:scale(1)}}
+@keyframes petWake{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.04)}}
+@keyframes floatUp{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-46px) scale(1.1)}}
+#petImg{transition:transform .12s ease-out;cursor:pointer}
+#petImg.pop{animation:petPop .42s ease-out}
+#petImg.wake{animation:petWake 1.6s ease-in-out infinite}
+#petWrap.idle #petImg{animation:petWake 3.2s ease-in-out infinite}
+#petWrap[data-mood="sad"] #petImg{animation:petSit 2.8s ease-in-out infinite}
+#petWrap[data-mood="happy"] #petImg{animation:petWake 1.4s ease-in-out infinite}
+#petWrap[data-mood="angry"] #petImg{animation:petShake .3s linear infinite}
+#petWrap[data-mood="fear"] #petImg{animation:petWake .9s ease-in-out infinite}
+.fx{position:absolute;left:50%;top:40%;width:10px;height:10px;pointer-events:none;
+  animation:floatUp 1.1s ease-out forwards}
+.fx.heart{background:#e8808f;border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+.fx.star{background:#f2c14e;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+/* 第三层小卡 */
+#petDeep{display:none;position:fixed;right:18px;bottom:150px;z-index:61;max-width:240px;
+  background:#1b2233;border:1px solid rgba(150,165,200,.28);border-radius:14px;padding:14px;
+  color:#dbe5f5;font-size:13px;line-height:1.6;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#petDeep.show{display:block}
+#petDeep h4{margin:0 0 8px;font-size:13.5px;color:#f2c14e}
+#petDeep .close2{position:absolute;right:8px;top:6px;background:none;border:0;color:#7d8aa1;cursor:pointer}
 </style>
 </head>
 <body>
@@ -420,6 +444,11 @@
     免费小游戏，用来陪你说说话。牌义依据传统塔罗（Rider-Waite 公共领域体系）自行编写。<br>
     <span id="crisisTip">如果你最近真的很难熬，请优先联系专业帮助，或拨打 12356（全国心理援助热线）。</span>
   </footer>
+</div>
+<div id="petDeep">
+  <button class="close2" id="petDeepClose" aria-label="关闭">×</button>
+  <h4>再往下看一层</h4>
+  <div id="petDeepBody"></div>
 </div>
 <script>
 // ===== 轻量埋点（本地，不上传，符合"不采集"承诺）=====
@@ -1397,6 +1426,11 @@ function roundRect(ctx, x0, y0, w, h, r) {
     if (!t) return;
 
     if (t.id === 'petEntry') { openPet(); return; }
+    if (t.id === 'petDeepClose') {
+      const deep = document.getElementById('petDeep');
+      if (deep) deep.classList.remove('show');
+      return;
+    }
     if (t.id === 'petClose') {
       const w = wrap(); if (w) w.classList.remove('show');
       sessionStorage.setItem('petClosed','1');
@@ -1410,6 +1444,18 @@ function roundRect(ctx, x0, y0, w, h, r) {
       const ll = document.getElementById('petLine');
       if (tt) tt.textContent = arr[idx];
       if (ll) ll.textContent = '';
+      t.classList.add('pop'); setTimeout(() => t.classList.remove('pop'), 450);
+      spawnFx(Math.random() < .5 ? 'heart' : 'star');
+      pokeCount++;
+      if (pokeCount === 3){
+        const deep = document.getElementById('petDeep');
+        const body = document.getElementById('petDeepBody');
+        if (deep && body){
+          body.textContent = DEEP[currentMood] || DEEP.meh;
+          deep.classList.add('show');
+        }
+        pokeCount = 0;
+      }
       if (window.TRACK) TRACK.ev('pet_poke');
       if (window.TRACK) TRACK.ev('pet_poke');
       return;
@@ -1483,6 +1529,38 @@ document.addEventListener('keydown', function(e){
   }
 })();
 
+
+
+  // ===== 页宠：交互反馈 =====
+  let pokeCount = 0;
+  function spawnFx(kind){
+    const w = document.getElementById('petWrap');
+    if (!w) return;
+    const el = document.createElement('div');
+    el.className = 'fx ' + kind;
+    el.style.setProperty('--dx', (Math.random() * 36 - 18).toFixed(0) + 'px');
+    el.style.left = (30 + Math.random() * 36) + 'px';
+    w.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+  }
+  document.addEventListener('mousemove', function(e){
+    const img = document.getElementById('petImg');
+    if (!img) return;
+    const r = img.getBoundingClientRect();
+    if (!r.width) return;
+    const dx = (e.clientX - (r.left + r.width / 2)) / r.width;
+    const dy = (e.clientY - (r.top + r.height / 2)) / r.height;
+    if (Math.abs(dx) > 2.2 || Math.abs(dy) > 2.2) return;   // 太远就不甩头
+    img.style.transform = `perspective(300px) rotateY(${(dx * 10).toFixed(1)}deg) rotateX(${(-dy * 8).toFixed(1)}deg)`;
+  });
+  const DEEP = {
+    happy: '这张牌不是让你更快，是提醒你：现在这个状态，值得多待一会儿。',
+    sad: '如果今晚什么都做不了，那就什么都别做。能睡着就已经算过关。',
+    angry: '别急着讲道理。先把那口气写下来，写完再看要不要发出去。',
+    fear: '把最坏的情况写出来，再写一句「真发生了我能做什么」。写完就不用一直想了。',
+    hate: '离那个让你膈应的东西远一点，物理上的——关一个窗口也算。',
+    meh: '不用给今天下结论。闷着也是状态的一种。'
+  };
 
   let openTries = 0;
   function openPet(){
