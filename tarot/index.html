@@ -3,28 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>深海塔罗 · 抽一张看看</title>
-<meta name="description" content="22 张大阿卡纳，7 种牌阵。免费、不注册、不采集。">
-<meta property="og:title" content="深海塔罗 · 抽一张看看">
+<title>秘法残片 · 抽一张看看</title>
+<meta name="description" content="资料是残片，核心部分未公开。这里放的是作者的审美。供娱乐。">
+<meta property="og:title" content="秘法残片 · 抽一张看看">
 <meta property="og:description" content="心里想一件事，然后抽牌。22 张牌 · 7 种牌阵。">
 <meta property="og:image" content="https://mumufish233.github.io/mood/og-tarot.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://mumufish233.github.io/mood/tarot/">
-<meta property="og:site_name" content="深海塔罗">
+<meta property="og:site_name" content="秘法残片">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="twitter:title" content="深海塔罗 · 抽一张看看">
-<meta name="twitter:description" content="22 张大阿卡纳，7 种牌阵。免费、不注册、不采集。">
+<meta name="twitter:title" content="秘法残片 · 抽一张看看">
+<meta name="twitter:description" content="资料是残片，核心部分未公开。这里放的是作者的审美。供娱乐。">
 <meta name="twitter:image" content="https://mumufish233.github.io/mood/og-tarot.png">
 <meta name="theme-color" content="#0a0c13">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication",
- "name":"深海塔罗","url":"https://mumufish233.github.io/mood/tarot/",
+ "name":"秘法残片","url":"https://mumufish233.github.io/mood/tarot/",
  "applicationCategory":"LifestyleApplication",
  "operatingSystem":"Web",
- "description":"22 张大阿卡纳、7 种牌阵的免费抽牌工具。定位是心理投射，不预测未来。",
+ "description":"一册来源不明的秘法残片，记有二十二幅命运图版。资料残缺，此处仅呈现作者审美，供娱乐。",
  "offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},
  "inLanguage":"zh-CN"}
 </script>
@@ -398,9 +398,9 @@
       <div class="fan">
         <img src="cards-webp/back.webp" alt=""><img src="cards-webp/back.webp" alt=""><img src="cards-webp/back.webp" alt="">
       </div>
-      <h1>深海塔罗</h1>
+      <h1>秘法残片</h1>
       <div class="sub">22 张大阿卡纳 · 不注册 · 不采集</div>
-      <p class="guide">心里想一件事，<b>然后抽牌</b><br>它不预测未来，只说你现在卡在哪</p>
+      <p class="guide">心里想一件事，<b>然后抽牌</b><br>残片不解释自己，你看见什么算什么</p>
       <div class="lastdraw" id="lastDraw" style="display:none"></div>
     </div>
 
@@ -441,7 +441,7 @@
   <div id="resultBox" class="hidden"></div>
 
   <footer>
-    免费小游戏，用来陪你说说话。牌义依据传统塔罗（Rider-Waite 公共领域体系）自行编写。<br>
+    资料是残片，核心部分未公开。这里放的是作者的审美。供娱乐。<br>
     <span id="crisisTip">如果你最近真的很难熬，请优先联系专业帮助，或拨打 12356（全国心理援助热线）。</span>
   </footer>
 </div>
@@ -780,7 +780,7 @@ function render(list) {
     try {
       const cv = await buildCardImage(items);
       const a = document.createElement('a');
-      a.download = '深海塔罗-' + items[0].c.name + '.png';
+      a.download = '秘法残片-' + items[0].c.name + '.png';
       a.href = cv.toDataURL('image/png');
       a.click();
       e.target.textContent = '已保存';
@@ -794,7 +794,7 @@ function render(list) {
     try {
       const cv = await buildThreeImage(items);
       const a = document.createElement('a');
-      a.download = '深海塔罗-三张-' + items.map(it => it.c.name).join('-') + '.png';
+      a.download = '秘法残片-三张-' + items.map(it => it.c.name).join('-') + '.png';
       a.href = cv.toDataURL('image/png');
       a.click();
       e.target.textContent = '已保存';
@@ -805,7 +805,7 @@ function render(list) {
   $('shareText').onclick = async (e) => {
     const c = items[0].c;
     const kw = (c.isRev ? c.kw_rev : c.kw_up).join(' · ');
-    const txt = `我在深海塔罗抽到「${c.name}·${c.isRev ? '逆位' : '正位'}」\n${kw}\n\n${c.isRev ? c.rev : c.up}\n\n你也来抽一张：https://mumufish233.github.io/mood/tarot/`;
+    const txt = `我在秘法残片抽到「${c.name}·${c.isRev ? '逆位' : '正位'}」\n${kw}\n\n${c.isRev ? c.rev : c.up}\n\n你也来抽一张：https://mumufish233.github.io/mood/tarot/`;
     try {
       await navigator.clipboard.writeText(txt);
       e.target.textContent = '已复制';
@@ -1169,10 +1169,10 @@ async function buildThreeImage(items) {
   x.fillStyle = 'rgba(255,214,170,.95)';
   x.font = '700 46px "Microsoft YaHei",sans-serif';
   x.textAlign = 'center';
-  x.fillText('深海塔罗 · 三张牌', W / 2, 100);
+  x.fillText('秘法残片 · 三张牌', W / 2, 100);
   x.font = '28px "Microsoft YaHei",sans-serif';
   x.fillStyle = 'rgba(190,200,220,.8)';
-  x.fillText('不预测，只说你现在卡在哪', W / 2, 150);
+  x.fillText('残片不说话，你看见什么算什么', W / 2, 150);
 
   // 三张牌并排
   const cw = 260, gap = 30;
