@@ -780,7 +780,7 @@ function render(list) {
     try {
       const cv = await buildCardImage(items);
       const a = document.createElement('a');
-      a.download = '秘法残片-' + items[0].c.name + '.png';
+      a.download = '秘法-' + items[0].c.name + '.png';
       a.href = cv.toDataURL('image/png');
       a.click();
       e.target.textContent = '已保存';
@@ -794,7 +794,7 @@ function render(list) {
     try {
       const cv = await buildThreeImage(items);
       const a = document.createElement('a');
-      a.download = '秘法残片-三张-' + items.map(it => it.c.name).join('-') + '.png';
+      a.download = '秘法-三张-' + items.map(it => it.c.name).join('-') + '.png';
       a.href = cv.toDataURL('image/png');
       a.click();
       e.target.textContent = '已保存';
@@ -805,7 +805,7 @@ function render(list) {
   $('shareText').onclick = async (e) => {
     const c = items[0].c;
     const kw = (c.isRev ? c.kw_rev : c.kw_up).join(' · ');
-    const txt = `我在秘法残片抽到「${c.name}·${c.isRev ? '逆位' : '正位'}」\n${kw}\n\n${c.isRev ? c.rev : c.up}\n\n你也来抽一张：https://mumufish233.github.io/mood/tarot/`;
+    const txt = `我在秘法抽到「${c.name}·${c.isRev ? '逆位' : '正位'}」\n${kw}\n\n${c.isRev ? c.rev : c.up}\n\n你也来抽一张：https://mumufish233.github.io/mood/tarot/`;
     try {
       await navigator.clipboard.writeText(txt);
       e.target.textContent = '已复制';
@@ -1169,7 +1169,7 @@ async function buildThreeImage(items) {
   x.fillStyle = 'rgba(255,214,170,.95)';
   x.font = '700 46px "Microsoft YaHei",sans-serif';
   x.textAlign = 'center';
-  x.fillText('秘法残片 · 三张牌', W / 2, 100);
+  x.fillText('秘法 · 三张牌', W / 2, 100);
   x.font = '28px "Microsoft YaHei",sans-serif';
   x.fillStyle = 'rgba(190,200,220,.8)';
   x.fillText('秘法', W / 2, 150);
