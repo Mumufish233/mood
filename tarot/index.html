@@ -1676,7 +1676,8 @@ document.addEventListener('DOMContentLoaded', function(){
       if (card.querySelector('.poem')) return;
       const hue = card.querySelector('.hue'); if (!hue) return;
       const nm = (hue.innerText||'').trim().split(/\s/)[0];
-      const b = window.B_TONE && window.B_TONE[nm]; if (!b) return;
+      const T = (typeof B_TONE !== 'undefined') ? B_TONE : (window.B_TONE || {});
+      const b = T[nm]; if (!b) return;
       const box = document.createElement('div');
       box.className = 'poem';
       box.style.cssText = 'margin-top:14px;padding:16px 16px 14px;border:1px solid rgba(206,184,134,.38);border-radius:12px;background:linear-gradient(180deg,rgba(206,184,134,.07),rgba(206,184,134,.02))';
