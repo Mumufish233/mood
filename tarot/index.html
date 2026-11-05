@@ -353,6 +353,17 @@
 #petDeep h4{margin:0 0 8px;font-size:13.5px;color:#f2c14e}
 #petDeep .close2{position:absolute;right:8px;top:6px;background:none;border:0;color:#7d8aa1;cursor:pointer}
 </style>
+
+<style>
+/* B 端口：命运回响 —— 只留硬核断语，把 A 的温柔话术收起 */
+body.tone-b .cap,
+body.tone-b .ming,
+body.tone-b .act,
+body.tone-b .quote,
+body.tone-b .rep:has(> b) { display: none !important; }
+body.tone-b .echo { display: block !important; }
+.echo { display: none; }
+</style>
 </head>
 <body>
 
@@ -1595,6 +1606,7 @@ window.setTone = function(t){
   document.querySelectorAll('[data-tone]').forEach(el=>{
     el.style.opacity = (el.dataset.tone===t) ? '1' : '.35';
   });
+  document.body.classList.toggle('tone-b', t === 'B');
   const box = document.getElementById('toneBox');
   if (box) box.setAttribute('data-cur', t);
 };
