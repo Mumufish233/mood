@@ -453,6 +453,12 @@ body.tone-b .echo { display: block !important; }
   <!-- 结果 -->
   <div id="resultBox" class="hidden"></div>
 
+  <!-- 意愿钩子：只记录点击，不收信息、不放二维码 -->
+  <div id="deepHook" class="hidden">
+    <button id="deepHookBtn">想要更深入的解读？</button>
+    <div id="deepHookNote" class="hidden"></div>
+  </div>
+
   <footer>
     资料是残片，核心未公开。此处仅呈现作者审美，供娱乐。<br><span style="opacity:.5;font-size:11px;letter-spacing:.2em">FINIS PRINCIPIUM · 终即是始</span><br>
     <span id="crisisTip">如果你最近真的很难熬，请优先联系专业帮助，或拨打 12356（全国心理援助热线）。</span>
@@ -1638,6 +1644,13 @@ document.addEventListener('DOMContentLoaded', function(){
 #portPick .port img{width:100%;display:block}
 #portPick .port .cap{padding:10px 12px;color:#cfc7b2;font-size:12.5px;letter-spacing:.12em}
 #portPick .port .cap b{display:block;color:#e9e2cf;font-size:14px;letter-spacing:.2em;margin-bottom:3px}
+/* 意愿钩子 */
+#deepHook{margin:34px auto 0;text-align:center;max-width:520px}
+#deepHookBtn{background:transparent;border:1px solid rgba(206,184,134,.55);color:#cfc7b2;
+  padding:12px 22px;border-radius:999px;font-size:13.5px;letter-spacing:.18em;cursor:pointer;
+  transition:.25s;font-family:inherit}
+#deepHookBtn:hover{border-color:rgba(206,184,134,1);color:#e9e2cf}
+#deepHookNote{margin-top:14px;color:#8b93a5;font-size:12.5px;line-height:1.9;letter-spacing:.06em}
 </style>
 <div id="portPick">
   <div class="inner">
@@ -1695,6 +1708,40 @@ document.addEventListener('DOMContentLoaded', function(){
       card.appendChild(box);
     });
   };
+})();
+</script>
+<script>
+/* ===== 意愿钩子：只在结果出现后显示；点一次记一次（本地，不上传） ===== */
+(function(){
+  var hook = document.getElementById('deepHook');
+  var btn  = document.getElementById('deepHookBtn');
+  var note = document.getElementById('deepHookNote');
+  if (!hook || !btn) return;
+
+  // 结果渲染 → 显示钩子（等牌翻完）
+  var shown = false;
+  function maybeShow(){
+    if (shown) return;
+    var rb = document.getElementById('resultBox');
+    if (!rb || rb.classList.contains('hidden')) return;
+    if (!rb.children.length) return;
+    shown = true;
+    setTimeout(function(){ hook.classList.remove('hidden'); }, 2600);
+  }
+  var mo = new MutationObserver(maybeShow);
+  var rb = document.getElementById('resultBox');
+  if (rb) mo.observe(rb, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+  window.addEventListener('load', function(){ setTimeout(maybeShow, 800); });
+
+  btn.addEventListener('click', function(){
+    try { if (window.TRACK && TRACK.ev) TRACK.ev('deep_hook_click'); } catch(e){}
+    try { localStorage.setItem('mifa_deep_click', String(Date.now())); } catch(e){}
+    note.classList.remove('hidden');
+    note.innerHTML = '已经记下了。<br><span style="opacity:.7">（只记在这台设备上，不上传、不采集你任何信息）</span>';
+    btn.setAttribute('disabled', 'disabled');
+    btn.style.opacity = '.45';
+    btn.style.cursor = 'default';
+  });
 })();
 </script>
 </body>
