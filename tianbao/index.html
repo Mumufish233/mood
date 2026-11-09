@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.14-天命榜-20261110">
+<meta name="dsh-version" content="v0.14.1-结算加固-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -723,6 +723,7 @@ function updateBars() {
 }
 
 function render() {
+  bindSettle();
   $("round").textContent = st.round;
   $("fac-pill").textContent = st.fac;
   updateBars();
@@ -736,6 +737,17 @@ function privKey(fac) {
   if (PRIVATE_LITE[fac]) return fac;
   if (fac === "河北" || fac === "范阳") return "范阳";
   return Object.keys(PRIVATE_LITE)[0];
+}
+
+/* 结算按钮：每次 render 都幂等重绑，防止节点被替换后 onclick 丢失；
+   并兜住结算过程中的异常，绝不让一次点击变成「什么都没发生」。 */
+function bindSettle() {
+  const b = $("btn-settle");
+  if (!b) return;
+  b.onclick = function () {
+    try { settleRound(); }
+    catch (e) { console.error("[settle]", e); toast("结算没走通，已把错误记到控制台"); }
+  };
 }
 
 function updateSettle() {
@@ -800,6 +812,7 @@ function pick(c) { /* 兼容旧调用：直接当作已选国事 */ }
 function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
   const card = st.pool[st.pendingCard];
+  if (!card) { st.pendingCard = null; render(); toast("牌面已变，请重新选一件国事"); return; }
   // 1) 国事
   Object.keys(card.e).forEach((k) => {
     st[k] = Math.max(0, Math.min(MAXV, st[k] + card.e[k]));
@@ -1178,7 +1191,7 @@ function backToPick() {
   showFacts();
 }
 $("btn-again").onclick = backToPick;
-$("btn-settle").onclick = settleRound;
+bindSettle();
 $("btn-share").onclick = copyShare;
 showFacts();
 </script>
