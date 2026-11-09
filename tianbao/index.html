@@ -17,7 +17,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .bar-row .n{width:34px;letter-spacing:2px}
 .bar{flex:1;height:8px;background:#26241d;border-radius:4px;overflow:hidden}
 .bar i{display:block;height:100%;background:#b39a5f;transition:width .3s}
-.bar.q i{background:#7f9a86}.bar.r i{background:#a5765a}
+
 .cards{display:flex;flex-direction:column;gap:10px}
 .card{background:#1d1f19;border:1px solid #34322a;border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
 .card:hover{border-color:#6f6244}
@@ -45,6 +45,8 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .fact:hover{border-color:#6f6244}
 .fact h3{margin:0 0 5px;font-size:17px;font-weight:400;letter-spacing:3px}
 .fact p{margin:0;font-size:12.5px;color:#9c9180;line-height:1.6}
+.bar i.q{background:#7f9a86 !important}
+.bar i.r{background:#a5765a !important}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -102,7 +104,7 @@ const DECKS = {
     { id: "t_eunuch", t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
     { id: "t_relief", t: "江淮漕运",   d: "粮船顺着运河上来，京城的米价压下去两成。", e: { money: 2, name: 1, army: -1 } },
     { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上已经没人抬头了。", e: { army: 2, name: -3, money: 1 } },
-    { id: "t_consort",t: "爱妃何在",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1 }, repeat: true },
+    { id: "t_consort",t: "爱妃何在",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
   ],
   "河北": [
     { id: "h_horse",  t: "收马",       d: "边市开到西域，一匹马换三匹绢，今年多了三千匹。", e: { army: 2, money: -1 } },
@@ -645,7 +647,7 @@ function privKey(fac) {
 function renderPrivate() {
   const box = $("cards");
   box.innerHTML = "";
-  $("chronicle").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
+  $("log").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
   if (st.privPool.length < 3) {
     const pool = (PRIVATE_LITE[privKey(st.fac)] || []).filter((x) => (st.priv || []).indexOf(x.name) < 0);
     st.privPool = shuffle((pool.length >= 3 ? pool : (PRIVATE_LITE[privKey(st.fac)] || [])).slice());
@@ -678,6 +680,10 @@ function choosePrivate(p) {
     st.priv.push(p.name);
     st.privPool = st.privPool.filter((x) => x.id !== p.id);
     st.log.unshift(`私事 · ${p.name}`);
+    if (p.name.indexOf("爱妃") >= 0) {
+      const loveN = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length;
+      if (loveN >= 2 && !st.loveWarned) { st.loveWarned = true; toast("陛下……已经第二个了。"); }
+    }
     if (p.flag) {
       st.flags.push(p.flag);
       st.log.unshift(`　└ 埋下隐患：${p.flag.name}`);
@@ -690,8 +696,10 @@ function choosePrivate(p) {
   st.step = "card";
   const lastRound = st.round >= ROUNDS;
   st.round += 1;
-  if (lastRound || st.money <= 0 || st.army <= 0) {
-    if (st.money <= 0 || st.army <= 0) st.log.unshift("⛔ 钱粮/兵甲见底，撑不到下一季了。");
+  if (lastRound || st.money <= 0 || st.army <= 0 || st.name <= 0) {
+    if (st.money <= 0) st.log.unshift("⛔ 钱粮见底，撑不到下一季了。");
+    else if (st.army <= 0) st.log.unshift("⛔ 兵甲见底，撑不到下一季了。");
+    else if (st.name <= 0) st.log.unshift("⛔ 人心散尽，撑不到下一季了。");
     return finish();
   }
   render();
@@ -711,7 +719,7 @@ function pick(c) {
   if (!c.repeat) st.pool = st.pool.filter((x) => x.id !== c.id);
   checkAch();
   if (st.godown) return finishCarnal();
-  if (st.money <= 0 || st.army <= 0) return finish();
+  if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
   st.step = "private";
   render();
 }
@@ -778,7 +786,7 @@ function monoKind() {
   const cnt = (k) => st.hist.filter((c) => (c.e[k] || 0) > 0).length;
   const m = { money: cnt("money"), army: cnt("army"), name: cnt("name") };
   const top = Object.keys(m).sort((a, b) => m[b] - m[a])[0];
-  return m[top] >= 4 ? top : null;
+  return m[top] >= 5 ? top : null;
 }
 
 function finish() {
@@ -795,6 +803,17 @@ function finish() {
   });
   // 爱妃三连 → 驾崩
   if ((st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length >= 3) return finishCarnal();
+  // 某一项归零 → 崩的方式不一样，别都叫兵变
+  const zero = st.money <= 0 ? "money" : (st.army <= 0 ? "army" : (st.name <= 0 ? "name" : null));
+  if (zero) {
+    const tk = { money: "粮尽", army: "兵变", name: "众叛" }[zero];
+    const c = ROT[zero];
+    $("end-title").textContent = tk;
+    $("end-quote").textContent = c.quote;
+    $("end-praise").textContent = c.praise;
+    $("end-sigh").textContent = c.sigh;
+    return;
+  }
   const mk = monoKind();
   if (mk) {
     const r = ROT[mk];
@@ -868,7 +887,7 @@ function copyShare() {
 function backToPick() {
   $("screen-end").classList.add("hide");
   $("screen-play").classList.add("hide");
-  $("screen-pick").classList.remove("hide");
+  $("screen-start").classList.remove("hide");
   st = null;
   showFacts();
 }
