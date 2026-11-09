@@ -730,7 +730,8 @@ function choosePrivate(p) {
       st[k] = Math.max(0, Math.min(MAXV, st[k] + p.eff[k]));
     });
     st.priv.push(p.name);
-    st.privPool = st.privPool.filter((x) => x.id !== p.id);
+    // 爱妃类私事可以反复选（不然 5 回合最多只能选到 2 次，「三连驾崩」根本走不到）
+    st.privPool = st.privPool.filter((x) => x.id !== p.id || p.name.indexOf("爱妃") >= 0);
     st.log.unshift(`私事 · ${p.name}`);
     if (p.name.indexOf("爱妃") >= 0) {
       const loveN = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length;
@@ -915,7 +916,7 @@ function finishCarnal() {
   $("end-title").textContent = "驾崩";
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
-  $("end-sigh").textContent = `称号：${pickTitle(st.fac, "carnal")}　封号：${facTitle(a.title)}。百姓谢谢你，史官只写了半页。`;
+  $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n百姓谢谢你，史官只写了半页。`;
 }
 
 function monoKind() {
