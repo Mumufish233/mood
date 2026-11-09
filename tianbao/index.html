@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.13-侧栏-20261110">
+<meta name="dsh-version" content="v0.14-天命榜-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -78,6 +78,14 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 @keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(217,197,137,.0)}50%{box-shadow:0 0 0 3px rgba(217,197,137,.18)}}
 .btn.ready{animation:breathe 1.8s ease-in-out infinite}
 .log div.latest{color:#e5d6b4;border-left:2px solid #d9c589;padding-left:8px;margin-left:-2px}
+.chron{margin-top:14px;font-size:12.5px;color:#8d8271;letter-spacing:1px;line-height:1.9}
+
+.heavens{margin:14px 0 2px;padding:12px 14px;border:1px solid #34322a;border-radius:12px;background:#1b1913}
+.heavens-title{font-size:11.5px;color:#b39a5f;letter-spacing:3px;margin-bottom:8px}
+.heavens ul{margin:0;padding-left:18px}
+.heavens li{font-size:12.5px;color:#a89c86;line-height:1.9}
+.heavens li b{color:#e5d6b4;font-weight:400}
+.heavens-note{margin-top:8px;font-size:11.5px;color:#6b6354}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -90,7 +98,18 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       钱、名、兵，三样都得撑住。<br>
       撑不住的那一样，会替你写出结局。
     </div>
-    <div class="cards" id="facts" style="margin-top:16px"></div>
+        <div class="heavens">
+      <div class="heavens-title">天命榜 · 看得见，够不着</div>
+      <ul>
+        <li><b>一键中兴</b>：钱名兵三项都不塌</li>
+        <li><b>史书上写得很好看</b>：三项都推到极高</li>
+        <li><b>吾儿奉先何在</b>：名动天下、兵甲极薄</li>
+        <li><b>MC 禄山</b>：跳着舞把兵攒到八万</li>
+        <li><b>撑到第五回</b>：活着走完，也算本事</li>
+      </ul>
+      <div class="heavens-note">打不出来不丢人，这游戏里赢是例外。</div>
+    </div>
+<div class="cards" id="facts" style="margin-top:16px"></div>
   </div>
 
   <div id="screen-play" class="hide">
@@ -122,6 +141,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <p class="quote" id="end-quote"></p>
       <p class="praise" id="end-praise"></p>
       <p class="sigh" id="end-sigh"></p>
+      <div id="end-chron" class="chron"></div>
       <span class="btn" id="btn-again">再来一局</span>
       <span class="btn gh" id="btn-share" style="margin-left:8px">复制这一局</span>
       <div id="share-tip" style="font-size:12px;color:#8d8271;margin-top:10px"></div>
@@ -149,7 +169,7 @@ const DECKS = {
     { id: "t_eunuch", t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
     { id: "t_relief", t: "江淮漕运",   d: "粮船顺着运河上来，京城的米价压下去两成。", e: { money: 2, name: 1, army: -1 } },
     { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上没人抬头；念到第十二个，有人开始背自己的履历。", e: { army: 2, name: -3, money: 1 } },
-    { id: "t_consort",t: "爱妃何在",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
+    { id: "t_consort",t: "贵妃省亲",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
   ],
   "河北": [
     { id: "h_horse",  t: "收马",       d: "边市开到西域，一匹马换三匹绢，今年多了三千匹。", e: { army: 2, money: -1 } },
@@ -194,6 +214,7 @@ const ACH = [
   { id: "fengxian", name: "吾儿奉先何在",       title: "唐义宗", desc: "名望极高、兵甲极薄。你在等人来救，来的人姓什么都能接受。" },
   { id: "nomoney2", name: "朕的钱！朕的钱！",   title: "唐蚊宗", desc: "国库空了。你还在问账房，账房还在问管事的，管事的已经跑了。" },
   { id: "gentle",   name: "百姓无不怀念我大唐", title: "唐糯宗", desc: "你什么都忍了。史官写你「宽仁」，边将写你「好说话」，牙兵写你「好捏」。帝性至糯，群臣皆捏之。" },
+  { id: "mc_lushan", name: "MC 禄山", title: "燕喊帝", desc: "胡旋一转，军心就散；喊麦一响，长安就晃。你起兵靠的不是兵书，是节奏。" },
   { id: "survive5", name: "撑到第五回",         title: "唐守宗", desc: "五回都走完了。在这个游戏里，活着本身就是一种成就。" },
   { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
 ];
@@ -840,6 +861,7 @@ function checkAch() {
   }
   if (count("relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
   if (n >= 5) unlock(ACH.find((a) => a.id === "survive5"));
+  if ((st.priv || []).some((x) => x.indexOf("舞") >= 0) && st.army >= 8) unlock(ACH.find((a) => a.id === "mc_lushan"));
   if (Math.min(st.money, st.name, st.army) >= 12) unlock(ACH.find((a) => a.id === "prosper"));
   if ((st.flagLog || []).length >= 2) unlock(ACH.find((a) => a.id === "scapecat"));
   if (st.name >= 9 && st.army <= 3) unlock(ACH.find((a) => a.id === "fengxian"));
@@ -897,7 +919,7 @@ function deathLine() {
 
 /* 名高兵低：朝廷来人了，看给不给面子 */
 function highFameEvent() {
-  if (!(st.name >= 8 && st.army <= 2)) return false;
+  if (!(st.name >= 8 && st.army <= 3)) return false;
   if (!st.fameWarn) {
     st.fameWarn = true;
     if (Math.random() < 0.6) {
@@ -1093,6 +1115,11 @@ function finish() {
   $("end-praise").textContent = c.praise;
   const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
   const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
+  // 本局起居注：把国策与私事串成一段
+  const acts = (st.hist || []).map((c) => c.t).join("、");
+  const privs = (st.priv || []).join("、") || "没折腾";
+  const chron = `起居注 · 五回之间：${acts || "未成事"}。私事：${privs}。`;
+  if ($("end-chron")) $("end-chron").textContent = chron;
   $("end-sigh").textContent = c.sigh
     + (titleAch ? `\n\n封号 · ${titleAch}` : "")
     + dualTitle(st.fac, h.kind)
