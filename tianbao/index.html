@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>天宝模拟器 · 轻量版</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#151712;color:#e8e0cf;font-family:"Noto Serif SC","Songti SC",serif;
+ background-image:radial-gradient(circle at 50% 0%,#221f18 0%,#151712 60%)}
+.wrap{max-width:520px;margin:0 auto;padding:20px 18px 48px;min-height:100vh;display:flex;flex-direction:column}
+h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-weight:400}
+.sub{text-align:center;color:#8d8271;font-size:12px;letter-spacing:3px;margin-bottom:18px}
+.pill{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.pill span{font-size:12px;padding:4px 10px;border:1px solid #3a362c;border-radius:99px;color:#a89c86}
+.pill b{color:#d8c9a8;font-weight:400}
+.bars{margin:6px 0 16px}
+.bar-row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px;color:#a89c86}
+.bar-row .n{width:34px;letter-spacing:2px}
+.bar{flex:1;height:8px;background:#26241d;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:#b39a5f;transition:width .3s}
+.bar.q i{background:#7f9a86}.bar.r i{background:#a5765a}
+.cards{display:flex;flex-direction:column;gap:10px}
+.card{background:#1d1f19;border:1px solid #34322a;border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
+.card:hover{border-color:#6f6244}
+.card h3{margin:0 0 6px;font-size:17px;font-weight:400;letter-spacing:2px}
+.card p{margin:0;font-size:12.5px;line-height:1.65;color:#9c9180}
+.card .eff{font-size:11.5px;color:#7e7362;margin-top:7px;letter-spacing:1px}
+.log{margin-top:14px;font-size:12.5px;line-height:1.9;color:#8d8271;flex:1}
+.end{text-align:center;margin-top:auto;padding-top:22px}
+.end h2{font-size:26px;letter-spacing:6px;font-weight:400;margin:0 0 14px;color:#e5d6b4}
+.quote{font-size:15px;line-height:2;color:#c3b494;letter-spacing:1px;margin:0 auto 16px;max-width:420px}
+.praise{font-size:14.5px;line-height:1.95;color:#dccfb2;margin:0 auto 12px;max-width:420px}
+.sigh{font-size:12.5px;line-height:1.9;color:#8d8271;margin:0 auto;max-width:420px}
+.btn{margin-top:22px;display:inline-block;padding:11px 26px;border:1px solid #b39a5f;border-radius:99px;color:#e5d6b4;font-size:14px;letter-spacing:3px;cursor:pointer;background:transparent}
+.btn:hover{background:#b39a5f;color:#151712}
+.hide{display:none}
+.toast{position:fixed;left:50%;bottom:34px;transform:translate(-50%,20px);background:#2a2620;border:1px solid #6f6244;
+ color:#e5d6b4;font-size:13px;letter-spacing:1px;padding:9px 16px;border-radius:99px;opacity:0;transition:.35s;pointer-events:none;z-index:9}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.sigh{white-space:pre-wrap}
+.quote, .praise, .sigh{opacity:0;transform:translateY(6px);animation:fadeUp .9s ease forwards}
+.praise{animation-delay:.45s}
+.sigh{animation-delay:1.1s}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.fact{padding:14px 16px;border:1px solid #34322a;border-radius:12px;margin-bottom:10px;cursor:pointer;background:#1d1f19}
+.fact:hover{border-color:#6f6244}
+.fact h3{margin:0 0 5px;font-size:17px;font-weight:400;letter-spacing:3px}
+.fact p{margin:0;font-size:12.5px;color:#9c9180;line-height:1.6}
+</style></head><body>
+<div class="wrap">
+  <h1>天宝模拟器</h1>
+  <div class="sub">一局五分钟 · 在平行世界里改写天命</div>
+
+  <div id="screen-start">
+    <div class="log" style="flex:none;color:#9c9180;font-size:13px;line-height:2">
+      天宝十四载。五回合，每回合做一件事。<br>
+      钱、名、兵，三样都得撑住。<br>
+      撑不住的那一样，会替你写出结局。
+    </div>
+    <div class="cards" id="facts" style="margin-top:16px"></div>
+  </div>
+
+  <div id="screen-play" class="hide">
+    <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span></div>
+    <div class="bars">
+      <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div></div>
+      <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div></div>
+      <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div></div>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div id="screen-end" class="hide">
+    <div class="end">
+      <h2 id="end-title"></h2>
+      <p class="quote" id="end-quote"></p>
+      <p class="praise" id="end-praise"></p>
+      <p class="sigh" id="end-sigh"></p>
+      <span class="btn" id="btn-again">再来一局</span>
+      <span class="btn gh" id="btn-share" style="margin-left:8px">复制这一局</span>
+      <div id="share-tip" style="font-size:12px;color:#8d8271;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===== 规则：5 回合、每回合 3 选 1、只有钱/名/兵 ===== */
+const ROUNDS = 5;
+
+const FACS = {
+  "\u5510\u5ef7": { tag: "\u518d\u9020\u5927\u5510", desc: "\u4f60\u62ff\u7740\u4e00\u4e2a\u6f0f\u6c34\u7684\u738b\u671d\u3002\u5efa\u4e0d\u5efa\u5f97\u8d77\uff0c\u770b\u4f60\u3002" },
+  "\u6cb3\u5317": { tag: "\u5929\u547d\u5728\u5317", desc: "\u6e14\u9633\u7684\u9f13\u58f0\u3002\u4f60\u8981\u5b83\u6572\u8fdb\u957f\u5b89\uff0c\u800c\u4e0d\u662f\u88ab\u5b83\u6572\u788e\u3002" },
+  "\u6cb3\u6714": { tag: "\u5c0f\u86c7\u5316\u9f99", desc: "\u4e09\u9547\u7259\u5175\uff0c\u6ca1\u540d\u5206\uff0c\u6709\u5200\u3002\u8c01\u8bf4\u5e1d\u738b\u5c06\u76f8\u6709\u79cd\u4e4e\uff1f" },
+};
+
+const DECK = [
+  { id: "tax",   t: "加税",   d: "账房的算盘响了一夜。第二天，城门口多了几户没收拾完的行李。", e: { money: 3, name: -2 } },
+  { id: "relief",t: "开仓",   d: "粥棚支到第三天，队伍里已经有了别郡的口音。", e: { money: -2, name: 3 } },
+  { id: "army",  t: "扩军",   d: "新兵穿上甲，还不会站队。老卒在旁边笑，笑完替他们整了整领子。", e: { army: 3, name: -1, money: -1 } },
+  { id: "school",t: "设学堂", d: "书声从破庙里传出来。有老吏路过，站了一会儿才走。", e: { name: 2, money: -1 } },
+  { id: "trade", t: "通商",   d: "胡商的驼队进了城，夜市头一回亮到三更。", e: { money: 2, name: -1, army: 1 } },
+  { id: "purge", t: "清洗",   d: "点到名字的人一个一个出去。剩下的人低头看自己的靴尖。", e: { army: 2, name: -3 } },
+  { id: "temple",t: "修庙",   d: "工匠在檐下量了三天。香客还没来，账上先空了一截。", e: { name: 2, money: -2 } },
+  { id: "raid",  t: "劫掠",   d: "掠来的牲口在营里叫了一夜。第二天，沿路的村子都空了。", e: { money: 3, name: -3 } },
+  { id: "pardon",t: "大赦",   d: "狱门开了，人出来时都眯着眼，像不信外面还有太阳。", e: { name: 2, army: -2 } },
+  { id: "drill", t: "练兵",   d: "校场上尘土不落。士绅的帖子来得比往年更勤。", e: { army: 2, money: -1, name: -1 } },
+  { id: "silk",  t: "织造",   d: "机杼声昼夜不停。绢卖得好，田里的人却更少了。", e: { money: 2, name: -1 } },
+  { id: "hostage",t: "质子",  d: "孩子上马时没回头。你知道他记住了这条路。", e: { name: 1, army: -1, money: 1 } },
+  { id: "consort",t: "爱妃何在", d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1 }, repeat: true },
+];
+
+
+/* ===== 成就与封号（梗在这儿，别删） ===== */
+const ACH = [
+  { id: "money5",  name: "唐扒皮",               title: "唐敛宗", desc: "周扒皮、黄世仁，所有剥削者见到你都得说一声地道！抠门程度，耗子来了都得留下一身毛。横征暴敛的好皇帝呀！" },
+  { id: "army5",   name: "忠诚的封建主义战士",   title: "唐武宗", desc: "刀不离手，话语权全靠刀刃的宽度。" },
+  { id: "name5",   name: "地主阶级的好朋友",     title: "唐圣宗", desc: "士绅写诗夸你，农人替你交税，这买卖你一直做得很好。" },
+  { id: "nomoney", name: "散财童子",             title: "唐慈宗", desc: "五回没往库里放一枚钱，倒是放了不少心。" },
+  { id: "forget",  name: "人民群众的最大敌人",   title: "唐剥宗", desc: "钱是够了，人心是账上唯一没有增加的一项。" },
+  { id: "consort2",name: "人形播种机",           title: "唐社宗", desc: "两回召见，一回没上朝。史官写到这里，笔尖顿了很久。" },
+  { id: "consort3",name: "色是刮骨刀，驾崩吧！陛下！", title: "唐社宗", desc: "你天天宠信爱妃，没几年就死了。大唐还是那个大唐，只是史书给你的那一页，只剩半页。" },
+  { id: "balanced",name: "一键中兴",             title: "唐中宗", desc: "钱、名、兵，三样都没塌。做到这件事的人，史书上不多。" },
+  { id: "lopsided",name: "偏科皇帝",             title: "唐偏宗", desc: "有一项拉得极高，另一项快见底。朝堂上没人敢提，但人人都看见了。" },
+  { id: "freesoldier", name: "躺赢",             title: "唐宪宗", desc: "你一次没练过兵，兵却还在。这大概是别人替你打完了。" },
+  { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
+];
+
+
+/* ===== 偏科淘汰（某类牌连选 4 次以上） ===== */
+const ROT = {
+  money: {
+    title: "粮仓",
+    quote: "邻居屯枪我屯粮，我即邻居之粮仓。",
+    praise: "钱是真攒住了。刀来的时候连本带利一起交出去——人没了，钱也没了，史官还给你记了句“富而好施”。太悲哀了。",
+    sigh: "你家的仓，后来做了别人的军粮库。门上的锁还在，钥匙还在你腰上，人已经不在了。",
+    ach: "邻居的粮仓", titleAch: "唐富宗",
+  },
+  army: {
+    title: "信仰之刀",
+    quote: "兵者，国之大事。",
+    praise: "营里后来传一句话：这仗是「寻思」出来的。兵饿着肚子，甲是补过的，对面是强弩大枪。你让他们冲，他们真的冲了。",
+    sigh: "清点的时候甲丢七成、人丢九成。有人想起入营第一顿喝的那碗羊肉汤，没敢说话。",
+    ach: "俺寻思", titleAch: "唐莽宗",
+  },
+  name: {
+    title: "嘴遁之子",
+    quote: "立国之道，尚礼仪不尚权谋；根本之图，在人心不在技艺。",
+    praise: "人心是攒够了，仓是空的，刀是别人的。真到要动手那天，你的道理讲得很好听，很好听，然后就没有然后了。",
+    sigh: "鸵鸟都没你能当瞎子。史书写你“以德服人”。写这三个字的时候，那个人的笔抬起来了两次。",
+    ach: "嘴遁大师", titleAch: "唐辩宗",
+  },
+};
+
+const HARD = [
+  { min: 8, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
+  { min: 6, kind: "partial", title: "\u504f\u5b89" },
+  { min: 4, kind: "split",   title: "\u5272\u636e" },
+  { min: 2, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
+  { min: 0, kind: "mutiny",  title: "\u5175\u53d8" },
+];
+
+/* ===== 结局文案：势力 × 结局，每篇三段：引句 / 赞叹 / 感慨 ===== */
+const COPY = {
+  "唐廷": {
+    win: [
+      { quote: "「九天阊阖开宫殿，万国衣冠拜冕旒。」", praise: "献俘那天您没穿甲，一身衮冕坐在含元殿上，河北来的降将跪了半庭。开元年间那套排场，隔了几十年又摆出来，还是那座殿，还是那个日头。干杯，新一代的天可汗。", sigh: "散朝后您一人在丹墀上站了会儿，风把乐声吹散一半。听惯了马蹄的耳朵，忽然这么静，倒有些不惯。" },
+      { quote: "「忆昔开元全盛日，小邑犹藏万家室。」", praise: "您没急着动刀，先把江淮的漕运疏开，把市舶的税厘清，胡商从广州一路排进了长安西市。钱袋鼓起来那天，边将说话的声音都低了三分。中兴的路数原该如此——先让锅里有米，再谈天威。", sigh: "西市的胡姬还唱旧曲，曲子里混进了新词。盛世这东西，往往是在没人留意的午后，悄悄返场的。" },
+      { quote: "「春风得意马蹄疾，一日看尽长安花。」", praise: "重开科场那年，曲江边挤得走不动，新进士簪花跨马，一路被人扔果子。您坐在楼上看了整场，比看捷报还认真。士人说朝廷回来了——这些人闻气数，比钦天监准。", sigh: "散场时落了场小雨，榜下的墨还没干透。有人哭，有人笑，都挤在一处。" },
+      { quote: "「中兴诸将收山东，捷书夜报清昼同。」", praise: "捷报三更递进宫，您已睡下，披衣起来读到天亮。帐下那几位老将，胡子比旗子还白，一提马鞍还是翻得上去。唐廷这口气，是您同他们一起从土里刨出来的。", sigh: "庆功酒喝到后半夜，有人趴在案上睡着了，鼾声压过丝竹。这一次，没人再喊他起来。" },
+    ],
+    partial: [
+      { quote: "日暮苍山远，天寒白屋贫。", praise: "潼关的守将照例递了请援的折子，驿马跑到华阴便换了人。折子递进中书，一位老吏抄了副本，在援兵二字旁边画了个圈，又拿墨涂掉。批复下来只三个字，抄在本上，原件压在案角。", sigh: "案角的折子积了一摞，纸边被手肘磨得起了毛。" },
+      { quote: "长安一片月，万户捣衣声。", praise: "汴口的漕船泊了半月，船工把受潮的粟摊在船板上晒，晒到第三日又落雨，只得收进舱。京城的米行改了价牌，一日之内换过两回。西市一个胡商来问水路，听说不通，回去把驼队往北牵了。", sigh: "船板上那层粟壳，被雨水冲进河里，浮了一片。" },
+      { quote: "驿路三千里，家书一字无。", praise: "户部侍郎上了告老的表，批得很快。他在政事堂收拾案上笔墨，只带走一支笔，砚台留下。送行的两个书吏扶着车辕，车出春明门时城门刚开，扫雪的差役正把雪往路边推。", sigh: "那方砚台里的墨还没干，管事的拿纸盖上，说等他回来再收。" },
+      { quote: "彼黍离离，彼稷之苗。", praise: "太常寺把郊祀的礼器搬出来擦洗，有一只铜豆的足上早年锡补过，纹路已经磨平。管簿册的人记下这一处，写明旧损，又注上沿用的年份。宫里的排班照旧按开元年的旧仪，乐工换了一批，曲子还是那几支。", sigh: "簿子的封皮换过几回，里头第一页的字，还是开元年的墨。" },
+    ],
+    split: [
+      { quote: "礼失而求诸野。", praise: "诏书送到魏博，节度使接了，留使者在馆驿住了几日，每日送酒。使者回来，把回礼摆在政事堂的案上：一匹绢，一匣药，一串晒干的菌子。宰相看了一遍，让人把绢入库。", sigh: "那串菌子搁在窗台上，过了秋，没人想起收。" },
+      { quote: "天下熙熙，皆为利来。", praise: "汴州的榷场收三种税，朝廷的、镇上的、牙人的。税吏备了三只木匣，分门别类，每日上锁。朝廷那只匣子小，锁却挂了三把，钥匙由三个人分拿。", sigh: "年终开匣，铜钱上生了绿，数钱的差役数到一半，出门透气。" },
+      { quote: "礼乐征伐，自诸侯出。", praise: "岁末各镇照例递表称臣，表文写得工整。礼部拿格式逐字比对，从一份表里挑出一处避讳写错，退回重誊。那镇的主簿连夜改过，重新封好，由驿使送进京。", sigh: "新表里那个字改了，其余一字未动。" },
+      { quote: "山围故国周遭在，潮打空城寂寞回。", praise: "长安的坊墙塌了一截，京兆府拨土坯来补，补到一半钱不够，就那样敞着。行人从缺口进出，赶车的把牲口牵慢了，怕蹭着砖。日子久了，缺口两边的土被踩出一条路。", sigh: "那条路上的土色，比旁边的深。" },
+    ],
+    fade: [
+      { quote: "其人存，则其政举；其人亡，则其政息。", praise: "户部把他的章程抄了副本，州县各存一份，封条上写着日期。管架的老吏在封条背面添了一行小字，记这例曾行过三年。三年后有人来调旧档，翻到这一册，看了看封条，没拆。", sigh: "那行小字朝里，得把封条撕开才看得见。" },
+      { quote: "去年今日此门中，人面桃花相映红。", praise: "城西的义仓是他任上修的，屋顶漏了，仓曹报修三次，钱一直拨不下来。后来库吏用苇席盖了半边，压上几块石头。秋后收新粟，好粟入东仓，西仓那半边留着陈的。", sigh: "一阵风掀起苇席一角，露出底下发黑的粟，又被石头压回去。" },
+      { quote: "所遇无故物，焉得不速老。", praise: "他留下的几个属官，一个调去外县，一个辞了，剩一个每天照旧来衙门点卯。堂上无案可办，他坐着把两只袖子叠好，听见鼓声就起身回家。", sigh: "他桌上那方铜镇纸，后来拿去压了灶房的柴单。" },
+      { quote: "只今惟有西江月，曾照吴王宫里人。", praise: "他病中口授的那道疏，死后压在政事堂的文书堆里。半年后翻出来，纸角被蠹虫蛀去两个字，誊抄的人照原样抄，在缺处画了个空圈。疏进了档案，编号写在角上。", sigh: "那个空圈后来有人用朱笔补上，字迹与前后都不同。" },
+    ],
+    mutiny: [
+      { quote: "「君以此始，亦必以终。」", praise: "你靠兵起家，兵也认你，只是账上没钱的时候，认不认就不由你了。那夜禁军围了宫城，喊的是“索饷”，不是“清君侧”。你登楼说了几句，风大，底下听不清。", sigh: "天亮以后，宫门照开，早朝照上，换了个人坐在上头。长安的市面一点没乱。" },
+      { quote: "「水能载舟，亦能覆舟。」", praise: "你一向信得过那几个内臣，禁军的鱼符交到他们手里，图个省事。省了几年的事，那一夜连本带利还回来。殿上的烛还亮着，你听见靴声，比听见丧钟还静。", sigh: "新帝即位，头一道诏书是褒恤你，追赠了个很好听的官。仇家一个没动。" },
+      { quote: "「天街踏尽公卿骨，内库烧为锦绣灰。」", praise: "兵从朱雀门进来时排得还算齐整，进去就不齐整了。你省下的那些钱，一夜散得比流水快。你的名字还挂在城门上，旁边多了一道刀痕。", sigh: "宫里的乐工被掳走一半，剩下的在瓦砾里捡了面鼓，敲两下，觉得没意思，又放下。" },
+      { quote: "「夜如何其，夜未央。」", praise: "你到尽头都在讲道理，讲打天下的旧情，讲同生共死的誓。帐前的兵低着头听，听完还是动了手。他们不是恨你，是等不到那个月饷，也等不到那个年头。", sigh: "收殓的时候，你的手还攥着那方鱼符。谁也没敢掰开，就连着符一起入了土。" },
+    ],
+    epilogue: [
+      { quote: "「长安米贱，西市人稠。」", praise: "西市开市那天，卖胡饼的老周把炉子支在原来的位置，面价比去年低了两文。税吏带着两个书手从街东过来，一摊一摊看秤，到老周这里，捏了个饼掰开，说发得不错。收完税，书手在簿子上画了个勾。", sigh: "老周把掰开的那半个饼用油纸包了，搁在炉边，到收摊也没卖。" },
+      { quote: "「马上相逢无纸笔，凭君传语报平安。」", praise: "城东驿站的老卒姓韩，三年前这里一天要换三回马，如今三天换不了一回。他把马厩扫得干净，草料垛得整齐，闲下来替人写家书，一封收三文。那天他给陇西的一个兵写了六行，写到“家中都好”停了停，还是照原话写下去。", sigh: "来取信的人到门口，他把信封在袖里暖了暖才递出去。" },
+      { quote: "「可怜无定河边骨，犹是春闺梦里人。」", praise: "清明那天，城西的坡地上又多了几座新坟。她带着儿子走了半个时辰，在一座没有碑的坟前摆下麦饭，把酒倒在土上。儿子今年七岁，学会写自己的名字，用树枝在土上划了一遍，划完拿脚抹了。", sigh: "回来的路上她买了两个胡饼，一个给儿子，一个揣在怀里。" },
+    ],
+  },
+  "河北": {
+    win: [
+      { quote: "渔阳鼓动，北斗南倾。", praise: "那年冬天，没人信河北的兵能走到朱雀门。鼓声一路敲过来，鼓点没乱，天下也没乱。你坐在马上，看长安的城墙一寸寸高起来。", sigh: "旧臣捧着玉玺上前时，手抖得厉害。你看见了，什么也没说。" },
+      { quote: "黑水冬清，白山桃芬，圣人出北，命在渔阳。", praise: "幽州的马，营州的兵，范阳的粮，被你拧成一股。胡汉两班朝会，礼官为座次吵了三个月，末了是你一句话按下去的。新朝头一回大朝，殿上有人说汉话，有人说胡语，都听得懂。", sigh: "第一道诏书用汉字写，念的人带一点胡音。你觉得这样就对了。" },
+      { quote: "三星聚于柳，萤火犯紫微。", praise: "你起家时手里没有名分，只有刀、粮和人。打了半辈子，名分自己找上门来。史官为你立传，笔停了很久，终究还是落下去。", sigh: "后世在酒桌上争你算不算唐。你自己心里清楚，你就是。" },
+      { quote: "燕山雪尽，龙见于幽。", praise: "从范阳到洛阳，你走了大半辈子。回程那段是坐着进的城，城门开着，没人拦。沿街的人跪了一半，另一半探头看，像看一场下不完的雪。", sigh: "当夜你在含元殿没睡，听见城外胡笳，觉得像小时候的声音。" },
+    ],
+    partial: [
+      { quote: "胡马依北风，越鸟巢南枝。", praise: "渔阳的兵册一年一修，划掉的名字比新添的多。点卯那日，校场上的队排得短了，队尾空出一片地。教头照旧喊号，喊到一半，改成让剩下的人自己练。", sigh: "校场边拴马的木桩空着三根，桩上的绳还系着。" },
+      { quote: "边市朝开，胡汉同价。", praise: "城外的市集连着开了三个月，胡人牵骆驼来卖盐和皮子，汉人摆摊卖饼和粗布。牙人立在当中，两边的话都听得懂，讲价时用手比。收摊后地上落一层瓜子壳和碎草料。", sigh: "扫街的人把这些扫作一堆，点火烧了，烟是甜的。" },
+      { quote: "十五从军征，八十始得归。", praise: "一个老兵从渔阳回来，家里的屋子塌了半边，井还在。他在井边坐了一下午，把甲片一片片解下来，码在石头上。邻家小孩来看，他挑了一片给孩子玩。", sigh: "那串甲片后来散在院里，锈成了土色。" },
+      { quote: "七月流火，九月授衣。", praise: "镇上的妇人赶在入秋前把旧袄拆了重絮，絮的是杨花和碎麻。城中铁匠改打锄头，铺子门口挂着的旧招牌没擦，铁锈盖住了字。开春买锄的人排到巷口，比往年到得早。", sigh: "铁匠把那块招牌取下来，立在门后，没有扔。" },
+    ],
+    split: [
+      { quote: "兄弟阋于墙，外御其侮。", praise: "老家主下葬那日，几支人马各举各的旗，旗色换了，字还是旧字。灵柩出城门，队伍在岔路口散开，一队往北，一队往西，剩下的进了城。坟头的土是各家派人一起堆的。", sigh: "堆完土，各回各的营，路上没人说话。" },
+      { quote: "邦分崩离析而不能守也。", praise: "两个镇在官道上各设了一道卡，赶车的备两份钱，走到第二道时摸摸口袋，只剩一串铜。守卡的牙兵看了看，把横木抬起来一半，让他过去了。", sigh: "那半截横木没放下来，后面的车跟着过去了。" },
+      { quote: "渔阳鼙鼓动地来。", praise: "招兵的旗插在集市口，两家各招各的。一个妇人把两个儿子拉到旗底下问，管事的翻名册，说一家只收一个。她指了小的，小的被牵走时回头看了三次。", sigh: "大的那个站在原地，手里还攥着半个饼。" },
+      { quote: "凉州七里十万家，胡人半解弹琵琶。", praise: "市集落在两镇的夹缝里，谁都不来管。胡商把毡子铺在土上，摆出盐块、硫黄和旧铜镜，汉人拿布和茶砖来换。入夜后有人在帐外弹琵琶，调子不准，弹了半宿。", sigh: "第二天收摊，毡子上的沙抖不干净，就那么卷起来驮走了。" },
+    ],
+    fade: [
+      { quote: "皮之不存，毛将焉附。", praise: "老家主一死，他定的赏格没人再提。几个旧部来讨欠的饷，管事的翻了簿子，说账在上一任手里，人已经走了。他们在衙门口站到天黑，各自散了。", sigh: "门房把那盏灯吹灭，锁门时发现门轴松了，用脚顶了一下。" },
+      { quote: "庭树不知人去尽，春来还发旧时花。", praise: "老家主院里的那棵梨树，春天照旧开花。他的旧部有两个还来看，站在墙外，没进去。扫院的老仆把落花扫到树根底下，堆成一堆。", sigh: "花堆沤了几天，颜色从白转黄，没人再动。" },
+      { quote: "醉卧沙场君莫笑，古来征战几人回。", praise: "跟着老家主出去的那批人，回来的没有几个。抚恤的单子是他死后才拟的，写单子的书吏照名册抄，抄到一半，发现有几户已经没人了。他停了笔，把那几行划去，重新算。", sigh: "那张单子贴在衙门口，边角很快被人撕去卷烟。" },
+      { quote: "亲戚或余悲，他人亦已歌。", praise: "灵前的席子撤了以后，院子里的鼓再没响过。几个儿子各忙各的，旧部的名册被拿去垫了桌脚，短了一截的那块。新来的管事重新造册，把老人划去，又在旁边添上新招的。", sigh: "垫桌脚的那本册子，从底下抽出来时，桌上留下一圈印。" },
+    ],
+    mutiny: [
+      { quote: "甲士夜起，帐中易主。", praise: "你睡得沉，醒来时帐外全是火把。亲兵还握着刀，只是刀口对着里头。你没喊，也没问为什么，只问了一句：粮够不够吃。为首的那个愣了半天，说够。", sigh: "他们把你送到别处安置，一路上没人说话。你看着车外，觉得这条路来的时候走过。" },
+      { quote: "三军哗于门外，主将不得安眠。", praise: "欠饷欠到第三个月，军中就开始传闲话。你四处挪银子，挪到后来连自己的马都卖了。兵没散，只是不再听你调遣；他们自己推了个说话算数的人。", sigh: "你后来才知道，他们要的不多，就是一个稳当的月粮。这道理你早懂，只是懂得太晚。" },
+      { quote: "胡汉分营，夜半相攻。", praise: "你一手拉起来的胡汉两军，终究还是动了手。起因很小，为一个抢来的女子，或者一匹好马，事后谁也说不清。天亮时营里静得吓人，你站在尸首中间，两边都跪着等你说句话。", sigh: "你什么也没说，转身回帐。那天之后，你再没能把两拨人合到一处。" },
+      { quote: "箭在弦上，不肯还手。", praise: "乱兵冲进来的时候，你的亲卫还挡在门口。有人喊你走，你没走；有人劝你降，你没降。末了是副将把你按在椅子上，替你签了字。签完他还行了个礼。", sigh: "你没怪他。这世道里，肯行礼的人已经不多。" },
+    ],
+    epilogue: [
+      { quote: "「三更灯火五更鸡，正是男儿读书时。」", praise: "范阳城南的学舍是三年前盖的，土墙，草顶，下雨就漏。教书的是个落第的汉人秀才，学生里有汉人的孩子，也有胡人的孩子。那天讲“关关雎鸠”，一个胡人孩子问雎鸠是什么鸟，秀才说，是水边的鸟，河湾里就有，孩子点头，接着念。", sigh: "下学时孩子们踩着泥水跑出去，秀才把窗子支起来，让风把墨味吹散。" },
+      { quote: "「昔为军户，今为编民。」", praise: "城北的军户老赵三年前解了甲，分了二十亩地，头一年种粟，第二年改种麦。税吏春上来量过一次田，用绳子和木桩，量完在册上改了数。老赵蹲在田头看，看到木桩打在他家祖坟边上，站起来说了句什么，税吏把桩子往里挪了半步。", sigh: "那半步的地，他后来种了两行豆。" },
+      { quote: "「皮货换盐，不问其族。」", praise: "市集上胡人的皮货摊摆在汉人的盐摊旁边，两家的孩子在一处玩石子。那天来了一队从北边回来的驼队，驮着羊皮和碱，摊主们围上去讲价，讲价的话半胡半汉。一个汉人妇人在胡人摊上挑了张羊皮，摸了摸毛，放下，又拿起来。", sigh: "她走的时候，摊主往她篮子里多塞了一把干草，说是垫皮子用的。" },
+    ],
+  },
+  "河朔": {
+    win: [
+      { quote: "小蛇吞象，鲤鱼化龙。", praise: "三镇的刀，是从牙缝里长出来的。你没读过几天书，进宗庙那天却把礼器一件一件数清了，一件没摔。往后的中原，皇帝头一个字要写成你这样的出身。", sigh: "传国玺抓在手里，只觉凉，不像传闻里那样烫。" },
+      { quote: "起于行伍，坐于明堂；刀未生锈，人已称尊。", praise: "当年在易水边分麦子的几个弟兄，如今穿上了紫袍。你给他们排的位次，比长安那本老家谱还稳当。这一回，天下是让刀说了算的。", sigh: "只是坐上去以后，帐外的鼓声听不清了。听不清，不等于停了。" },
+      { quote: "天子宁有种耶，兵强马壮者为之耳。", praise: "你一辈子没求人赐名分，名分是你自己提着刀换的。换得干净，连史官都不好意思在开头写\"本出寒微\"那四个字。", sigh: "酒过三巡，你还是会想起营里那个拿你当小校呼喝的老都头。他没等到今天。" },
+      { quote: "风吹易水，马首向东。", praise: "二十年里你替人守城、押粮、低头，前后跪过多少回自己都懒得算。今日站上承天门，底下的人照样跪，只是这回跪的是你。这条路远近，只有你那双膝盖清楚。", sigh: "夜里你还是睡得浅，甲叶响一声就醒。做节度使时落下的毛病，做了天子也没改。" },
+    ],
+    partial: [
+      { quote: "「河朔麦熟，不问长安。」", praise: "这年秋税下来，牙兵的饷按月初八发，一文没拖。关外的麦子晒在场院上，没人来征。长安的诏书搁在案上，搁到纸角积了灰。", sigh: "库房那三把旧锁他没换，钥匙挂在腰上，走路时碰出响声。" },
+      { quote: "「关门不启，市声自喧。」", praise: "镇帅把三道关的税吏换了半茬，新来的几个识得秤，也识得价。盐价稳了三年，粮车不必等兵过才敢进城。牙兵照旧吃双饷，逢五有肉，逢十有酒，酒是本镇烧的。", sigh: "关门的门板上刻着“太平”两字，刻得浅，第二年就看不清了。" },
+      { quote: "「不争其名，只争其仓。」", praise: "邻镇发兵来试，走到界河就停了。两边的人在河滩上互相看着，看到日头偏西，各自回营。镇帅让人送了两车盐过去，没附书信，那边收下盐，兵也退了。", sigh: "河滩上留下些马蹄印，开春被犁进了地。" },
+      { quote: "「河水绕城，兵不动，市不散。」", praise: "他在这把椅子上坐到第十一个年头，牙兵换了两茬，认得的旗没换。每年开春他亲自上校场点一回名，念到谁，谁应一声，应完就退。文吏把名册抱回去，墨迹一年比一年淡。", sigh: "校场边那棵老榆树被缰绳磨出一圈白痕，磨了很多年，树还站着。" },
+    ],
+    split: [
+      { quote: "「三镇各立牙旗，各铸其钱。」", praise: "范阳铸的钱成色足，成德的轻些，魏博的最杂，市上按成色折价，谁也不吃亏。三家立过一纸约，写“互不犯界”，每年重抄一遍，抄的人换了三个。抄完各饮一碗酒。", sigh: "那纸约压在范阳的柜里，边角被酒渍洇黄了。" },
+      { quote: "「兵认月粮，不认姓名。」", praise: "镇帅一年里头换了两个。头一个被牙兵围在帐里，交出印信，第二天骑马走了，走时还带着自己的厨子；第二个上任头一件事是补发欠饷，第二件事是把前任的旗收进库房。营里照常开伙，粥是稠的。", sigh: "新帅上位那天，中军帐里重新铺了席，旧席卷起来靠在墙角，没人去收。" },
+      { quote: "「一河为界，三旗相望。」", praise: "三家打过两回，都是点到即止。打完了坐下来分盐引，一家一份，分得不匀就再打一回。边境的百姓摸出了规律，听见鼓声就往地窖里搬粮，鼓停了再把粮搬出来晒。", sigh: "地窖口那块石板被搬得发亮，边上缺了一角。" },
+      { quote: "「官自己封，历自己颁。」", praise: "他在镇上设了一套官，名目照长安的旧制，只少了几司，多了一个“粮料使”。文书抬头并着写两个号，一个唐的，一个自己的。使者来了看半天，没说什么，喝了茶就走。", sigh: "那套官印是本地匠人刻的，铜不够，掺了锡，按在纸上颜色发青。" },
+    ],
+    fade: [
+      { quote: "「盐引未干，签押已改。」", praise: "他病重时把仓帐交代给两个文吏，一条一条念，念到第七页没了声音。丧事办得简单，牙兵列队送了三里。回营第一件事是开库发饷，管库的换了人，新锁的钥匙挂在新人腰上。", sigh: "旧钥匙还在他儿子的抽屉里，铜绿爬了一半。" },
+      { quote: "「解甲归田，田非其田。」", praise: "他死后第二年，营里放了一批老卒回乡，每人领三斗米、一匹布。有个老卒走了七天回到村口，自家的地在河湾，界石被人挪了三尺，新界石上刻着别家的姓。他在田埂上坐到天黑。", sigh: "他把那匹布铺在田埂上，第二天起来，布上落了一层霜。" },
+      { quote: "「印在匣中，无人启封。」", praise: "他留下的条陈装了四只木匣，摆在帐后。继任的镇帅翻开第一只，看了两页，叫人把匣子挪到仓房，腾出地方摆一张新案。新案是整块榆木的，抬进来卡在帐门上，卸了门框才进得去。", sigh: "四只匣子在仓房里摞着，最上头那只压着一杆旧秤。" },
+      { quote: "「一院两家，令废院存。」", praise: "他在时定过一条：胡汉通婚的人家，田亩各半，子嗣随父随母自便。这条用了九年，他死后第三年被废，废得也简单，只在册子上添了一行小字。城南那户人家的院子还在，院墙塌了半截，两家合着垒过一次，垒得歪，也没再塌。", sigh: "灶台上并排放着两只陶罐，一只装盐，一只装酪。" },
+    ],
+    mutiny: [
+      { quote: "牙兵饱食，则思易主。", praise: "你待他们不薄，饷从不拖欠，年节有酒有肉。他们一直很感激你，也没在人前说过一句怨话。", sigh: "那一夜，饷晚了三个月。掀帐的人进来时，你还没醒。" },
+      { quote: "白刃及颈，方知恩薄。", praise: "你从一个小校走到镇帅，二十年里渡过三条河，丢过半只耳朵。这些人一路看着你往上爬，看得比谁都清楚。", sigh: "他们也知道你睡觉时刀放在哪一边。这一手，是你自己教给他们的。" },
+      { quote: "养虎帐中，虎识其面。", praise: "你在时把军中的赏罚改了三回，改得比谁都公道。有人说，三镇这些主帅里，只有你讲理。", sigh: "讲理的人死在一个不讲理的夜里。这一节，史书写得最短。" },
+      { quote: "刀从枕边起，祸自帐中生。", praise: "你没败在阵上。长安派来的兵动不了你，邻镇那员名将也动不了你。你只是把最贴身的这支牙兵，养得太肥了。", sigh: "第二天营里照常开伙。中军帐里换了个人坐，粥还是那个味道。" },
+    ],
+    epilogue: [
+      { quote: "「少小离家老大回，乡音无改鬓毛衰。」", praise: "解甲的老兵姓陈，三年前从易水边回来，走了十一天。村口的老槐树还在，他家的地在村西，如今插着别家的界牌。他去问里正，里正翻出册子给他看，册上写着别人的名字，落着三年前过契的手印。", sigh: "他把包袱放在田埂上，坐下，把鞋里的土倒出来。土落在界牌上，盖住了半个姓。" },
+      { quote: "「一井两家，炊烟同起。」", praise: "城西那户人家，三年前住着汉人的婆婆和胡人的媳妇。婆婆在院里晒酱，媳妇在檐下打酥酪；男人从军去了两年，捎回来过一回信，信上说到明年开春。那天媳妇把酥酪端了一碗给隔壁，隔壁回了一把葱。", sigh: "院里的井绳换了新的，旧的那根还挂在墙上，没扔。" },
+      { quote: "「饷到则聚，饷迟则散。」", praise: "三镇的牙兵如今按月领饷，饷从盐税里出。发饷那天营门口排着队，领了钱的兵往市集上走，卖酒的、卖饼的把摊子支到营门外。有个兵领了钱先去还了酒账，剩下的买了半匹布，说是给家里捎回去。", sigh: "布店掌柜把布卷好，用麻绳捆了两道，打了个死结。" },
+    ],
+  },
+};
+
+let st = null;
+
+function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+const $ = (id) => document.getElementById(id);
+
+function showFacts() {
+  const box = $("facts");
+  box.innerHTML = "";
+  Object.keys(FACS).forEach((name) => {
+    const el = document.createElement("div");
+    el.className = "fact";
+    el.innerHTML = `<h3>${name} \u00b7 ${FACS[name].tag}</h3><p>${FACS[name].desc}</p>`;
+    el.onclick = () => start(name);
+    box.appendChild(el);
+  });
+}
+
+function start(fac) {
+  st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0, pool: shuffle(DECK), log: [], ach: [], hist: [] };
+  $("screen-start").classList.add("hide");
+  $("screen-end").classList.add("hide");
+  $("screen-play").classList.remove("hide");
+  render();
+}
+
+function render() {
+  $("round").textContent = st.round;
+  $("fac-pill").textContent = st.fac;
+  $("bar-money").style.width = (st.money * 10) + "%";
+  $("bar-name").style.width = (st.name * 10) + "%";
+  $("bar-army").style.width = (st.army * 10) + "%";
+  $("log").innerHTML = st.log.map((x) => `<div>${x}</div>`).join("");
+  const box = $("cards");
+  box.innerHTML = "";
+  st.pool.slice(0, 3).forEach((c) => {
+    const el = document.createElement("div");
+    el.className = "card";
+    const parts = [];
+    if (c.e.money) parts.push(`\u94b1 ${c.e.money > 0 ? "+" : ""}${c.e.money}`);
+    if (c.e.name) parts.push(`\u540d ${c.e.name > 0 ? "+" : ""}${c.e.name}`);
+    if (c.e.army) parts.push(`\u5175 ${c.e.army > 0 ? "+" : ""}${c.e.army}`);
+    el.innerHTML = `<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts.join("\u3000")}</div>`;
+    el.onclick = () => pick(c);
+    box.appendChild(el);
+  });
+}
+
+function pick(c) {
+  ["money", "name", "army"].forEach((k) => {
+    st[k] = Math.max(0, Math.min(10, st[k] + (c.e[k] || 0)));
+  });
+  const parts = Object.keys(c.e).map((k) => {
+    const label = { money: "\u94b1", name: "\u540d", army: "\u5175" }[k];
+    const v = c.e[k];
+    return `${label}${v > 0 ? "+" : ""}${v}`;
+  }).join(" ");
+  st.log.unshift(`\u7b2c${st.round}\u56de \u00b7 ${c.t}\u3000${parts}`);
+  st.hist.push(c);
+  if (!c.repeat) st.pool = st.pool.filter((x) => x.id !== c.id);
+  checkAch();
+  if (st.godown) return finishCarnal();
+  st.round += 1;
+  if (st.round > ROUNDS || st.money <= 0 || st.army <= 0) return finish();
+  render();
+}
+
+
+function unlock(a) {
+  if (st.ach.some((x) => x.id === a.id)) return;
+  st.ach.push(a);
+  toast(`成就解锁 · ${a.name}　封号 ${a.title}`);
+}
+
+function checkAch() {
+  const h = st.hist;
+  const n = h.length;
+  const all = (fn) => h.every(fn);
+  const count = (id) => h.filter((x) => x.id === id).length;
+
+  if (n >= 5 && all((c) => (c.e.money || 0) > 0)) unlock(ACH.find((a) => a.id === "money5"));
+  if (n >= 5 && all((c) => (c.e.army || 0) > 1)) unlock(ACH.find((a) => a.id === "army5"));
+  if (n >= 5 && all((c) => (c.e.name || 0) > 0)) unlock(ACH.find((a) => a.id === "name5"));
+  if (n >= 5 && all((c) => !(c.e.money > 0))) unlock(ACH.find((a) => a.id === "nomoney"));
+  if (n >= 5 && st.name <= 2 && st.money >= 8) unlock(ACH.find((a) => a.id === "forget"));
+  if (count("consort") >= 2) unlock(ACH.find((a) => a.id === "consort2"));
+  if (count("consort") >= 3) {
+    unlock(ACH.find((a) => a.id === "consort3"));
+    st.godown = true;
+  }
+  if (count("relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
+  if (n >= 5 && st.army >= 6 && all((c) => !(c.e.army > 0))) unlock(ACH.find((a) => a.id === "freesoldier"));
+  if (n >= 4 && Math.max(st.money, st.name, st.army) >= 9 && Math.min(st.money, st.name, st.army) <= 2) {
+    unlock(ACH.find((a) => a.id === "lopsided"));
+  }
+  if (n >= 5 && Math.min(st.money, st.name, st.army) >= 8) unlock(ACH.find((a) => a.id === "balanced"));
+}
+
+let toastTimer = null;
+function toast(text) {
+  let el = document.getElementById("toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toast";
+    el.className = "toast";
+    (document.body || document.documentElement || document).appendChild(el);
+  }
+  el.textContent = text;
+  el.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+function finishCarnal() {
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  const a = ACH.find((x) => x.id === "consort3");
+  $("end-title").textContent = "驾崩";
+  $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
+  $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
+  $("end-sigh").textContent = `封号：${a.title}。百姓谢谢你，史官只写了半页。`;
+}
+
+function monoKind() {
+  const cnt = (k) => st.hist.filter((c) => (c.e[k] || 0) > 0).length;
+  const m = { money: cnt("money"), army: cnt("army"), name: cnt("name") };
+  const top = Object.keys(m).sort((a, b) => m[b] - m[a])[0];
+  return m[top] >= 4 ? top : null;
+}
+
+function finish() {
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  const mk = monoKind();
+  if (mk) {
+    const r = ROT[mk];
+    $("end-title").textContent = r.title;
+    $("end-quote").textContent = r.quote;
+    $("end-praise").textContent = r.praise;
+    $("end-sigh").textContent = r.sigh + `\n\n封号 · ${r.titleAch}　成就 · ${r.ach}`;
+    toast(`成就解锁 · ${r.ach}　封号 ${r.titleAch}`);
+    return;
+  }
+  const low = Math.min(st.money, st.name, st.army);
+  const h = HARD.find((x) => low >= x.min) || HARD[HARD.length - 1];
+  const pool = COPY[st.fac][h.kind];
+  const c = pool[Math.floor(Math.random() * pool.length)];
+  const epi = (COPY[st.fac].epilogue || []);
+  const ep = epi.length ? epi[Math.floor(Math.random() * epi.length)] : null;
+  $("end-title").textContent = h.title;
+  $("end-quote").textContent = c.quote;
+  $("end-praise").textContent = c.praise;
+  const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
+  const titleAch = st.ach.length ? st.ach[st.ach.length - 1].title : "";
+  $("end-sigh").textContent = c.sigh
+    + (titleAch ? `\n\n封号 · ${titleAch}` : "")
+    + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
+    + (ep ? `\n\n三年后 · ${ep.praise}` : "");
+}
+
+
+/* ===== 复制这一局：给真人反馈用 ===== */
+function buildShareText() {
+  const title = $("end-title").textContent;
+  const pick = (st.hist || []).map((c) => c.t).slice(0, 6).join(" → ");
+  const ach = (st.ach || []).map((a) => a.name).join(" / ") || "无";
+  return [
+    "【天宝模拟器 · 试玩反馈】",
+    `势力：${st.fac}｜结局：${title}`,
+    `我选的：${pick}`,
+    `成就/封号：${ach}`,
+    "",
+    "我觉得（随便一句就行）：",
+    "1. 这局好玩吗：",
+    "2. 哪里最想吐槽：",
+    "3. 会不会再玩一局：",
+  ].join("\n");
+}
+
+function copyShare() {
+  const text = buildShareText();
+  const tip = $("share-tip");
+  const done = () => { if (tip) tip.textContent = "已复制，粘到微信发我就行。"; };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallback());
+  } else {
+    fallback();
+  }
+  function fallback() {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) {
+      if (tip) tip.textContent = "复制失败，手动截个图也行。";
+    }
+    document.body.removeChild(ta);
+  }
+}
+
+$("btn-again").onclick = showFacts;
+$("btn-share").onclick = copyShare;
+showFacts();
+</script>
+</body></html>
