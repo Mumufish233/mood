@@ -150,6 +150,295 @@ const ROT = {
   },
 };
 
+/* ===== 私人策略（从网页版抽来，数值已缩放到 0–10） ===== */
+const PRIVATE_LITE = {
+  "唐廷": [
+    {
+      "id": "p_ljzt",
+      "name": "励精图治",
+      "note": "早起批折子，一天看三百本",
+      "eff": {
+        "name": 4,
+        "army": 2
+      },
+      "flag": {
+        "name": "利益集团警惕",
+        "chance": 0.24,
+        "eff": {
+          "army": -2,
+          "name": -2
+        },
+        "text": "甘露之变：您的人还没动手，先被人在殿上动了手。"
+      }
+    },
+    {
+      "id": "p_fftq",
+      "name": "发愤图强",
+      "note": "通宵理政，还要炼个丹",
+      "eff": {
+        "money": 1,
+        "army": 2
+      },
+      "flag": {
+        "name": "服丹药",
+        "chance": 0.24,
+        "eff": {
+          "name": -3,
+          "army": -2
+        },
+        "text": "中道崩殂：丹炉炸了，天子当场升天——字面意义的。"
+      }
+    },
+    {
+      "id": "p_xrxc",
+      "name": "信任贤臣",
+      "note": "把事交给一个明白人",
+      "eff": {
+        "name": 4,
+        "army": 2
+      },
+      "flag": {
+        "name": "另一派离心",
+        "chance": 0.28,
+        "eff": {
+          "name": -2,
+          "army": -1
+        },
+        "text": "您信任的那一派升了，另一派转头就把边关的门锁了。"
+      }
+    },
+    {
+      "id": "p_afei",
+      "name": "爱妃何在？",
+      "note": "国事明天再说",
+      "eff": {
+        "name": 1,
+        "army": -1,
+        "money": -1
+      },
+      "flag": {
+        "name": "朝纲松弛",
+        "chance": 0.2,
+        "eff": {
+          "army": -1
+        },
+        "text": "百官在殿外等了一个时辰，天子在里面找妃子。"
+      }
+    },
+    {
+      "id": "p_lizhi",
+      "name": "爱妃的荔枝呢！",
+      "note": "八百里加急，只为一颗果",
+      "eff": {
+        "name": 1,
+        "money": -1,
+        "army": -1
+      },
+      "flag": {
+        "name": "驿传疲敝",
+        "chance": 0.25,
+        "eff": {
+          "army": -2
+        },
+        "text": "为了那颗荔枝，驿马跑死了七匹，边关军报晚到了三天。"
+      }
+    },
+    {
+      "id": "p_furen",
+      "name": "城中可有妇人？",
+      "note": "军心需要一点娱乐",
+      "eff": {
+        "army": 2,
+        "name": -2
+      },
+      "flag": {
+        "name": "民怨",
+        "chance": 0.3,
+        "eff": {
+          "name": -2,
+          "money": -1
+        },
+        "text": "城中哭声一片。士兵很开心，百姓记住了这一天。"
+      }
+    }
+  ],
+  "范阳": [
+    {
+      "id": "p_changan",
+      "name": "打破长安！活捉玉环！",
+      "note": "口号喊得比刀快",
+      "eff": {
+        "army": 2,
+        "money": 1,
+        "name": -2
+      },
+      "flag": {
+        "name": "天下共愤",
+        "chance": 0.3,
+        "eff": {
+          "name": -3
+        },
+        "text": "各地勤王的旗子一夜间全竖起来了，连您的老朋友都在骂您。"
+      }
+    },
+    {
+      "id": "p_tiaowu",
+      "name": "咱老胡人，今儿必须跳个舞！",
+      "note": "胡旋一转，军心就散",
+      "eff": {
+        "name": 2,
+        "army": -1
+      },
+      "flag": {
+        "name": "军纪松弛",
+        "chance": 0.25,
+        "eff": {
+          "army": -2
+        },
+        "text": "主帅在营中跳舞，第二天三个营的人去抢了同一个村。"
+      }
+    },
+    {
+      "id": "p_fenshang",
+      "name": "分赏三军",
+      "note": "钱给到位，刀就听使唤",
+      "eff": {
+        "army": 2,
+        "money": -2
+      },
+      "flag": null
+    },
+    {
+      "id": "p_gandie",
+      "name": "认个干爹",
+      "note": "找个名义上的靠山",
+      "eff": {
+        "name": 1
+      },
+      "flag": null
+    },
+    {
+      "id": "p_tucheng",
+      "name": "屠城立威",
+      "note": "以杀止疑",
+      "eff": {
+        "army": 2,
+        "name": -3
+      },
+      "flag": {
+        "name": "血债",
+        "chance": 0.3,
+        "eff": {
+          "name": -2
+        },
+        "text": "城里的血还没干，降表就变成了战书。"
+      }
+    },
+    {
+      "id": "p_chengdi",
+      "name": "称帝",
+      "note": "迟早上位，不如现在",
+      "eff": {
+        "name": 2
+      },
+      "flag": {
+        "name": "树大招风",
+        "chance": 0.32,
+        "eff": {
+          "name": -2,
+          "army": -1
+        },
+        "text": "刚刻完玉玺，两个老部下就开始商量您的身后事了。"
+      }
+    }
+  ],
+  "河朔": [
+    {
+      "id": "p_baojing",
+      "name": "保境安民",
+      "note": "不出门就不会死",
+      "eff": {
+        "name": 1,
+        "money": 1
+      },
+      "flag": {
+        "name": "朝廷猜忌",
+        "chance": 0.22,
+        "eff": {
+          "army": -1
+        },
+        "text": "您越安分，朝廷越觉得您在憋坏水。"
+      }
+    },
+    {
+      "id": "p_lianyin",
+      "name": "与邻镇联姻",
+      "note": "把刀换成亲家",
+      "eff": {
+        "name": 2,
+        "money": -1
+      },
+      "flag": null
+    },
+    {
+      "id": "p_jiaxiang",
+      "name": "牙兵加饷",
+      "note": "喂饱了才不会被换掉",
+      "eff": {
+        "army": 2,
+        "money": -2
+      },
+      "flag": {
+        "name": "胃口变大",
+        "chance": 0.3,
+        "eff": {
+          "army": -1,
+          "money": -1
+        },
+        "text": "明年他们要求加双倍，理由是「去年都加了」。"
+      }
+    },
+    {
+      "id": "p_xuanmei",
+      "name": "选美入府",
+      "note": "府里总要有点乐子",
+      "eff": {
+        "name": 1,
+        "money": -1
+      },
+      "flag": null
+    },
+    {
+      "id": "p_qiang",
+      "name": "抢邻镇的钱粮",
+      "note": "反正都是藩镇",
+      "eff": {
+        "money": 2,
+        "name": -1
+      },
+      "flag": {
+        "name": "报复",
+        "chance": 0.28,
+        "eff": {
+          "army": -2,
+          "money": -1
+        },
+        "text": "邻镇没吭声，只在您的地界上点了几把火。"
+      }
+    },
+    {
+      "id": "p_jingjie",
+      "name": "请朝廷给个旌节",
+      "note": "花点钱买个名分",
+      "eff": {
+        "name": 2,
+        "army": -1
+      },
+      "flag": null
+    }
+  ]
+};
+
 const HARD = [
   { min: 8, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
   { min: 6, kind: "partial", title: "\u504f\u5b89" },
@@ -291,7 +580,10 @@ function showFacts() {
 }
 
 function start(fac) {
-  st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0, pool: shuffle(DECK), log: [], ach: [], hist: [] };
+  st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0,
+         pool: shuffle(DECK), log: [], ach: [], hist: [],
+         step: "card", priv: [], flags: [], flagLog: [],
+         privPool: shuffle((PRIVATE_LITE[fac] || []).slice()) };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
@@ -299,6 +591,7 @@ function start(fac) {
 }
 
 function render() {
+  if (st.step === "private") return renderPrivate();
   $("round").textContent = st.round;
   $("fac-pill").textContent = st.fac;
   $("bar-money").style.width = (st.money * 10) + "%";
@@ -320,6 +613,55 @@ function render() {
   });
 }
 
+
+function renderPrivate() {
+  const box = $("cards");
+  box.innerHTML = "";
+  $("chronicle").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
+  if (!st.privPool.length) { st.privPool = shuffle((PRIVATE_LITE[st.fac] || []).slice()); }
+  const picks = st.privPool.slice(0, 3);
+  picks.forEach((p) => {
+    const el = document.createElement("div");
+    el.className = "card";
+    const parts = Object.keys(p.eff).map((k) => {
+      const label = { money: "钱", name: "名", army: "兵" }[k];
+      const v = p.eff[k];
+      return `${label}${v > 0 ? "+" : ""}${v}`;
+    }).join("　");
+    el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>`;
+    el.onclick = () => choosePrivate(p);
+    box.appendChild(el);
+  });
+  const skip = document.createElement("div");
+  skip.className = "card";
+  skip.innerHTML = "<h3>这次不折腾</h3><p>把心思都放在国事上。</p>";
+  skip.onclick = () => choosePrivate(null);
+  box.appendChild(skip);
+}
+
+function choosePrivate(p) {
+  if (p) {
+    Object.keys(p.eff).forEach((k) => {
+      st[k] = Math.max(0, Math.min(10, st[k] + p.eff[k]));
+    });
+    st.priv.push(p.name);
+    st.privPool = st.privPool.filter((x) => x.id !== p.id);
+    st.log.unshift(`私事 · ${p.name}`);
+    if (p.flag) {
+      st.flags.push(p.flag);
+      st.log.unshift(`　└ 埋下隐患：${p.flag.name}`);
+    }
+  } else {
+    st.log.unshift("私事 · 没折腾");
+  }
+  checkAch();
+  if (st.godown) return finishCarnal();
+  st.step = "card";
+  st.round += 1;
+  if (st.round > ROUNDS || st.money <= 0 || st.army <= 0) return finish();
+  render();
+}
+
 function pick(c) {
   ["money", "name", "army"].forEach((k) => {
     st[k] = Math.max(0, Math.min(10, st[k] + (c.e[k] || 0)));
@@ -334,8 +676,8 @@ function pick(c) {
   if (!c.repeat) st.pool = st.pool.filter((x) => x.id !== c.id);
   checkAch();
   if (st.godown) return finishCarnal();
-  st.round += 1;
-  if (st.round > ROUNDS || st.money <= 0 || st.army <= 0) return finish();
+  if (st.money <= 0 || st.army <= 0) return finish();
+  st.step = "private";
   render();
 }
 
@@ -357,7 +699,9 @@ function checkAch() {
   if (n >= 5 && all((c) => (c.e.name || 0) > 0)) unlock(ACH.find((a) => a.id === "name5"));
   if (n >= 5 && all((c) => !(c.e.money > 0))) unlock(ACH.find((a) => a.id === "nomoney"));
   if (n >= 5 && st.name <= 2 && st.money >= 8) unlock(ACH.find((a) => a.id === "forget"));
-  if (count("consort") >= 2) unlock(ACH.find((a) => a.id === "consort2"));
+  const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length + count("consort");
+  if (privLove >= 2) unlock(ACH.find((a) => a.id === "consort2"));
+  if (privLove >= 3) { unlock(ACH.find((a) => a.id === "consort3")); st.godown = true; }
   if (count("consort") >= 3) {
     unlock(ACH.find((a) => a.id === "consort3"));
     st.godown = true;
@@ -405,6 +749,15 @@ function monoKind() {
 function finish() {
   $("screen-play").classList.add("hide");
   $("screen-end").classList.remove("hide");
+  // 暗雷结算（私事埋下的东西）
+  (st.flags || []).forEach((fl) => {
+    if (Math.random() < fl.chance) {
+      apply(fl.eff);
+      st.flagLog.push(fl.text || fl.name);
+    }
+  });
+  // 爱妃三连 → 驾崩
+  if ((st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length >= 3) return finishCarnal();
   const mk = monoKind();
   if (mk) {
     const r = ROT[mk];
@@ -429,7 +782,8 @@ function finish() {
   $("end-sigh").textContent = c.sigh
     + (titleAch ? `\n\n封号 · ${titleAch}` : "")
     + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
-    + (ep ? `\n\n三年后 · ${ep.praise}` : "");
+    + (ep ? `\n\n三年后 · ${ep.praise}` : "")
+    + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
 }
 
 
