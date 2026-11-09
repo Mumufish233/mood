@@ -707,8 +707,15 @@ function showFacts() {
   });
 }
 
+const START = {
+  "唐廷": { money: 4, name: 8, army: 6 },   // 朝廷：名分最厚，钱最紧
+  "河北": { money: 4, name: 3, army: 8 },   // 范阳：兵最多，名最薄
+  "河朔": { money: 6, name: 3, army: 4 },   // 河东：钱粮稍厚，名兵都弱
+};
+
 function start(fac) {
-  st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0,
+  const s0 = START[fac] || { money: 5, name: 5, army: 5 };
+  st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, combo: 0,
          pool: shuffle(deckOf(fac).slice()), log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
@@ -963,7 +970,7 @@ const TITLES = {
   "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
             evil: ["篡逆权臣", "窃国之贼"],
             mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "杀年猪"],
-            funny: ["肥胖的小丑", "奴隶主义的先锋队", "好色胖子", "LV10胡旋舞者"] },
+            funny: ["渔阳舞王", "加肥版曹公", "干娘收藏家", "LV10胡旋舞者"] },
   "河朔": { win: ["真龙在野", "草蛇吞象", "乱世枭雄", "天命归晋", "人民保卫者"],
             mid: ["三镇之主", "牙兵大帅"], low: ["被换掉的帅", "没人记得的节度使"],
             funny: ["白日野心家", "戏曲行为大师", "出头的笨鸟", "俺寻思大能"] },
@@ -1043,8 +1050,9 @@ const RESCUE = [
 ];
 
 function poorTick() {
-  const low = Math.min(st.money, st.name, st.army);
-  if (!st.poor && st.army > 1 && low <= 2) {
+  const lows = [st.money, st.name, st.army].filter((v) => v <= 2).length;
+  const broke = Math.min(st.money, st.name) <= 1;   // 钱或名见底也算绝境
+  if (!st.poor && st.army > 1 && (lows >= 2 || broke)) {
     st.poor = true;
     st.poorRounds = 0;
     st.rescueGiven = false;
