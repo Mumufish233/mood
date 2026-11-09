@@ -118,7 +118,7 @@ const DECKS = {
     { id: "h_tribute",t: "献马入朝",   d: "两千匹马上表送去，长安的猜疑暂时松了一寸。", e: { name: 2, army: -1 } },
     { id: "h_sick",   t: "装病",       d: "你病得很有分寸，使者来了三次都没有见到人。", e: { name: 1, army: -1, money: 1 } },
     { id: "h_raid",   t: "掠奚",       d: "出塞三百里，羊群都是你的，人之前是别人的。", e: { money: 3, name: -2 } },
-    { id: "h_swallow",t: "吞邻镇",     d: "陛下忠诚的范阳公，用铁与血教育那些桀骜不驯的藩镇，什么是「忠诚」。", e: { army: 2, name: -2, money: -1 } },
+    { id: "h_swallow",t: "吞邻镇",     d: "陛下忠诚的范阳公，用铁与血教育那些桀骜不驯的藩镇，什么是「忠诚」——顺便把他们的粮仓也「忠诚」到了自己兜里。", e: { army: 2, name: -2, money: -1 } },
     { id: "h_cut",    t: "截留赋税",   d: "三镇的税款自己留下，户部只能附和。", e: { money: 3, name: -1 } },
     { id: "h_confess",t: "上表请罪",   d: "折子里把自己骂得很重，重到皇帝不好意思再问。", e: { name: 2, army: -1, money: -1 } },
   ],
@@ -127,7 +127,7 @@ const DECKS = {
     { id: "s_pay",    t: "牙兵加饷",   d: "饷发足了，牙兵喊你一声帅；发不足，他们不喊名字，喊价钱。", e: { army: 3, money: -2 } },
     { id: "s_marry",  t: "与邻镇联姻", d: "两家结了亲，儿女还没出生就先分了地。", e: { name: 2, money: 1, army: -1 } },
     { id: "s_rob",    t: "抢邻镇",     d: "邻镇的钱粮过境，路上刚好掉了。", e: { money: 3, name: -2 } },
-    { id: "s_jie",    t: "请旌节",     d: "朝廷给了旌节。旗子到了，粮没到，兵也没动。", e: { name: 2, army: -1 } },
+    { id: "s_jie",    t: "请旌节",     d: "旌节是朱漆的，绳子是麻的。朝廷的意思很明白：朱漆撑面子，麻绳留着给你上吊。", e: { name: 2, army: -1 } },
     { id: "s_hoard",  t: "囤钱",       d: "库房加了两道锁，钥匙挂在你自己腰间。", e: { money: 3, name: -1 } },
     { id: "s_drill",  t: "练兵",       d: "校场上尘土不落，士绅的帖子来得比往年勤。", e: { army: 2, money: -1, name: -1 } },
     { id: "s_sell",   t: "卖马",       d: "马卖给了南边。第二年，南边的官军骑着你的马、拿着你的粮、来打你的城。", e: { money: 2, army: -2 } },
@@ -154,7 +154,7 @@ const ACH = [
   { id: "scapecat", name: "专业背锅三十年",     title: "唐非宗", desc: "暗雷踩了不止一颗。你不是运气差，你是那个被挑中的人。" },
   { id: "fengxian", name: "吾儿奉先何在",       title: "唐义宗", desc: "名望极高、兵甲极薄。你在等人来救，来的人姓什么都能接受。" },
   { id: "nomoney2", name: "朕的钱！朕的钱！",   title: "唐蚊宗", desc: "国库空了。你还在问账房，账房还在问管事的，管事的已经跑了。" },
-  { id: "gentle",   name: "百姓无不怀念我大唐", title: "唐棉宗", desc: "你什么都忍了。史官写你「宽仁」，边将写你「好说话」，牙兵写你「好欺负」。" },
+  { id: "gentle",   name: "百姓无不怀念我大唐", title: "唐糯宗", desc: "你什么都忍了。史官写你「宽仁」，边将写你「好说话」，牙兵写你「好捏」。帝性至糯，群臣皆捏之。" },
   { id: "survive5", name: "撑到第五回",         title: "唐守宗", desc: "五回都走完了。在这个游戏里，活着本身就是一种成就。" },
   { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
 ];
@@ -962,7 +962,7 @@ function playDeathLine(kind) {
   $("end-title").textContent = kind === "poor" ? "穷丘八" : "乱臣贼子";
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
-  const PIG = { "唐廷": "唐豚宗", "河北": "燕猪公", "河朔": "魏豕公" };
+  const PIG = { "唐廷": "唐豚宗", "河北": "燕猪公", "河朔": "魏醢公" };
   const pigTitle = (kind === "behead") ? (PIG[st.fac] || "唐豚宗") : facTitle(c.titleAch);
   $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}　封号 · ${pigTitle}`;
   return true;
