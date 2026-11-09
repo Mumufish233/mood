@@ -92,21 +92,42 @@ const FACS = {
   "\u6cb3\u6714": { tag: "\u5c0f\u86c7\u5316\u9f99", desc: "\u4e09\u9547\u7259\u5175\uff0c\u6ca1\u540d\u5206\uff0c\u6709\u5200\u3002\u8c01\u8bf4\u5e1d\u738b\u5c06\u76f8\u6709\u79cd\u4e4e\uff1f" },
 };
 
-const DECK = [
-  { id: "tax",   t: "加税",   d: "账房的算盘响了一夜。第二天，城门口多了几户没收拾完的行李。", e: { money: 3, name: -2 } },
-  { id: "relief",t: "开仓",   d: "粥棚支到第三天，队伍里已经有了别郡的口音。", e: { money: -2, name: 3 } },
-  { id: "army",  t: "扩军",   d: "新兵穿上甲，还不会站队。老卒在旁边笑，笑完替他们整了整领子。", e: { army: 3, name: -1, money: -1 } },
-  { id: "school",t: "设学堂", d: "书声从破庙里传出来。有老吏路过，站了一会儿才走。", e: { name: 2, money: -1 } },
-  { id: "trade", t: "通商",   d: "胡商的驼队进了城，夜市头一回亮到三更。", e: { money: 2, name: -1, army: 1 } },
-  { id: "purge", t: "清洗",   d: "点到名字的人一个一个出去。剩下的人低头看自己的靴尖。", e: { army: 2, name: -3 } },
-  { id: "temple",t: "修庙",   d: "工匠在檐下量了三天。香客还没来，账上先空了一截。", e: { name: 2, money: -2 } },
-  { id: "raid",  t: "劫掠",   d: "掠来的牲口在营里叫了一夜。第二天，沿路的村子都空了。", e: { money: 3, name: -3 } },
-  { id: "pardon",t: "大赦",   d: "狱门开了，人出来时都眯着眼，像不信外面还有太阳。", e: { name: 2, army: -2 } },
-  { id: "drill", t: "练兵",   d: "校场上尘土不落。士绅的帖子来得比往年更勤。", e: { army: 2, money: -1, name: -1 } },
-  { id: "silk",  t: "织造",   d: "机杼声昼夜不停。绢卖得好，田里的人却更少了。", e: { money: 2, name: -1 } },
-  { id: "hostage",t: "质子",  d: "孩子上马时没回头。你知道他记住了这条路。", e: { name: 1, army: -1, money: 1 } },
-  { id: "consort",t: "爱妃何在", d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1 }, repeat: true },
-];
+/* ===== 三家国策牌（各 8 张，气质不同，不是同一套换皮） ===== */
+const DECKS = {
+  "唐廷": [
+    { id: "t_tax",    t: "两税法",     d: "户部的册子重造了一遍，隐户浮出来，骂声也浮出来。", e: { money: 3, name: -2 } },
+    { id: "t_cut",    t: "削藩",       d: "一纸诏书往河北去。使者带了两百骑，回来只剩一百八。", e: { army: 2, name: -1, money: -1 } },
+    { id: "t_school", t: "开科取士",   d: "曲江边新进士簪花跨马，被扔了一路果子。", e: { name: 3, money: -1 } },
+    { id: "t_post",   t: "修驿站",     d: "驿马跑起来，边关的军报早到三天，也早被人看见三天。", e: { army: 1, money: -2, name: 1 } },
+    { id: "t_eunuch", t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
+    { id: "t_relief", t: "江淮漕运",   d: "粮船顺着运河上来，京城的米价压下去两成。", e: { money: 2, name: 1, army: -1 } },
+    { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上已经没人抬头了。", e: { army: 2, name: -3, money: 1 } },
+    { id: "t_consort",t: "爱妃何在",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1 }, repeat: true },
+  ],
+  "河北": [
+    { id: "h_horse",  t: "收马",       d: "边市开到西域，一匹马换三匹绢，今年多了三千匹。", e: { army: 2, money: -1 } },
+    { id: "h_recruit",t: "募健儿",     d: "赋税截一半，归十九分之一募乡里子弟。", e: { army: 3, money: -1, name: -1 } },
+    { id: "h_tribute",t: "献马入朝",   d: "两千匹马上表送去，长安的猜疑暂时松了一寸。", e: { name: 2, army: -1 } },
+    { id: "h_sick",   t: "装病",       d: "你病得很有分寸，使者来了三次都没有见到人。", e: { name: 1, army: -1, money: 1 } },
+    { id: "h_raid",   t: "掠奚",       d: "出塞三百里，羊群都是你的，人之前是别人的。", e: { money: 3, name: -2 } },
+    { id: "h_swallow",t: "吞邻镇",     d: "同一条路上的守捉不听调令了，后来连人带马都归了你。", e: { army: 2, name: -2, money: -1 } },
+    { id: "h_cut",    t: "截留赋税",   d: "三镇的税款自己留下，户部只能附和。", e: { money: 3, name: -1 } },
+    { id: "h_confess",t: "上表请罪",   d: "折子里把自己骂得很重，重到皇帝不好意思再问。", e: { name: 2, army: -1, money: -1 } },
+  ],
+  "河朔": [
+    { id: "s_hold",   t: "保境",       d: "四门一闭，谁来都说不清是谁的地界。", e: { army: 1, name: 1, money: -1 } },
+    { id: "s_pay",    t: "牙兵加饷",   d: "饷发足了，牙兵喊你一声帅；发不足，喊你名字。", e: { army: 3, money: -2 } },
+    { id: "s_marry",  t: "与邻镇联姻", d: "两家结了亲，儿女还没出生就先分了地。", e: { name: 2, money: 1, army: -1 } },
+    { id: "s_rob",    t: "抢邻镇",     d: "邻镇的钱粮过境，路上刚好掉了。", e: { money: 3, name: -2 } },
+    { id: "s_jie",    t: "请旌节",     d: "朝廷给了旌节，也给了名分里的那根绳子。", e: { name: 2, army: -1 } },
+    { id: "s_hoard",  t: "囤钱",       d: "库房加了两道锁，钥匙挂在你自己腰间。", e: { money: 3, name: -1 } },
+    { id: "s_drill",  t: "练兵",       d: "校场上尘土不落，士绅的帖子来得比往年勤。", e: { army: 2, money: -1, name: -1 } },
+    { id: "s_sell",   t: "卖马",       d: "马卖给了南边，南边的官军骑着你的马来了。", e: { money: 2, army: -2 } },
+  ],
+};
+
+function deckOf(fac) { return DECKS[fac] || DECKS["唐廷"]; }
+
 
 
 /* ===== 成就与封号（梗在这儿，别删） ===== */
@@ -581,9 +602,9 @@ function showFacts() {
 
 function start(fac) {
   st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0,
-         pool: shuffle(DECK), log: [], ach: [], hist: [],
+         pool: shuffle(deckOf(fac).slice()), log: [], ach: [], hist: [],
          step: "card", priv: [], flags: [], flagLog: [],
-         privPool: shuffle((PRIVATE_LITE[fac] || []).slice()) };
+         privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
@@ -614,11 +635,21 @@ function render() {
 }
 
 
+/* 私事数据按史称（范阳）存，游戏里势力叫河北 → 做个映射，否则河北永远没有私事 */
+function privKey(fac) {
+  if (PRIVATE_LITE[fac]) return fac;
+  if (fac === "河北" || fac === "范阳") return "范阳";
+  return Object.keys(PRIVATE_LITE)[0];
+}
+
 function renderPrivate() {
   const box = $("cards");
   box.innerHTML = "";
   $("chronicle").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
-  if (!st.privPool.length) { st.privPool = shuffle((PRIVATE_LITE[st.fac] || []).slice()); }
+  if (st.privPool.length < 3) {
+    const pool = (PRIVATE_LITE[privKey(st.fac)] || []).filter((x) => (st.priv || []).indexOf(x.name) < 0);
+    st.privPool = shuffle((pool.length >= 3 ? pool : (PRIVATE_LITE[privKey(st.fac)] || [])).slice());
+  }
   const picks = st.privPool.slice(0, 3);
   picks.forEach((p) => {
     const el = document.createElement("div");
@@ -657,8 +688,12 @@ function choosePrivate(p) {
   checkAch();
   if (st.godown) return finishCarnal();
   st.step = "card";
+  const lastRound = st.round >= ROUNDS;
   st.round += 1;
-  if (st.round > ROUNDS || st.money <= 0 || st.army <= 0) return finish();
+  if (lastRound || st.money <= 0 || st.army <= 0) {
+    if (st.money <= 0 || st.army <= 0) st.log.unshift("⛔ 钱粮/兵甲见底，撑不到下一季了。");
+    return finish();
+  }
   render();
 }
 
