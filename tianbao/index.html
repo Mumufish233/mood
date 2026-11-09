@@ -99,7 +99,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 
   <div id="screen-start">
     <div class="log" style="flex:none;color:#9c9180;font-size:13px;line-height:2">
-      天宝十四载。五回合，每回合做一件事。<br>
+      天宝十四载。五回合，每回合：一件国事，一条私事。<br>
       钱、名、兵，三样都得撑住。<br>
       撑不住的那一样，会替你写出结局。
     </div>
@@ -568,10 +568,10 @@ const MISERIES = [
 ];
 
 const HARD = [
-  { min: 11, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
-  { min: 8, kind: "partial", title: "\u504f\u5b89" },
-  { min: 5, kind: "split",   title: "\u5272\u636e" },
-  { min: 3, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
+  { min: 8, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
+  { min: 6, kind: "partial", title: "\u504f\u5b89" },
+  { min: 4, kind: "split",   title: "\u5272\u636e" },
+  { min: 2, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
   { min: 0, kind: "mutiny",  title: "\u5175\u53d8" },
 ];
 
@@ -695,6 +695,39 @@ let st = null;
 function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
 const $ = (id) => document.getElementById(id);
 
+/* BUG-6：三选一不再用「池里取前三张、选掉补位」的滑动窗口（8 张牌 5 回只见 5~6 张）。
+   改成每回合从剩余池随机抽 3 张展示、选 1 张；展示过的 3 张都从剩余池移走，
+   池里「上回合没出现过的牌」不足 3 张时洗回整副牌，所以 5 回合最多见 15 张。
+   prevHandIds 记上一回合展示过的 id；本回合只从「不在 prev 的牌」里抽，
+   严格保证同一张牌不会连续两回合出现。repeat 牌（贵妃省亲）留在池里，
+   隔一回合还能再抽到，爱妃三连仍然可达。 */
+function drawHand() {
+  const prev = st.prevHandIds || [];
+  let pool = (st.pool || []).slice();
+  const uniq = (arr) => {
+    const seen = new Set(); const out = [];
+    arr.forEach((c) => { if (!seen.has(c.id)) { seen.add(c.id); out.push(c); } });
+    return out;
+  };
+  // poorTick 送来的三条救命路优先进入本回合展示，同样避开上回合出现过的
+  const forced = uniq(pool.filter((c) => /^r_/.test(c.id) && prev.indexOf(c.id) < 0)).slice(0, 3);
+  const forcedIds = new Set(forced.map((c) => c.id));
+  const freshOf = (src) => uniq(src).filter((c) => !forcedIds.has(c.id) && prev.indexOf(c.id) < 0);
+  let fresh = freshOf(pool);
+  // 池子见底（可用新牌不足 3 张）→ 洗回整副牌，再取新牌
+  if (forced.length + fresh.length < 3) {
+    pool = uniq(pool.concat(shuffle(deckOf(st.fac))));
+    fresh = freshOf(pool);
+  }
+  // 8 张牌 - 上回合 3 张 = 5 张新牌 ≥ 3，正常情况下 picks 恒为 3 张且全不在 prev
+  const picks = forced.concat(shuffle(fresh)).slice(0, 3);
+  const ids = new Set(picks.map((c) => c.id));
+  st.hand = picks;
+  st.prevHandIds = Array.from(ids);
+  // 展示过的 3 张移出剩余池；repeat 牌留池，但下一回合被 prev 挡住，不会连续出现
+  st.pool = uniq(pool).filter((c) => !ids.has(c.id) || c.repeat);
+}
+
 function showFacts() {
   const box = $("facts");
   box.innerHTML = "";
@@ -716,12 +749,13 @@ const START = {
 function start(fac) {
   const s0 = START[fac] || { money: 5, name: 5, army: 5 };
   st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, combo: 0,
-         pool: shuffle(deckOf(fac).slice()), log: [], ach: [], hist: [],
+         pool: shuffle(deckOf(fac).slice()), hand: [], prevHandIds: [], skipPriv: 0, log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
+  drawHand();
   render();
 }
 
@@ -774,7 +808,7 @@ function renderSlots() {
   // 上：国事三选一
   const box = $("cards");
   box.innerHTML = "";
-  st.pool.slice(0, 3).forEach((c, i) => {
+  (st.hand || []).forEach((c, i) => {
     const el = document.createElement("div");
     el.className = "card" + (st.pendingCard === i ? " on" : "");
     const parts = Object.keys(c.e).map((k) => {
@@ -823,7 +857,7 @@ function pick(c) { /* 兼容旧调用：直接当作已选国事 */ }
 
 function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
-  const card = st.pool[st.pendingCard];
+  const card = (st.hand || [])[st.pendingCard];
   if (!card) { st.pendingCard = null; render(); toast("牌面已变，请重新选一件国事"); return; }
   // 1) 国事
   Object.keys(card.e).forEach((k) => {
@@ -831,7 +865,7 @@ function settleRound() {
   });
   st.hist.push(card);
   st.log.unshift(`第${st.round}回 · ${card.t}`);
-  if (!card.repeat) st.pool = st.pool.filter((x) => x.id !== card.id);
+  // BUG-6：本回合展示的 3 张已在 drawHand() 里移出剩余池；repeat 牌留池中可再抽到
   // 2) 私事
   const priv = (st.privPool || []).find((x) => x.id === st.pendingPriv) || null;
   if (priv) {
@@ -844,10 +878,11 @@ function settleRound() {
     st.privPool = st.privPool.filter((x) => x.id !== priv.id || priv.name.indexOf("爱妃") >= 0);
   } else {
     st.log.unshift("　私事 · 没折腾");
+    st.skipPriv = (st.skipPriv || 0) + 1;
   }
   st.pendingCard = null;
   st.pendingPriv = null;
-  checkAch();
+  checkAch(false);   // 过程型成就 + 驾崩判定
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
   if (highFameEvent()) return playDeathLine("behead");
@@ -856,7 +891,7 @@ function settleRound() {
   if (dl) return playDeathLine(dl);
   if (st.round >= ROUNDS) return finish();
   st.round += 1;
-  if (st.pool.length < 3) st.pool = st.pool.concat(deckOf(st.fac));
+  drawHand();
   render();
 }
 
@@ -866,38 +901,49 @@ function unlock(a) {
   toast(`成就解锁 · ${a.name}　封号 ${facTitle(a.title)}`);
 }
 
-function checkAch() {
+/* 成就判定分两段。BUG-4：数值型成就必须在暗雷 + 所有扣减之后用终局值判，
+   否则「一键中兴」会在暗雷扣减前解锁，跟结局打架。unlock() 幂等，重复调用不会重复解锁。 */
+function checkAch(final) {
   const h = st.hist;
   const n = h.length;
   const all = (fn) => h.every(fn);
   const count = (id) => h.filter((x) => x.id === id).length;
 
-  if (n >= 5 && all((c) => (c.e.money || 0) > 0)) unlock(ACH.find((a) => a.id === "money5"));
+  /* —— 历史型：只看选过的牌 / 私事，与终局数值无关 —— */
+  // BUG-3：原「五张牌全加钱」数学上不可能（唐廷只有 3 张加钱牌）；
+  // 改成「一局五回里，至少 3 回选了加钱的国事牌」。
+  if (h.filter((c) => (c.e.money || 0) > 0).length >= 3) unlock(ACH.find((a) => a.id === "money5"));
   if (n >= 5 && all((c) => (c.e.army || 0) > 1)) unlock(ACH.find((a) => a.id === "army5"));
   if (n >= 5 && all((c) => (c.e.name || 0) > 0)) unlock(ACH.find((a) => a.id === "name5"));
   if (n >= 5 && all((c) => !(c.e.money > 0))) unlock(ACH.find((a) => a.id === "nomoney"));
-  if (n >= 5 && st.name <= 2 && st.money >= 8) unlock(ACH.find((a) => a.id === "forget"));
-  const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length + count("consort");
+  if (n >= 5) unlock(ACH.find((a) => a.id === "survive5"));
+  // BUG-3：原判定查 st.priv 里含「不折腾」的私事名，但「这次不折腾」是跳过选项，
+  // 从不会 push 进 st.priv，这条成就永远拿不到；改数真实的「没折腾」回数。
+  if ((st.skipPriv || 0) >= 3) unlock(ACH.find((a) => a.id === "gentle"));
+
+  // BUG-3：国策牌 id 前缀是 t_，原来的 "consort" / "relief" 在 DECKS 里根本不存在
+  const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length + count("t_consort");
   if (privLove >= 2) unlock(ACH.find((a) => a.id === "consort2"));
   if (privLove >= 3) { unlock(ACH.find((a) => a.id === "consort3")); st.godown = true; }
-  if (count("consort") >= 3) {
+  if (count("t_consort") >= 3) {
     unlock(ACH.find((a) => a.id === "consort3"));
     st.godown = true;
   }
-  if (count("relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
-  if (n >= 5) unlock(ACH.find((a) => a.id === "survive5"));
+
+  /* —— 数值型：只在终局判，用的必须是扣减完的终局值 —— */
+  if (!final) return;
+  const lo = Math.min(st.money, st.name, st.army);
+  const hi = Math.max(st.money, st.name, st.army);
+  if (count("t_relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
+  if (n >= 5 && st.name <= 2 && st.money >= 8) unlock(ACH.find((a) => a.id === "forget"));
   if ((st.priv || []).some((x) => x.indexOf("舞") >= 0) && st.army >= 8) unlock(ACH.find((a) => a.id === "mc_lushan"));
-  if (Math.min(st.money, st.name, st.army) >= 12) unlock(ACH.find((a) => a.id === "prosper"));
+  if (lo >= 12) unlock(ACH.find((a) => a.id === "prosper"));
   if ((st.flagLog || []).length >= 2) unlock(ACH.find((a) => a.id === "scapecat"));
   if (st.name >= 9 && st.army <= 3) unlock(ACH.find((a) => a.id === "fengxian"));
   if (st.money <= 2 && st.round >= 4) unlock(ACH.find((a) => a.id === "nomoney2"));
-  if ((st.priv || []).filter((n) => n.indexOf("不折腾") >= 0).length >= 3) unlock(ACH.find((a) => a.id === "gentle"));
-
   if (n >= 5 && st.army >= 6 && all((c) => !(c.e.army > 0))) unlock(ACH.find((a) => a.id === "freesoldier"));
-  if (n >= 4 && Math.max(st.money, st.name, st.army) >= 9 && Math.min(st.money, st.name, st.army) <= 2) {
-    unlock(ACH.find((a) => a.id === "lopsided"));
-  }
-  if (n >= 5 && Math.min(st.money, st.name, st.army) >= 8) unlock(ACH.find((a) => a.id === "balanced"));
+  if (n >= 4 && hi >= 9 && lo <= 2) unlock(ACH.find((a) => a.id === "lopsided"));
+  if (n >= 5 && lo >= 8) unlock(ACH.find((a) => a.id === "balanced"));
 }
 
 let toastTimer = null;
@@ -916,6 +962,7 @@ function toast(text) {
 }
 
 function finishCarnal() {
+  checkAch(true);   // BUG-4：终局成就用终局值
   $("screen-play").classList.add("hide");
   $("screen-end").classList.remove("hide");
   const a = ACH.find((x) => x.id === "consort3");
@@ -1029,6 +1076,7 @@ function dualTitle(fac, kind) {
 }
 
 function playDeathLine(kind) {
+  checkAch(true);   // BUG-4：终局成就用终局值
   const c = kind === "poor" ? POOR_SOLDIER : BEHEAD;
   st.ach.push({ id: "deathline-" + kind, name: c.ach, title: c.titleAch });
   $("screen-play").classList.add("hide");
@@ -1095,10 +1143,9 @@ function poorTick() {
   return false;
 }
 
-function finish() {
-  $("screen-play").classList.add("hide");
-  $("screen-end").classList.remove("hide");
-  // 暗雷结算（私事埋下的东西）
+/* BUG-4：暗雷（私事埋下的隐患）是最后一环扣减，抽成独立函数，
+   保证「所有扣减做完 → 判成就 → 定结局」这个顺序。 */
+function settleHiddenFlags() {
   (st.flags || []).forEach((fl) => {
     if (Math.random() < fl.chance) {
       ["money", "name", "army"].forEach((k) => {
@@ -1107,19 +1154,61 @@ function finish() {
       st.flagLog.push(fl.text || fl.name);
     }
   });
+}
+
+function finish() {
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  settleHiddenFlags();
+  checkAch(true);          // BUG-4：终局成就用扣减后的三项值
   // 爱妃三连 → 驾崩
   if ((st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length >= 3) return finishCarnal();
-  // 某一项归零 → 崩的方式不一样，别都叫兵变
+
+  /* BUG-1/2：kind 只认「所有扣减做完之后」的 min(钱,名,兵)，按 HARD 分档；
+     四篇变体只在同一个 kind 池里随机，绝不串档。 */
+  const low = Math.min(st.money, st.name, st.army);
+  const h = HARD.find((x) => low >= x.min) || HARD[HARD.length - 1];
+  const idx = HARD.indexOf(h);
+  const upper = idx > 0 ? HARD[idx - 1].min : Infinity;
+  // 开发自检：档位与最低值不一致时告警（只进控制台，不影响玩家）
+  if (h.kind === "win" && low < HARD[0].min) console.warn("[finish] kind=win 但 min 低于胜档门槛", low);
+  if (h.kind === "fade" && low >= HARD[0].min) console.warn("[finish] kind=fade 但 min 很高", low);
+  if (!(low >= h.min && low < upper)) console.warn("[finish] 结局档位与 min 分档不一致", low, h.kind);
+  st.endKind = h.kind;
+  st.endVals = { money: st.money, name: st.name, army: st.army, min: low };
+  if (typeof window !== "undefined") window.__lastEnd = { kind: h.kind, title: h.title, vals: st.endVals };
+
+  const pool = COPY[st.fac][h.kind];
+  const c = pool[Math.floor(Math.random() * pool.length)];
+  const epi = (COPY[st.fac].epilogue || []);
+  const ep = epi.length ? epi[Math.floor(Math.random() * epi.length)] : null;
+  const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
+  const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
+  // 本局起居注：把国策与私事串成一段
+  const acts = (st.hist || []).map((c) => c.t).join("、");
+  const privs = (st.priv || []).join("、") || "没折腾";
+  const chron = `起居注 · 五回之间：${acts || "未成事"}。私事：${privs}。`;
+  if ($("end-chron")) $("end-chron").textContent = chron;
+  const tail = (titleAch ? `\n\n封号 · ${titleAch}` : "")
+    + dualTitle(st.fac, h.kind)
+    + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
+    + (ep ? `\n\n三年后 · ${ep.praise}` : "")
+    + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
+
+  /* BUG-1：某一项归零时原代码复用 ROT[zero] 的判词，而那套文案写的是「这一项极高」
+     （如 ROT.name 的"人心是攒够了，仓是空的"），归零时正好说反。标题差异保留，
+     判词改从 kind 池里取，池子不再串。 */
   const zero = st.money <= 0 ? "money" : (st.army <= 0 ? "army" : (st.name <= 0 ? "name" : null));
   if (zero) {
     const tk = { money: "粮尽", army: "兵变", name: "众叛" }[zero];
-    const c = ROT[zero];
     $("end-title").textContent = tk;
     $("end-quote").textContent = c.quote;
     $("end-praise").textContent = c.praise;
-    $("end-sigh").textContent = c.sigh + dualTitle(st.fac, "low") + `\n\n成就 · ${c.ach}`;
+    $("end-sigh").textContent = c.sigh + tail;
     return;
   }
+
+  // 偏科淘汰是独立结局（自带文案），判定保留；kind 已按终局值算清，不受它影响
   const mk = (st.round > ROUNDS - 1) ? monoKind() : null;
   if (mk) {
     const r = ROT[mk];
@@ -1130,28 +1219,11 @@ function finish() {
     toast(`成就解锁 · ${r.ach}　封号 ${r.titleAch}`);
     return;
   }
-  const low = Math.min(st.money, st.name, st.army);
-  const h = HARD.find((x) => low >= x.min) || HARD[HARD.length - 1];
-  const pool = COPY[st.fac][h.kind];
-  const c = pool[Math.floor(Math.random() * pool.length)];
-  const epi = (COPY[st.fac].epilogue || []);
-  const ep = epi.length ? epi[Math.floor(Math.random() * epi.length)] : null;
+
   $("end-title").textContent = h.title;
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
-  const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
-  const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
-  // 本局起居注：把国策与私事串成一段
-  const acts = (st.hist || []).map((c) => c.t).join("、");
-  const privs = (st.priv || []).join("、") || "没折腾";
-  const chron = `起居注 · 五回之间：${acts || "未成事"}。私事：${privs}。`;
-  if ($("end-chron")) $("end-chron").textContent = chron;
-  $("end-sigh").textContent = c.sigh
-    + (titleAch ? `\n\n封号 · ${titleAch}` : "")
-    + dualTitle(st.fac, h.kind)
-    + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
-    + (ep ? `\n\n三年后 · ${ep.praise}` : "")
-    + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
+  $("end-sigh").textContent = c.sigh + tail;
 }
 
 
