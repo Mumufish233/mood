@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.14.1-结算加固-20261110">
+<meta name="dsh-version" content="v0.15-选中反馈对齐-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -55,7 +55,8 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .btn.gh{border-color:#4a4436;color:#a89c86}
 .btn.gh:hover{background:#4a4436;color:#e5d6b4}
 .slot-title{font-size:11.5px;color:#8d8271;letter-spacing:3px;margin:14px 0 6px}
-.btn.off{background:#2a323c;color:#5b6472;cursor:default}
+.btn.off{background:#2a323c;color:#5b6472;border-color:#3a444f;cursor:default}
+.btn.off:hover{background:#2a323c;color:#5b6472;border-color:#3a444f}
 
 /* ===== 两栏：左选项 / 右事件框 ===== */
 .play-grid{display:grid;gap:14px;align-items:start}
@@ -63,7 +64,9 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .col-log{background:#1b1913;border:1px solid #34322a;border-radius:12px;padding:12px 14px;max-height:46vh;overflow:auto}
 .log-head{font-size:11.5px;color:#b39a5f;letter-spacing:4px;margin-bottom:8px}
 @media (min-width:720px){
-  .play-grid{grid-template-columns:minmax(0,1fr) 300px}
+  /* 只在游戏屏放宽容器，开局/结局仍保持 520px 居中；不支持 :has 时自动回退 */
+  .wrap:has(#screen-play:not(.hide)){max-width:940px}
+  .play-grid{grid-template-columns:minmax(0,1fr) 320px;gap:20px}
   .col-log{position:sticky;top:12px;max-height:82vh}
 }
 @media (max-width:719px){
@@ -71,12 +74,14 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 }
 /* ===== 选中反馈 ===== */
 .card{position:relative;cursor:pointer;transition:border-color .15s,background .15s,opacity .15s,transform .1s}
-.card:active{transform:scale(.99)}
-.card.on{border-color:#d9c589;background:#241f16;box-shadow:0 0 0 1px rgba(217,197,137,.55) inset,0 8px 20px rgba(0,0,0,.35)}
-.card.on::after{content:"✓";position:absolute;top:7px;right:10px;color:#d9c589;font-size:14px;font-weight:700}
-.cards.has-sel .card:not(.on){opacity:.5}
-@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(217,197,137,.0)}50%{box-shadow:0 0 0 3px rgba(217,197,137,.18)}}
-.btn.ready{animation:breathe 1.8s ease-in-out infinite}
+.card:active{transform:scale(.985);background:#2b2619;border-color:#d9c589}
+.card.on{border:2px solid #d9c589;background:#241f16;padding:13px 15px;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.card.on::after{content:"✓";position:absolute;top:7px;right:9px;width:22px;height:22px;line-height:22px;text-align:center;color:#151712;background:#d9c589;border-radius:50%;font-size:13px;font-weight:700}
+.cards.has-sel .card:not(.on){opacity:.55}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(217,197,137,.0)}50%{box-shadow:0 0 0 3px rgba(217,197,137,.28)}}
+.btn.ready{background:linear-gradient(180deg,#e8d5a0,#c9ad63);color:#151712;border-color:#e8d5a0;font-weight:700;animation:breathe 1.8s ease-in-out infinite}
+.btn.ready:hover{background:linear-gradient(180deg,#f0dfae,#d3b870);color:#151712}
+.btn:not(.off):active{transform:scale(.97)}
 .log div.latest{color:#e5d6b4;border-left:2px solid #d9c589;padding-left:8px;margin-left:-2px}
 .chron{margin-top:14px;font-size:12.5px;color:#8d8271;letter-spacing:1px;line-height:1.9}
 
