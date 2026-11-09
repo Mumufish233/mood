@@ -778,6 +778,39 @@ function facTitle(t) {
   return t;
 }
 
+
+/* 正史庙号：史官按谥法硬凑的（评审那套"像话"的写法） */
+const OFFICIAL = {
+  "唐廷": { win: ["唐德宗", "唐宣宗"], mid: ["唐顺宗", "唐宪宗"],
+            low: ["唐哀帝", "唐僖宗"], funny: ["唐灵宗", "唐炀宗"] },
+  "河北": { win: ["燕武烈王", "燕昭成王"], mid: ["范阳郡王", "卢龙节度使"],
+            low: ["燕留后", "燕都将"], funny: ["燕使相", "赐铁券"] },
+  "河朔": { win: ["魏武公", "魏昭公"], mid: ["魏国公", "魏郡公"],
+            low: ["魏牙将", "魏小校"], funny: ["魏牙公", "魏哀公"] },
+};
+
+const HISTORIAN_LINES = [
+  "史官翻遍谥法，实在找不出更合适的字。",
+  "按谥法，本不该这么写。但史官想了想，还是写了。",
+  "这一笔史官斟酌了很久，最后还是落下了。",
+];
+
+function officialTitle(fac, kind) {
+  const o = OFFICIAL[fac] || OFFICIAL["唐廷"];
+  let pool = o.low;
+  if (kind === "win") pool = o.win;
+  else if (kind === "partial" || kind === "split") pool = o.mid;
+  else if (kind === "carnal" || kind === "rot") pool = o.funny;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function dualTitle(fac, kind) {
+  const off = officialTitle(fac, kind);
+  const folk = pickTitle(fac, kind);
+  const line = HISTORIAN_LINES[Math.floor(Math.random() * HISTORIAN_LINES.length)];
+  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}`;
+}
+
 function pickTitle(fac, kind) {
   const t = TITLES[fac] || TITLES["唐廷"];
   let pool = t.low;
@@ -996,7 +1029,7 @@ function finish() {
     $("end-title").textContent = tk;
     $("end-quote").textContent = c.quote;
     $("end-praise").textContent = c.praise;
-    $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}`;
+    $("end-sigh").textContent = c.sigh + dualTitle(st.fac, "low") + `\n\n成就 · ${c.ach}`;
     return;
   }
   const mk = (st.round > ROUNDS - 1) ? monoKind() : null;
@@ -1005,7 +1038,7 @@ function finish() {
     $("end-title").textContent = r.title;
     $("end-quote").textContent = r.quote;
     $("end-praise").textContent = r.praise;
-    $("end-sigh").textContent = r.sigh + `\n\n称号 · ${pickTitle(st.fac, "rot")}　封号 · ${r.titleAch}　成就 · ${r.ach}`;
+    $("end-sigh").textContent = r.sigh + dualTitle(st.fac, "rot") + `\n\n封号 · ${r.titleAch}　成就 · ${r.ach}`;
     toast(`成就解锁 · ${r.ach}　封号 ${r.titleAch}`);
     return;
   }
@@ -1022,7 +1055,7 @@ function finish() {
   const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
   $("end-sigh").textContent = c.sigh
     + (titleAch ? `\n\n封号 · ${titleAch}` : "")
-    + `\n称号 · ${pickTitle(st.fac, h.kind)}`
+    + dualTitle(st.fac, h.kind)
     + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
     + (ep ? `\n\n三年后 · ${ep.praise}` : "")
     + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
