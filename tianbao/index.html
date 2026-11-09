@@ -104,12 +104,12 @@ const FACS = {
 const DECKS = {
   "唐廷": [
     { id: "t_tax",    t: "两税法",     d: "户部的册子重造了一遍，隐户浮出来，骂声也浮出来。", e: { money: 3, name: -2 } },
-    { id: "t_cut",    t: "削藩",       d: "一纸诏书往河北去。使者带了两百骑，回来只剩一百八。", e: { army: 2, name: -1, money: -1 } },
+    { id: "t_cut",    t: "削藩",       d: "一纸诏书往河北去。使者带了两百骑，回来只剩一百八——回来的都说是迷路了。", e: { army: 2, name: -1, money: -1 } },
     { id: "t_school", t: "开科取士",   d: "曲江边新进士簪花跨马，被扔了一路果子。", e: { name: 3, money: -1 } },
     { id: "t_post",   t: "修驿站",     d: "驿马跑起来，边关的军报早到三天，也早被人看见三天。", e: { army: 1, money: -2, name: 1 } },
     { id: "t_eunuch", t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
     { id: "t_relief", t: "江淮漕运",   d: "粮船顺着运河上来，京城的米价压下去两成。", e: { money: 2, name: 1, army: -1 } },
-    { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上已经没人抬头了。", e: { army: 2, name: -3, money: 1 } },
+    { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上没人抬头；念到第十二个，有人开始背自己的履历。", e: { army: 2, name: -3, money: 1 } },
     { id: "t_consort",t: "爱妃何在",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
   ],
   "河北": [
@@ -118,19 +118,19 @@ const DECKS = {
     { id: "h_tribute",t: "献马入朝",   d: "两千匹马上表送去，长安的猜疑暂时松了一寸。", e: { name: 2, army: -1 } },
     { id: "h_sick",   t: "装病",       d: "你病得很有分寸，使者来了三次都没有见到人。", e: { name: 1, army: -1, money: 1 } },
     { id: "h_raid",   t: "掠奚",       d: "出塞三百里，羊群都是你的，人之前是别人的。", e: { money: 3, name: -2 } },
-    { id: "h_swallow",t: "吞邻镇",     d: "同一条路上的守捉不听调令了，后来连人带马都归了你。", e: { army: 2, name: -2, money: -1 } },
+    { id: "h_swallow",t: "吞邻镇",     d: "同一条路上的守捉不听调令了，后来连人带马都归了你——调令他们留着，说以后有用。", e: { army: 2, name: -2, money: -1 } },
     { id: "h_cut",    t: "截留赋税",   d: "三镇的税款自己留下，户部只能附和。", e: { money: 3, name: -1 } },
     { id: "h_confess",t: "上表请罪",   d: "折子里把自己骂得很重，重到皇帝不好意思再问。", e: { name: 2, army: -1, money: -1 } },
   ],
   "河朔": [
     { id: "s_hold",   t: "保境",       d: "四门一闭，谁来都说不清是谁的地界。", e: { army: 1, name: 1, money: -1 } },
-    { id: "s_pay",    t: "牙兵加饷",   d: "饷发足了，牙兵喊你一声帅；发不足，喊你名字。", e: { army: 3, money: -2 } },
+    { id: "s_pay",    t: "牙兵加饷",   d: "饷发足了，牙兵喊你一声帅；发不足，他们不喊名字，喊价钱。", e: { army: 3, money: -2 } },
     { id: "s_marry",  t: "与邻镇联姻", d: "两家结了亲，儿女还没出生就先分了地。", e: { name: 2, money: 1, army: -1 } },
     { id: "s_rob",    t: "抢邻镇",     d: "邻镇的钱粮过境，路上刚好掉了。", e: { money: 3, name: -2 } },
-    { id: "s_jie",    t: "请旌节",     d: "朝廷给了旌节，也给了名分里的那根绳子。", e: { name: 2, army: -1 } },
+    { id: "s_jie",    t: "请旌节",     d: "朝廷给了旌节。旌节是朱漆的，绳子是麻的，两样都寄到了。", e: { name: 2, army: -1 } },
     { id: "s_hoard",  t: "囤钱",       d: "库房加了两道锁，钥匙挂在你自己腰间。", e: { money: 3, name: -1 } },
     { id: "s_drill",  t: "练兵",       d: "校场上尘土不落，士绅的帖子来得比往年勤。", e: { army: 2, money: -1, name: -1 } },
-    { id: "s_sell",   t: "卖马",       d: "马卖给了南边，南边的官军骑着你的马来了。", e: { money: 2, army: -2 } },
+    { id: "s_sell",   t: "卖马",       d: "马卖给了南边。第二年，南边的官军骑着你的马、拿着你的粮、来打你的城。", e: { money: 2, army: -2 } },
   ],
 };
 
@@ -150,6 +150,11 @@ const ACH = [
   { id: "balanced",name: "一键中兴",             title: "唐中宗", desc: "钱、名、兵，三样都没塌。做到这件事的人，史书上不多。" },
   { id: "lopsided",name: "偏科皇帝",             title: "唐偏宗", desc: "有一项拉得极高，另一项快见底。朝堂上没人敢提，但人人都看见了。" },
   { id: "freesoldier", name: "躺赢",             title: "唐宪宗", desc: "你一次没练过兵，兵却还在。这大概是别人替你打完了。" },
+  { id: "prosper",  name: "这盛世如你所愿",     title: "唐盛宗", desc: "三项都推到极高。百姓过得怎么样不知道，史官写得很好看。" },
+  { id: "scapecat", name: "专业背锅三十年",     title: "唐锅宗", desc: "暗雷踩了不止一颗。你不是运气差，你是那个被挑中的人。" },
+  { id: "fengxian", name: "吾儿奉先何在",       title: "唐危宗", desc: "名望极高、兵甲极薄。你在等人来救，来的人姓什么都能接受。" },
+  { id: "nomoney2", name: "朕的钱！朕的钱！",   title: "唐穷宗", desc: "国库空了。你还在问账房，账房还在问管事的，管事的已经跑了。" },
+  { id: "gentle",   name: "百姓无不怀念我大唐", title: "唐穆宗", desc: "你什么都忍了。史官写你「宽仁」，边将写你「好说话」，牙兵写你「好欺负」。" },
   { id: "survive5", name: "撑到第五回",         title: "唐守宗", desc: "五回都走完了。在这个游戏里，活着本身就是一种成就。" },
   { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
 ];
@@ -475,7 +480,7 @@ const BEHEAD = {
   quote: "挫尔胡酋，以正国法。",
   praise: "你的名够大，兵不够。朝廷的平乱诏还没写完，隔壁镇的节度使已经动手了——他比你更懂怎么交差。\n朝廷拿你抄没的家产，给当地百姓抚恤了一波。那年冬天，没人饿着。",
   sigh: "人头装进木匣，匣上贴了张条子：乱党首级一枚。\n百姓给这事起了个好名字，简单易懂：杀年猪。牺牲你一人，幸福千万家——好人啊。",
-  ach: "牺牲你一人，幸福千万家", titleAch: "唐屠宗",
+  ach: "牺牲你一人，幸福千万家", titleAch: "唐猪公",
 };
 const POOR_SOLDIER = {
   quote: "朱门酒肉臭，路有冻死骨。",
@@ -874,6 +879,12 @@ function checkAch() {
   }
   if (count("relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
   if (n >= 5) unlock(ACH.find((a) => a.id === "survive5"));
+  if (Math.min(st.money, st.name, st.army) >= 12) unlock(ACH.find((a) => a.id === "prosper"));
+  if ((st.flagLog || []).length >= 2) unlock(ACH.find((a) => a.id === "scapecat"));
+  if (st.name >= 9 && st.army <= 3) unlock(ACH.find((a) => a.id === "fengxian"));
+  if (st.money <= 2 && st.round >= 4) unlock(ACH.find((a) => a.id === "nomoney2"));
+  if ((st.priv || []).filter((n) => n.indexOf("不折腾") >= 0).length >= 3) unlock(ACH.find((a) => a.id === "gentle"));
+
   if (n >= 5 && st.army >= 6 && all((c) => !(c.e.army > 0))) unlock(ACH.find((a) => a.id === "freesoldier"));
   if (n >= 4 && Math.max(st.money, st.name, st.army) >= 9 && Math.min(st.money, st.name, st.army) <= 2) {
     unlock(ACH.find((a) => a.id === "lopsided"));
