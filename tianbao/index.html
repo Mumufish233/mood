@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.12-双槽-20261110">
+<meta name="dsh-version" content="v0.13-侧栏-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -56,6 +56,28 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .btn.gh:hover{background:#4a4436;color:#e5d6b4}
 .slot-title{font-size:11.5px;color:#8d8271;letter-spacing:3px;margin:14px 0 6px}
 .btn.off{background:#2a323c;color:#5b6472;cursor:default}
+
+/* ===== 两栏：左选项 / 右事件框 ===== */
+.play-grid{display:grid;gap:14px;align-items:start}
+.col-opt{min-width:0}
+.col-log{background:#1b1913;border:1px solid #34322a;border-radius:12px;padding:12px 14px;max-height:46vh;overflow:auto}
+.log-head{font-size:11.5px;color:#b39a5f;letter-spacing:4px;margin-bottom:8px}
+@media (min-width:720px){
+  .play-grid{grid-template-columns:minmax(0,1fr) 300px}
+  .col-log{position:sticky;top:12px;max-height:82vh}
+}
+@media (max-width:719px){
+  .col-log{order:-1;max-height:30vh}
+}
+/* ===== 选中反馈 ===== */
+.card{position:relative;cursor:pointer;transition:border-color .15s,background .15s,opacity .15s,transform .1s}
+.card:active{transform:scale(.99)}
+.card.on{border-color:#d9c589;background:#241f16;box-shadow:0 0 0 1px rgba(217,197,137,.55) inset,0 8px 20px rgba(0,0,0,.35)}
+.card.on::after{content:"✓";position:absolute;top:7px;right:10px;color:#d9c589;font-size:14px;font-weight:700}
+.cards.has-sel .card:not(.on){opacity:.5}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 0 rgba(217,197,137,.0)}50%{box-shadow:0 0 0 3px rgba(217,197,137,.18)}}
+.btn.ready{animation:breathe 1.8s ease-in-out infinite}
+.log div.latest{color:#e5d6b4;border-left:2px solid #d9c589;padding-left:8px;margin-left:-2px}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -78,13 +100,20 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div><span class="v" id="val-name">5</span></div>
       <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div><span class="v" id="val-army">5</span></div>
     </div>
-    <div id="chronicle" class="chronicle"></div>
-    <div class="slot-title">国事 · 三选一</div>
-    <div class="cards" id="cards"></div>
-    <div class="slot-title">私人事件 · 可选一条（也可以不折腾）</div>
-    <div class="cards" id="privCards"></div>
-    <button class="btn" id="btn-settle">结算本回合</button>
-    <div class="log" id="log"></div>
+    <div class="play-grid">
+      <div class="col-opt">
+        <div class="slot-title">国事 · 三选一</div>
+        <div class="cards" id="cards"></div>
+        <div class="slot-title">私人事件 · 可选一条（也可以不折腾）</div>
+        <div class="cards" id="privCards"></div>
+        <button class="btn" id="btn-settle">先选一件国事</button>
+      </div>
+      <aside class="col-log">
+        <div class="log-head">史官在记</div>
+        <div id="chronicle" class="chronicle"></div>
+        <div class="log" id="log"></div>
+      </aside>
+    </div>
   </div>
 
   <div id="screen-end" class="hide">
@@ -678,7 +707,7 @@ function render() {
   updateBars();
   $("chronicle").innerHTML = "";
   renderSlots();
-  $("log").innerHTML = st.log.map((x) => `<div>${x}</div>`).join("");
+  $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
 }
 
 /* 私事数据按史称（范阳）存，游戏里势力叫河北 → 做个映射，否则河北永远没有私事 */
@@ -692,7 +721,7 @@ function updateSettle() {
   const b = $("btn-settle");
   if (!b) return;
   const ready = st.pendingCard !== null;
-  b.className = "btn" + (ready ? "" : " off");
+  b.className = "btn" + (ready ? " ready" : " off");
   b.textContent = ready ? "结算本回合" : "先选一件国事";
 }
 
@@ -735,6 +764,8 @@ function renderSlots() {
     el.onclick = () => { st.pendingPriv = (st.pendingPriv === p.id ? null : p.id); render(); };
     pbox.appendChild(el);
   });
+  $("cards").classList.toggle("has-sel", st.pendingCard !== null);
+  $("privCards").classList.toggle("has-sel", st.pendingPriv !== null);
   updateSettle();
   const skip = document.createElement("div");
   skip.className = "card" + (st.pendingPriv === null ? " on" : "");
