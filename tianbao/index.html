@@ -92,6 +92,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 <script>
 /* ===== 规则：5 回合、每回合 3 选 1、只有钱/名/兵 ===== */
 const ROUNDS = 5;
+const MAXV = 14;   // 单项上限（内测反馈：10 太早撞顶）
 
 const FACS = {
   "\u5510\u5ef7": { tag: "\u518d\u9020\u5927\u5510", desc: "\u4f60\u62ff\u7740\u4e00\u4e2a\u6f0f\u6c34\u7684\u738b\u671d\u3002\u5efa\u4e0d\u5efa\u5f97\u8d77\uff0c\u770b\u4f60\u3002" },
@@ -149,6 +150,7 @@ const ACH = [
   { id: "balanced",name: "一键中兴",             title: "唐中宗", desc: "钱、名、兵，三样都没塌。做到这件事的人，史书上不多。" },
   { id: "lopsided",name: "偏科皇帝",             title: "唐偏宗", desc: "有一项拉得极高，另一项快见底。朝堂上没人敢提，但人人都看见了。" },
   { id: "freesoldier", name: "躺赢",             title: "唐宪宗", desc: "你一次没练过兵，兵却还在。这大概是别人替你打完了。" },
+  { id: "survive5", name: "撑到第五回",         title: "唐守宗", desc: "五回都走完了。在这个游戏里，活着本身就是一种成就。" },
   { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
 ];
 
@@ -468,10 +470,10 @@ const PRIVATE_LITE = {
 };
 
 const HARD = [
-  { min: 8, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
-  { min: 6, kind: "partial", title: "\u504f\u5b89" },
-  { min: 4, kind: "split",   title: "\u5272\u636e" },
-  { min: 2, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
+  { min: 11, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
+  { min: 8, kind: "partial", title: "\u504f\u5b89" },
+  { min: 5, kind: "split",   title: "\u5272\u636e" },
+  { min: 3, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
   { min: 0, kind: "mutiny",  title: "\u5175\u53d8" },
 ];
 
@@ -621,7 +623,7 @@ function start(fac) {
 function updateBars() {
   ["money", "name", "army"].forEach((k) => {
     const el = $("bar-" + k);
-    if (el) el.style.width = Math.max(2, Math.min(100, st[k] * 10)) + "%";
+    if (el) el.style.width = Math.max(2, Math.min(100, (st[k] / MAXV) * 100)) + "%";
     const v = $("val-" + k);
     if (v) v.textContent = st[k];
   });
@@ -675,7 +677,9 @@ function renderPrivate() {
       const v = p.eff[k];
       return `${label}${v > 0 ? "+" : ""}${v}`;
     }).join("　");
-    el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>`;
+    const VAGUE = ["朝中有人盯着", "驿路上不太平", "有人在记这笔账", "营里传了闲话", "宫里递了话"];
+    const hint = p.flag ? `<div class="eff" style="color:#b0806a">隐约觉得：${VAGUE[(p.name.length + p.note.length) % VAGUE.length]}</div>` : "";
+    el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>${hint}`;
     el.onclick = () => choosePrivate(p);
     box.appendChild(el);
   });
@@ -689,7 +693,7 @@ function renderPrivate() {
 function choosePrivate(p) {
   if (p) {
     Object.keys(p.eff).forEach((k) => {
-      st[k] = Math.max(0, Math.min(10, st[k] + p.eff[k]));
+      st[k] = Math.max(0, Math.min(MAXV, st[k] + p.eff[k]));
     });
     st.priv.push(p.name);
     st.privPool = st.privPool.filter((x) => x.id !== p.id);
@@ -719,9 +723,36 @@ function choosePrivate(p) {
   render();
 }
 
+
+/* ===== 势力称号（结算页展示；河东留给 v7 五势力版） ===== */
+const TITLES = {
+  "唐廷": { win: ["中兴之主", "天可汗", "再造大唐"], mid: ["守成之君", "偏安天子"],
+            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
+  "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
+            evil: ["篡逆权臣", "窃国之贼"],
+            mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "刀下之鬼"],
+            funny: ["肥胖的小丑", "奴隶主义的先锋队", "好色胖子", "LV10胡旋舞者"] },
+  "河朔": { win: ["真龙在野", "草蛇吞象", "乱世枭雄", "天命归晋", "人民保卫者"],
+            mid: ["三镇之主", "牙兵大帅"], low: ["被换掉的帅", "没人记得的节度使"],
+            funny: ["白日野心家", "戏曲行为大师", "出头的笨鸟", "俺寻思大能"] },
+};
+
+function pickTitle(fac, kind) {
+  const t = TITLES[fac] || TITLES["唐廷"];
+  let pool = t.low;
+  if (kind === "win") {
+    // 赢得不干净（唐扒皮 / 人民公敌 / 驾崩）→ 走恶名池
+    const dirty = (st.ach || []).some((a) => ["唐扒皮", "人民群众的最大敌人", "好色胖子"].indexOf(a.name) >= 0);
+    pool = (dirty && t.evil) ? t.evil : t.win;
+  }
+  else if (kind === "partial" || kind === "split") pool = t.mid;
+  else if (kind === "carnal" || kind === "rot") pool = t.funny;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function pick(c) {
   ["money", "name", "army"].forEach((k) => {
-    st[k] = Math.max(0, Math.min(10, st[k] + (c.e[k] || 0)));
+    st[k] = Math.max(0, Math.min(MAXV, st[k] + (c.e[k] || 0)));
   });
   const parts = Object.keys(c.e).map((k) => {
     const label = { money: "\u94b1", name: "\u540d", army: "\u5175" }[k];
@@ -764,6 +795,7 @@ function checkAch() {
     st.godown = true;
   }
   if (count("relief") === 0 && st.name <= 4 && n >= 4) unlock(ACH.find((a) => a.id === "pardon3"));
+  if (n >= 5) unlock(ACH.find((a) => a.id === "survive5"));
   if (n >= 5 && st.army >= 6 && all((c) => !(c.e.army > 0))) unlock(ACH.find((a) => a.id === "freesoldier"));
   if (n >= 4 && Math.max(st.money, st.name, st.army) >= 9 && Math.min(st.money, st.name, st.army) <= 2) {
     unlock(ACH.find((a) => a.id === "lopsided"));
@@ -793,14 +825,16 @@ function finishCarnal() {
   $("end-title").textContent = "驾崩";
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
-  $("end-sigh").textContent = `封号：${a.title}。百姓谢谢你，史官只写了半页。`;
+  $("end-sigh").textContent = `称号：${pickTitle(st.fac, "carnal")}　封号：${a.title}。百姓谢谢你，史官只写了半页。`;
 }
 
 function monoKind() {
-  const cnt = (k) => st.hist.filter((c) => (c.e[k] || 0) > 0).length;
-  const m = { money: cnt("money"), army: cnt("army"), name: cnt("name") };
-  const top = Object.keys(m).sort((a, b) => m[b] - m[a])[0];
-  return m[top] >= 5 ? top : null;
+  const vals = { money: st.money, name: st.name, army: st.army };
+  const keys = Object.keys(vals);
+  const mx = Math.max(...keys.map((k) => vals[k]));
+  const mn = Math.min(...keys.map((k) => vals[k]));
+  if (!(mx >= 11 && mn <= 3)) return null;   // 只看极差：一项很高、另一项很低才算偏科
+  return keys.sort((a, b) => vals[b] - vals[a])[0];
 }
 
 function finish() {
@@ -810,7 +844,7 @@ function finish() {
   (st.flags || []).forEach((fl) => {
     if (Math.random() < fl.chance) {
       ["money", "name", "army"].forEach((k) => {
-        if (fl.eff && fl.eff[k]) st[k] = Math.max(0, Math.min(10, st[k] + fl.eff[k]));
+        if (fl.eff && fl.eff[k]) st[k] = Math.max(0, Math.min(MAXV, st[k] + fl.eff[k]));
       });
       st.flagLog.push(fl.text || fl.name);
     }
@@ -834,7 +868,7 @@ function finish() {
     $("end-title").textContent = r.title;
     $("end-quote").textContent = r.quote;
     $("end-praise").textContent = r.praise;
-    $("end-sigh").textContent = r.sigh + `\n\n封号 · ${r.titleAch}　成就 · ${r.ach}`;
+    $("end-sigh").textContent = r.sigh + `\n\n称号 · ${pickTitle(st.fac, "rot")}　封号 · ${r.titleAch}　成就 · ${r.ach}`;
     toast(`成就解锁 · ${r.ach}　封号 ${r.titleAch}`);
     return;
   }
@@ -851,6 +885,7 @@ function finish() {
   const titleAch = st.ach.length ? st.ach[st.ach.length - 1].title : "";
   $("end-sigh").textContent = c.sigh
     + (titleAch ? `\n\n封号 · ${titleAch}` : "")
+    + `\n称号 · ${pickTitle(st.fac, h.kind)}`
     + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
     + (ep ? `\n\n三年后 · ${ep.praise}` : "")
     + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
