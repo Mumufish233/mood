@@ -145,13 +145,13 @@ const ACH = [
   { id: "name5",   name: "地主阶级的好朋友",     title: "唐圣宗", desc: "士绅写诗夸你，农人替你交税，这买卖你一直做得很好。" },
   { id: "nomoney", name: "散财童子",             title: "唐慈宗", desc: "五回没往库里放一枚钱，倒是放了不少心。" },
   { id: "forget",  name: "人民群众的最大敌人",   title: "唐剥宗", desc: "钱是够了，人心是账上唯一没有增加的一项。" },
-  { id: "consort2",name: "人形播种机",           title: "唐社宗", desc: "两回召见，一回没上朝。史官写到这里，笔尖顿了很久。" },
-  { id: "consort3",name: "色是刮骨刀，驾崩吧！陛下！", title: "唐社宗", desc: "你天天宠信爱妃，没几年就死了。大唐还是那个大唐，只是史书给你的那一页，只剩半页。" },
+  { id: "consort2",name: "人形播种机",           title: "唐炀宗", desc: "两回召见，一回没上朝。史官写到这里，笔尖顿了很久。" },
+  { id: "consort3",name: "色是刮骨刀，驾崩吧！陛下！", title: "唐炀宗", desc: "你天天宠信爱妃，没几年就死了。大唐还是那个大唐，只是史书给你的那一页，只剩半页。" },
   { id: "balanced",name: "一键中兴",             title: "唐中宗", desc: "钱、名、兵，三样都没塌。做到这件事的人，史书上不多。" },
   { id: "lopsided",name: "偏科皇帝",             title: "唐偏宗", desc: "有一项拉得极高，另一项快见底。朝堂上没人敢提，但人人都看见了。" },
   { id: "freesoldier", name: "躺赢",             title: "唐宪宗", desc: "你一次没练过兵，兵却还在。这大概是别人替你打完了。" },
   { id: "survive5", name: "撑到第五回",         title: "唐守宗", desc: "五回都走完了。在这个游戏里，活着本身就是一种成就。" },
-  { id: "pardon3", name: "何不食肉糜",           title: "唐饥宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
+  { id: "pardon3", name: "何不食肉糜",           title: "唐括宗", desc: "开仓这件事，你想过很多次，一次也没做。" },
 ];
 
 
@@ -484,6 +484,19 @@ const POOR_SOLDIER = {
   ach: "大唐帝国斩杀线下的丘八", titleAch: "魏丘公",
 };
 
+
+/* ===== 穷丘八的随机灾祸（不是固定 -5，是"又出事了"） ===== */
+const MISERIES = [
+  { t: "邻居的友好打劫", d: "隔壁镇的人过来说：借点粮。带了两百人。", e: { money: -2, army: -1 } },
+  { t: "秋雨烂仓", d: "仓顶漏了三天，粟米发热，能吃的只剩一半。", e: { money: -2 } },
+  { t: "营啸", d: "半夜有人喊了一声，全营惊起，自己踩死了自己人。", e: { army: -2, name: -1 } },
+  { t: "疫病", d: "营里开始拉肚子，第三天才知道是水的问题。", e: { army: -1, name: -1 } },
+  { t: "朝廷催税", d: "使者来了，说三镇的税还差一成。他坐着不走。", e: { money: -1, name: -1 } },
+  { t: "马瘟", d: "军马倒了一半，剩下的也站不稳。", e: { army: -2 } },
+  { t: "士绅告状", d: "有人把状纸递到了长安，说你们抢了他的粮。", e: { name: -2 } },
+  { t: "欠饷", d: "三个月没发饷，兵开始自己动手找。", e: { money: -2, name: -1 } },
+];
+
 const HARD = [
   { min: 11, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
   { min: 8, kind: "partial", title: "\u504f\u5b89" },
@@ -727,7 +740,8 @@ function choosePrivate(p) {
   checkAch();
   if (st.godown) return finishCarnal();
   st.step = "card";
-  poorSpiral();
+  if (highFameEvent()) return playDeathLine("behead");
+  if (poorTick()) return playDeathLine("poor");
   const dl2 = deathLine();
   if (dl2) return playDeathLine(dl2);
   const lastRound = st.round >= ROUNDS;
@@ -745,7 +759,7 @@ function choosePrivate(p) {
 /* ===== 势力称号（结算页展示；河东留给 v7 五势力版） ===== */
 const TITLES = {
   "唐廷": { win: ["中兴之主", "天可汗", "再造大唐"], mid: ["守成之君", "偏安天子"],
-            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
+            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐炀宗", "唐括宗", "唐辩宗"] },
   "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
             evil: ["篡逆权臣", "窃国之贼"],
             mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "刀下之鬼"],
@@ -792,6 +806,8 @@ function pick(c) {
   checkAch();
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
+  if (highFameEvent()) return playDeathLine("behead");
+  if (poorTick()) return playDeathLine("poor");
   const dl = deathLine();
   if (dl) return playDeathLine(dl);
   st.step = "private";
@@ -869,13 +885,29 @@ function monoKind() {
 
 /* 斩杀线判定：兵/名/钱的红线 */
 function deathLine() {
-  // 名高兵低：典型该杀的乱臣贼子
-  if (st.name >= 8 && st.army <= 2) return "behead";
-  // 兵见底：朝廷平乱
+  // 兵见底才是硬红线；名高兵低走"朝廷来人"事件，不一刀切
   if (st.army <= 1) return "behead";
-  // 河朔专属：穷丘八（三样都低，越拖越死）
-  if (st.fac === "河朔" && (st.money + st.name + st.army) / 3 <= 3.5) return "poor";
   return null;
+}
+
+/* 名高兵低：朝廷来人了，看给不给面子 */
+function highFameEvent() {
+  if (!(st.name >= 8 && st.army <= 2)) return false;
+  if (!st.fameWarn) {
+    st.fameWarn = true;
+    if (Math.random() < 0.6) {
+      st.money = Math.max(0, st.money - 3);
+      st.name = Math.max(0, st.name - 2);
+      st.log.unshift("🏛 朝廷来人了：破财消灾，名分上也让了一步。");
+      toast("朝廷来人了 · 破财消灾");
+      return false;
+    }
+    st.log.unshift("🏛 朝廷来人了：你没给面子。");
+    toast("朝廷来人了 · 没给面子");
+    return false;   // 先警告，下一轮还越线才动刀
+  }
+  // 已经警告过一次还在越线 → 动刀
+  return true;
 }
 
 function playDeathLine(kind) {
@@ -890,18 +922,56 @@ function playDeathLine(kind) {
   return true;
 }
 
-/* 河朔的穷丘八：每回合三属性 -1，25% 暴击 -5 */
-function poorSpiral() {
-  if (st.fac !== "河朔") return false;
-  if ((st.money + st.name + st.army) / 3 > 3.5) return false;
-  ["money", "name", "army"].forEach((k) => { st[k] = Math.max(0, st[k] - 1); });
-  st.log.unshift("📉 穷得开始死人：三样各 -1。");
-  if (Math.random() < 0.25) {
-    const k = ["money", "name", "army"][Math.floor(Math.random() * 3)];
-    st[k] = Math.max(0, st[k] - 5);
-    st.log.unshift("💀 暴击：营里又塌了一块（-" + 5 + "）。");
+/* 穷丘八：任一项见底就进状态；有救命牌，能脱困也会饿死 */
+const RESCUE = [
+  { id: "r_rob", t: "抢邻镇", d: "饿到这份上，脸面不值钱了。", e: { money: 3, name: -1 } },
+  { id: "r_loan", t: "借饷", d: "向商人借，利息按天算。", e: { money: 3, army: -1 } },
+  { id: "r_sell", t: "卖地", d: "把屯田卖了，换两个月的粮。", e: { money: 2, name: -1 } },
+];
+
+function poorTick() {
+  const low = Math.min(st.money, st.name, st.army);
+  if (!st.poor && st.army > 1 && low <= 2) {
+    st.poor = true;
+    st.poorRounds = 0;
+    st.rescueGiven = false;
+    st.log.unshift("📉 穷丘八：营里开始断粮。");
+    toast("进入状态 · 穷丘八");
   }
-  return true;
+  if (!st.poor) return false;
+
+  st.poorRounds += 1;
+  ["money", "name", "army"].forEach((k) => { st[k] = Math.max(0, st[k] - 1); });
+  st.log.unshift("📉 穷困蔓延：三样各 -1。");
+
+  if (!st.rescueGiven) {
+    st.rescueGiven = true;
+    st.pool = RESCUE.concat(st.pool);
+    st.log.unshift("🆘 有人送来三条路：抢邻镇 / 借饷 / 卖地。");
+  }
+
+  if (Math.random() < 0.45) {
+    const ev = MISERIES[Math.floor(Math.random() * MISERIES.length)];
+    ["money", "name", "army"].forEach((k) => {
+      if (ev.e[k]) st[k] = Math.max(0, st[k] + ev.e[k]);
+    });
+    st.log.unshift(`💀 ${ev.t}：${ev.d}`);
+    toast(`又出事了 · ${ev.t}`);
+  }
+
+  const nowLow = Math.min(st.money, st.name, st.army);
+  if (nowLow >= 4) {
+    st.poorRecover = (st.poorRecover || 0) + 1;
+    if (st.poorRecover >= 2) {
+      st.poor = false;
+      st.log.unshift("🌾 缓过来了：穷丘八的状态解除了。");
+    }
+  } else {
+    st.poorRecover = 0;
+  }
+
+  if (st.poorRounds >= 3) return true;   // 饿死
+  return false;
 }
 
 function finish() {
@@ -926,10 +996,10 @@ function finish() {
     $("end-title").textContent = tk;
     $("end-quote").textContent = c.quote;
     $("end-praise").textContent = c.praise;
-    $("end-sigh").textContent = c.sigh;
+    $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}`;
     return;
   }
-  const mk = monoKind();
+  const mk = (st.round > ROUNDS - 1) ? monoKind() : null;
   if (mk) {
     const r = ROT[mk];
     $("end-title").textContent = r.title;
