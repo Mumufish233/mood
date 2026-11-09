@@ -51,6 +51,8 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .chronicle{font-size:12.5px;line-height:1.8;color:#a89c86;margin:0 0 10px}
 .btn.gh{border-color:#4a4436;color:#a89c86}
 .btn.gh:hover{background:#4a4436;color:#e5d6b4}
+.slot-title{font-size:11.5px;color:#8d8271;letter-spacing:3px;margin:14px 0 6px}
+.btn.off{background:#2a323c;color:#5b6472;cursor:default}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -74,7 +76,11 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div><span class="v" id="val-army">5</span></div>
     </div>
     <div id="chronicle" class="chronicle"></div>
+    <div class="slot-title">国事 · 三选一</div>
     <div class="cards" id="cards"></div>
+    <div class="slot-title">私人事件 · 可选一条（也可以不折腾）</div>
+    <div class="cards" id="privCards"></div>
+    <button class="btn" id="btn-settle">结算本回合</button>
     <div class="log" id="log"></div>
   </div>
 
@@ -646,7 +652,7 @@ function showFacts() {
 function start(fac) {
   st = { round: 1, fac, money: 5, name: 5, army: 5, combo: 0,
          pool: shuffle(deckOf(fac).slice()), log: [], ach: [], hist: [],
-         step: "card", priv: [], flags: [], flagLog: [],
+         step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
@@ -664,28 +670,13 @@ function updateBars() {
 }
 
 function render() {
-  if (st.step === "private") return renderPrivate();
   $("round").textContent = st.round;
   $("fac-pill").textContent = st.fac;
-  $("bar-money").style.width = (st.money * 10) + "%";
-  $("bar-name").style.width = (st.name * 10) + "%";
-  $("bar-army").style.width = (st.army * 10) + "%";
+  updateBars();
+  $("chronicle").innerHTML = "";
+  renderSlots();
   $("log").innerHTML = st.log.map((x) => `<div>${x}</div>`).join("");
-  const box = $("cards");
-  box.innerHTML = "";
-  st.pool.slice(0, 3).forEach((c) => {
-    const el = document.createElement("div");
-    el.className = "card";
-    const parts = [];
-    if (c.e.money) parts.push(`\u94b1 ${c.e.money > 0 ? "+" : ""}${c.e.money}`);
-    if (c.e.name) parts.push(`\u540d ${c.e.name > 0 ? "+" : ""}${c.e.name}`);
-    if (c.e.army) parts.push(`\u5175 ${c.e.army > 0 ? "+" : ""}${c.e.army}`);
-    el.innerHTML = `<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts.join("\u3000")}</div>`;
-    el.onclick = () => pick(c);
-    box.appendChild(el);
-  });
 }
-
 
 /* 私事数据按史称（范阳）存，游戏里势力叫河北 → 做个映射，否则河北永远没有私事 */
 function privKey(fac) {
@@ -694,18 +685,42 @@ function privKey(fac) {
   return Object.keys(PRIVATE_LITE)[0];
 }
 
-function renderPrivate() {
+function updateSettle() {
+  const b = $("btn-settle");
+  if (!b) return;
+  const ready = st.pendingCard !== null;
+  b.className = "btn" + (ready ? "" : " off");
+  b.textContent = ready ? "结算本回合" : "先选一件国事";
+}
+
+function renderSlots() {
+  // 上：国事三选一
   const box = $("cards");
   box.innerHTML = "";
-  $("chronicle").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
+  st.pool.slice(0, 3).forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "card" + (st.pendingCard === i ? " on" : "");
+    const parts = Object.keys(c.e).map((k) => {
+      const label = { money: "钱", name: "名", army: "兵" }[k];
+      const v = c.e[k];
+      return `${label}${v > 0 ? "+" : ""}${v}`;
+    }).join("　");
+    el.innerHTML = `<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts}</div>`;
+    el.onclick = () => { st.pendingCard = i; render(); };
+    box.appendChild(el);
+  });
+
+  // 下：私人事件（独立槽）
+  const pbox = $("privCards");
+  pbox.innerHTML = "";
   if (st.privPool.length < 3) {
     const pool = (PRIVATE_LITE[privKey(st.fac)] || []).filter((x) => (st.priv || []).indexOf(x.name) < 0);
     st.privPool = shuffle((pool.length >= 3 ? pool : (PRIVATE_LITE[privKey(st.fac)] || [])).slice());
   }
-  const picks = st.privPool.slice(0, 3);
-  picks.forEach((p) => {
+  const opts = st.privPool.slice(0, 3);
+  opts.forEach((p) => {
     const el = document.createElement("div");
-    el.className = "card";
+    el.className = "card" + (st.pendingPriv === p.id ? " on" : "");
     const parts = Object.keys(p.eff).map((k) => {
       const label = { money: "钱", name: "名", army: "兵" }[k];
       const v = p.eff[k];
@@ -714,135 +729,44 @@ function renderPrivate() {
     const VAGUE = ["朝中有人盯着", "驿路上不太平", "有人在记这笔账", "营里传了闲话", "宫里递了话"];
     const hint = p.flag ? `<div class="eff" style="color:#b0806a">隐约觉得：${VAGUE[(p.name.length + p.note.length) % VAGUE.length]}</div>` : "";
     el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>${hint}`;
-    el.onclick = () => choosePrivate(p);
-    box.appendChild(el);
+    el.onclick = () => { st.pendingPriv = (st.pendingPriv === p.id ? null : p.id); render(); };
+    pbox.appendChild(el);
   });
+  updateSettle();
   const skip = document.createElement("div");
-  skip.className = "card";
+  skip.className = "card" + (st.pendingPriv === null ? " on" : "");
   skip.innerHTML = "<h3>这次不折腾</h3><p>把心思都放在国事上。</p>";
-  skip.onclick = () => choosePrivate(null);
-  box.appendChild(skip);
+  skip.onclick = () => { st.pendingPriv = null; render(); };
+  pbox.appendChild(skip);
 }
 
-function choosePrivate(p) {
-  if (p) {
-    Object.keys(p.eff).forEach((k) => {
-      st[k] = Math.max(0, Math.min(MAXV, st[k] + p.eff[k]));
-    });
-    st.priv.push(p.name);
-    // 爱妃类私事可以反复选（不然 5 回合最多只能选到 2 次，「三连驾崩」根本走不到）
-    st.privPool = st.privPool.filter((x) => x.id !== p.id || p.name.indexOf("爱妃") >= 0);
-    st.log.unshift(`私事 · ${p.name}`);
-    if (p.name.indexOf("爱妃") >= 0) {
-      const loveN = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length;
-      if (loveN >= 2 && !st.loveWarned) { st.loveWarned = true; toast("陛下……已经第二个了。"); }
-    }
-    if (p.flag) {
-      st.flags.push(p.flag);
-      st.log.unshift(`　└ 埋下隐患：${p.flag.name}`);
-    }
-  } else {
-    st.log.unshift("私事 · 没折腾");
-  }
-  checkAch();
-  if (st.godown) return finishCarnal();
-  st.step = "card";
-  if (highFameEvent()) return playDeathLine("behead");
-  if (poorTick()) return playDeathLine("poor");
-  const dl2 = deathLine();
-  if (dl2) return playDeathLine(dl2);
-  const lastRound = st.round >= ROUNDS;
-  st.round += 1;
-  if (lastRound || st.money <= 0 || st.army <= 0 || st.name <= 0) {
-    if (st.money <= 0) st.log.unshift("⛔ 钱粮见底，撑不到下一季了。");
-    else if (st.army <= 0) st.log.unshift("⛔ 兵甲见底，撑不到下一季了。");
-    else if (st.name <= 0) st.log.unshift("⛔ 人心散尽，撑不到下一季了。");
-    return finish();
-  }
-  render();
-}
+function pick(c) { /* 兼容旧调用：直接当作已选国事 */ }
 
-
-/* ===== 势力称号（结算页展示；河东留给 v7 五势力版） ===== */
-const TITLES = {
-  "唐廷": { win: ["中兴之主", "天可汗", "再造大唐"], mid: ["守成之君", "偏安天子"],
-            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
-  "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
-            evil: ["篡逆权臣", "窃国之贼"],
-            mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "杀年猪"],
-            funny: ["肥胖的小丑", "奴隶主义的先锋队", "好色胖子", "LV10胡旋舞者"] },
-  "河朔": { win: ["真龙在野", "草蛇吞象", "乱世枭雄", "天命归晋", "人民保卫者"],
-            mid: ["三镇之主", "牙兵大帅"], low: ["被换掉的帅", "没人记得的节度使"],
-            funny: ["白日野心家", "戏曲行为大师", "出头的笨鸟", "俺寻思大能"] },
-};
-
-
-/* 封号按势力改号：唐廷用「唐X宗」，河北用「燕X帝」，河朔用「魏X帝」 */
-function facTitle(t) {
-  if (!t) return t;
-  if (st.fac === "河北") return t.replace(/^唐/, "燕").replace(/宗$/, "帝");
-  if (st.fac === "河朔") return t.replace(/^唐/, "魏").replace(/宗$/, "帝");
-  return t;
-}
-
-
-/* 正史庙号：史官按谥法硬凑的（评审那套"像话"的写法） */
-const OFFICIAL = {
-  "唐廷": { win: ["唐德宗", "唐宣宗"], mid: ["唐顺宗", "唐宪宗"],
-            low: ["唐哀帝", "唐僖宗"], funny: ["唐灵宗", "唐炀宗"] },
-  "河北": { win: ["燕武烈王", "燕昭成王"], mid: ["范阳郡王", "卢龙节度使"],
-            low: ["燕留后", "燕都将"], funny: ["燕使相", "赐铁券"] },
-  "河朔": { win: ["魏武公", "魏昭公"], mid: ["魏国公", "魏郡公"],
-            low: ["魏牙将", "魏小校"], funny: ["魏牙公", "魏哀公"] },
-};
-
-const HISTORIAN_LINES = [
-  "史官翻遍谥法，实在找不出更合适的字。",
-  "按谥法，本不该这么写。但史官想了想，还是写了。",
-  "这一笔史官斟酌了很久，最后还是落下了。",
-];
-
-function officialTitle(fac, kind) {
-  const o = OFFICIAL[fac] || OFFICIAL["唐廷"];
-  let pool = o.low;
-  if (kind === "win") pool = o.win;
-  else if (kind === "partial" || kind === "split") pool = o.mid;
-  else if (kind === "carnal" || kind === "rot") pool = o.funny;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function dualTitle(fac, kind) {
-  const off = officialTitle(fac, kind);
-  const folk = pickTitle(fac, kind);
-  const line = HISTORIAN_LINES[Math.floor(Math.random() * HISTORIAN_LINES.length)];
-  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}`;
-}
-
-function pickTitle(fac, kind) {
-  const t = TITLES[fac] || TITLES["唐廷"];
-  let pool = t.low;
-  if (kind === "win") {
-    // 赢得不干净（唐扒皮 / 人民公敌 / 驾崩）→ 走恶名池
-    const dirty = (st.ach || []).some((a) => ["唐扒皮", "人民群众的最大敌人", "好色胖子"].indexOf(a.name) >= 0);
-    pool = (dirty && t.evil) ? t.evil : t.win;
-  }
-  else if (kind === "partial" || kind === "split") pool = t.mid;
-  else if (kind === "carnal" || kind === "rot") pool = t.funny;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function pick(c) {
-  ["money", "name", "army"].forEach((k) => {
-    st[k] = Math.max(0, Math.min(MAXV, st[k] + (c.e[k] || 0)));
+function settleRound() {
+  if (st.pendingCard === null) { toast("先选一件国事"); return; }
+  const card = st.pool[st.pendingCard];
+  // 1) 国事
+  Object.keys(card.e).forEach((k) => {
+    st[k] = Math.max(0, Math.min(MAXV, st[k] + card.e[k]));
   });
-  const parts = Object.keys(c.e).map((k) => {
-    const label = { money: "\u94b1", name: "\u540d", army: "\u5175" }[k];
-    const v = c.e[k];
-    return `${label}${v > 0 ? "+" : ""}${v}`;
-  }).join(" ");
-  st.log.unshift(`\u7b2c${st.round}\u56de \u00b7 ${c.t}\u3000${parts}`);
-  st.hist.push(c);
-  if (!c.repeat) st.pool = st.pool.filter((x) => x.id !== c.id);
+  st.hist.push(card);
+  st.log.unshift(`第${st.round}回 · ${card.t}`);
+  if (!card.repeat) st.pool = st.pool.filter((x) => x.id !== card.id);
+  // 2) 私事
+  const priv = (st.privPool || []).find((x) => x.id === st.pendingPriv) || null;
+  if (priv) {
+    Object.keys(priv.eff).forEach((k) => {
+      st[k] = Math.max(0, Math.min(MAXV, st[k] + priv.eff[k]));
+    });
+    st.priv.push(priv.name);
+    st.log.unshift(`　私事 · ${priv.name}`);
+    if (priv.flag) { st.flags.push(priv.flag); st.log.unshift(`　└ 埋下隐患：${priv.flag.name}`); }
+    st.privPool = st.privPool.filter((x) => x.id !== priv.id || priv.name.indexOf("爱妃") >= 0);
+  } else {
+    st.log.unshift("　私事 · 没折腾");
+  }
+  st.pendingCard = null;
+  st.pendingPriv = null;
   checkAch();
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
@@ -850,10 +774,11 @@ function pick(c) {
   if (poorTick()) return playDeathLine("poor");
   const dl = deathLine();
   if (dl) return playDeathLine(dl);
-  st.step = "private";
+  if (st.round >= ROUNDS) return finish();
+  st.round += 1;
+  if (st.pool.length < 3) st.pool = st.pool.concat(deckOf(st.fac));
   render();
 }
-
 
 function unlock(a) {
   if (st.ach.some((x) => x.id === a.id)) return;
@@ -954,6 +879,72 @@ function highFameEvent() {
   }
   // 已经警告过一次还在越线 → 动刀
   return true;
+}
+
+
+/* ===== 称号系统（势力称号池 + 正史庙号 + 双写） ===== */
+const TITLES = {
+  "唐廷": { win: ["中兴之主", "天可汗", "再造大唐"], mid: ["守成之君", "偏安天子"],
+            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
+  "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
+            evil: ["篡逆权臣", "窃国之贼"],
+            mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "杀年猪"],
+            funny: ["肥胖的小丑", "奴隶主义的先锋队", "好色胖子", "LV10胡旋舞者"] },
+  "河朔": { win: ["真龙在野", "草蛇吞象", "乱世枭雄", "天命归晋", "人民保卫者"],
+            mid: ["三镇之主", "牙兵大帅"], low: ["被换掉的帅", "没人记得的节度使"],
+            funny: ["白日野心家", "戏曲行为大师", "出头的笨鸟", "俺寻思大能"] },
+};
+
+const OFFICIAL = {
+  "唐廷": { win: ["唐德宗", "唐宣宗"], mid: ["唐顺宗", "唐宪宗"],
+            low: ["唐哀帝", "唐僖宗"], funny: ["唐灵宗", "唐炀宗"] },
+  "河北": { win: ["燕武烈王", "燕昭成王"], mid: ["范阳郡王", "卢龙节度使"],
+            low: ["燕留后", "燕都将"], funny: ["燕使相", "赐铁券"] },
+  "河朔": { win: ["魏武公", "魏昭公"], mid: ["魏国公", "魏郡公"],
+            low: ["魏牙将", "魏小校"], funny: ["魏牙公", "魏哀公"] },
+};
+
+const HISTORIAN_LINES = [
+  "史官翻遍谥法，实在找不出更合适的字。",
+  "按谥法，本不该这么写。但史官想了想，还是写了。",
+  "这一笔史官斟酌了很久，最后还是落下了。",
+];
+
+function facTitle(t) {
+  if (!t) return t;
+  if (st.fac === "河北") return t.replace(/^唐/, "燕").replace(/宗$/, "帝");
+  if (st.fac === "河朔") return t.replace(/^唐/, "魏").replace(/宗$/, "帝");
+  return t;
+}
+
+function pickTitle(fac, kind) {
+  const t = TITLES[fac] || TITLES["唐廷"];
+  let pool = t.low;
+  if (kind === "win") {
+    const dirty = (st.ach || []).some((a) => ["唐扒皮", "人民群众的最大敌人"].indexOf(a.name) >= 0);
+    pool = (dirty && t.evil) ? t.evil : t.win;
+  } else if (kind === "partial" || kind === "split") {
+    pool = t.mid;
+  } else if (kind === "carnal" || kind === "rot") {
+    pool = t.funny;
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function officialTitle(fac, kind) {
+  const o = OFFICIAL[fac] || OFFICIAL["唐廷"];
+  let pool = o.low;
+  if (kind === "win") pool = o.win;
+  else if (kind === "partial" || kind === "split") pool = o.mid;
+  else if (kind === "carnal" || kind === "rot") pool = o.funny;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function dualTitle(fac, kind) {
+  const off = officialTitle(fac, kind);
+  const folk = pickTitle(fac, kind);
+  const line = HISTORIAN_LINES[Math.floor(Math.random() * HISTORIAN_LINES.length)];
+  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}`;
 }
 
 function playDeathLine(kind) {
@@ -1126,6 +1117,7 @@ function backToPick() {
   showFacts();
 }
 $("btn-again").onclick = backToPick;
+$("btn-settle").onclick = settleRound;
 $("btn-share").onclick = copyShare;
 showFacts();
 </script>
