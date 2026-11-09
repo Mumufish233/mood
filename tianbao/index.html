@@ -469,6 +469,21 @@ const PRIVATE_LITE = {
   ]
 };
 
+
+/* ===== 斩杀线结局：兵不够的藩镇，会被人拿去做人情 ===== */
+const BEHEAD = {
+  quote: "挫尔胡酋，以正国法。",
+  praise: "你的名够大，兵不够。朝廷的平乱诏还没写完，隔壁镇的节度使已经动手了——他比你更懂怎么交差。",
+  sigh: "人头装进木匣，匣上贴了张条子：乱党首级一枚。押送的人顺路领了赏，回来路上还买了两斤肉。",
+  ach: "乱臣贼子", titleAch: "魏削公",
+};
+const POOR_SOLDIER = {
+  quote: "朱门酒肉臭，路有冻死骨。",
+  praise: "你们穷得连刀都磨不起。三个数字一降，人就开始烂；摔一跤就是暴击，-5，直接躺下。\n我天朝上国，大唐盛世不杀无名之辈——因为你们连被杀的资格都没有。",
+  sigh: "老爷心善，见不得穷人。来人啊，把这些臭要饭的丘八，全部给杀了。\n史书上没留你们的名字，只写了一句：营中饥，亡者众。",
+  ach: "大唐帝国斩杀线下的丘八", titleAch: "魏丘公",
+};
+
 const HARD = [
   { min: 11, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
   { min: 8, kind: "partial", title: "\u504f\u5b89" },
@@ -712,6 +727,9 @@ function choosePrivate(p) {
   checkAch();
   if (st.godown) return finishCarnal();
   st.step = "card";
+  poorSpiral();
+  const dl2 = deathLine();
+  if (dl2) return playDeathLine(dl2);
   const lastRound = st.round >= ROUNDS;
   st.round += 1;
   if (lastRound || st.money <= 0 || st.army <= 0 || st.name <= 0) {
@@ -774,6 +792,8 @@ function pick(c) {
   checkAch();
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
+  const dl = deathLine();
+  if (dl) return playDeathLine(dl);
   st.step = "private";
   render();
 }
@@ -844,6 +864,44 @@ function monoKind() {
   const mn = Math.min(...keys.map((k) => vals[k]));
   if (!(mx >= 11 && mn <= 3)) return null;   // 只看极差：一项很高、另一项很低才算偏科
   return keys.sort((a, b) => vals[b] - vals[a])[0];
+}
+
+
+/* 斩杀线判定：兵/名/钱的红线 */
+function deathLine() {
+  // 名高兵低：典型该杀的乱臣贼子
+  if (st.name >= 8 && st.army <= 2) return "behead";
+  // 兵见底：朝廷平乱
+  if (st.army <= 1) return "behead";
+  // 河朔专属：穷丘八（三样都低，越拖越死）
+  if (st.fac === "河朔" && (st.money + st.name + st.army) / 3 <= 3.5) return "poor";
+  return null;
+}
+
+function playDeathLine(kind) {
+  const c = kind === "poor" ? POOR_SOLDIER : BEHEAD;
+  st.ach.push({ id: "deathline-" + kind, name: c.ach, title: c.titleAch });
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  $("end-title").textContent = kind === "poor" ? "穷丘八" : "乱臣贼子";
+  $("end-quote").textContent = c.quote;
+  $("end-praise").textContent = c.praise;
+  $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}　封号 · ${facTitle(c.titleAch)}`;
+  return true;
+}
+
+/* 河朔的穷丘八：每回合三属性 -1，25% 暴击 -5 */
+function poorSpiral() {
+  if (st.fac !== "河朔") return false;
+  if ((st.money + st.name + st.army) / 3 > 3.5) return false;
+  ["money", "name", "army"].forEach((k) => { st[k] = Math.max(0, st[k] - 1); });
+  st.log.unshift("📉 穷得开始死人：三样各 -1。");
+  if (Math.random() < 0.25) {
+    const k = ["money", "name", "army"][Math.floor(Math.random() * 3)];
+    st[k] = Math.max(0, st[k] - 5);
+    st.log.unshift("💀 暴击：营里又塌了一块（-" + 5 + "）。");
+  }
+  return true;
 }
 
 function finish() {
