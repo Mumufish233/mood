@@ -962,7 +962,7 @@ function playDeathLine(kind) {
   $("end-title").textContent = kind === "poor" ? "穷丘八" : "乱臣贼子";
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
-  const PIG = { "唐廷": "唐豚宗", "河北": "燕猪公", "河朔": "魏醢公" };
+  const PIG = { "唐廷": "唐脍宗", "河北": "燕猪公", "河朔": "魏酱公" };
   const pigTitle = (kind === "behead") ? (PIG[st.fac] || "唐豚宗") : facTitle(c.titleAch);
   $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}　封号 · ${pigTitle}`;
   return true;
