@@ -752,7 +752,9 @@ function finish() {
   // 暗雷结算（私事埋下的东西）
   (st.flags || []).forEach((fl) => {
     if (Math.random() < fl.chance) {
-      apply(fl.eff);
+      ["money", "name", "army"].forEach((k) => {
+        if (fl.eff && fl.eff[k]) st[k] = Math.max(0, Math.min(10, st[k] + fl.eff[k]));
+      });
       st.flagLog.push(fl.text || fl.name);
     }
   });
@@ -828,7 +830,14 @@ function copyShare() {
   }
 }
 
-$("btn-again").onclick = showFacts;
+function backToPick() {
+  $("screen-end").classList.add("hide");
+  $("screen-play").classList.add("hide");
+  $("screen-pick").classList.remove("hide");
+  st = null;
+  showFacts();
+}
+$("btn-again").onclick = backToPick;
 $("btn-share").onclick = copyShare;
 showFacts();
 </script>
