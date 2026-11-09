@@ -23,7 +23,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .card:hover{border-color:#6f6244}
 .card h3{margin:0 0 6px;font-size:17px;font-weight:400;letter-spacing:2px}
 .card p{margin:0;font-size:12.5px;line-height:1.65;color:#9c9180}
-.card .eff{font-size:11.5px;color:#7e7362;margin-top:7px;letter-spacing:1px}
+.card .eff{font-size:11.5px;color:#a89c86;margin-top:7px;letter-spacing:1px}
 .log{margin-top:14px;font-size:12.5px;line-height:1.9;color:#8d8271;flex:1}
 .end{text-align:center;margin-top:auto;padding-top:22px}
 .end h2{font-size:26px;letter-spacing:6px;font-weight:400;margin:0 0 14px;color:#e5d6b4}
@@ -47,6 +47,10 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .fact p{margin:0;font-size:12.5px;color:#9c9180;line-height:1.6}
 .bar i.q{background:#7f9a86 !important}
 .bar i.r{background:#a5765a !important}
+.bar-row .v{width:36px;text-align:right;color:#c8bda6;font-size:12px;font-variant-numeric:tabular-nums}
+.chronicle{font-size:12.5px;line-height:1.8;color:#a89c86;margin:0 0 10px}
+.btn.gh{border-color:#4a4436;color:#a89c86}
+.btn.gh:hover{background:#4a4436;color:#e5d6b4}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -64,10 +68,11 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
   <div id="screen-play" class="hide">
     <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span></div>
     <div class="bars">
-      <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div></div>
-      <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div></div>
-      <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div></div>
+      <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div><span class="v" id="val-money">5</span></div>
+      <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div><span class="v" id="val-name">5</span></div>
+      <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div><span class="v" id="val-army">5</span></div>
     </div>
+    <div id="chronicle" class="chronicle"></div>
     <div class="cards" id="cards"></div>
     <div class="log" id="log"></div>
   </div>
@@ -613,6 +618,15 @@ function start(fac) {
   render();
 }
 
+function updateBars() {
+  ["money", "name", "army"].forEach((k) => {
+    const el = $("bar-" + k);
+    if (el) el.style.width = Math.max(2, Math.min(100, st[k] * 10)) + "%";
+    const v = $("val-" + k);
+    if (v) v.textContent = st[k];
+  });
+}
+
 function render() {
   if (st.step === "private") return renderPrivate();
   $("round").textContent = st.round;
@@ -647,7 +661,7 @@ function privKey(fac) {
 function renderPrivate() {
   const box = $("cards");
   box.innerHTML = "";
-  $("log").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
+  $("chronicle").innerHTML = `<div>史官：国事已定，陛下还有私事要办。</div>`;
   if (st.privPool.length < 3) {
     const pool = (PRIVATE_LITE[privKey(st.fac)] || []).filter((x) => (st.priv || []).indexOf(x.name) < 0);
     st.privPool = shuffle((pool.length >= 3 ? pool : (PRIVATE_LITE[privKey(st.fac)] || [])).slice());
