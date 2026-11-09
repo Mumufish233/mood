@@ -888,7 +888,7 @@ function highFameEvent() {
 /* ===== 称号系统（势力称号池 + 正史庙号 + 双写） ===== */
 const TITLES = {
   "唐廷": { win: ["中兴之主", "天可汗", "再造大唐"], mid: ["守成之君", "偏安天子"],
-            low: ["傀儡天子", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
+            low: ["慈善家", "亡国之君"], funny: ["唐扒皮", "唐社宗", "唐饥宗", "唐辩宗"] },
   "河北": { win: ["河北救世主", "天命圣人", "汗上之汗"],
             evil: ["篡逆权臣", "窃国之贼"],
             mid: ["范阳节度使", "北地大帅"], low: ["一介叛将", "杀年猪"],
@@ -947,7 +947,7 @@ function dualTitle(fac, kind) {
   const off = officialTitle(fac, kind);
   const folk = pickTitle(fac, kind);
   const line = HISTORIAN_LINES[Math.floor(Math.random() * HISTORIAN_LINES.length)];
-  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}`;
+  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}` + ((fac === "唐廷" && folk === "慈善家") ? "（后世尊称 ATM）" : "");
 }
 
 function playDeathLine(kind) {
