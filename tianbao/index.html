@@ -737,6 +737,15 @@ const TITLES = {
             funny: ["白日野心家", "戏曲行为大师", "出头的笨鸟", "俺寻思大能"] },
 };
 
+
+/* 封号按势力改号：唐廷用「唐X宗」，河北用「燕X帝」，河朔用「魏X帝」 */
+function facTitle(t) {
+  if (!t) return t;
+  if (st.fac === "河北") return t.replace(/^唐/, "燕").replace(/宗$/, "帝");
+  if (st.fac === "河朔") return t.replace(/^唐/, "魏").replace(/宗$/, "帝");
+  return t;
+}
+
 function pickTitle(fac, kind) {
   const t = TITLES[fac] || TITLES["唐廷"];
   let pool = t.low;
@@ -773,7 +782,7 @@ function pick(c) {
 function unlock(a) {
   if (st.ach.some((x) => x.id === a.id)) return;
   st.ach.push(a);
-  toast(`成就解锁 · ${a.name}　封号 ${a.title}`);
+  toast(`成就解锁 · ${a.name}　封号 ${facTitle(a.title)}`);
 }
 
 function checkAch() {
@@ -825,7 +834,7 @@ function finishCarnal() {
   $("end-title").textContent = "驾崩";
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
-  $("end-sigh").textContent = `称号：${pickTitle(st.fac, "carnal")}　封号：${a.title}。百姓谢谢你，史官只写了半页。`;
+  $("end-sigh").textContent = `称号：${pickTitle(st.fac, "carnal")}　封号：${facTitle(a.title)}。百姓谢谢你，史官只写了半页。`;
 }
 
 function monoKind() {
@@ -882,7 +891,7 @@ function finish() {
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
   const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
-  const titleAch = st.ach.length ? st.ach[st.ach.length - 1].title : "";
+  const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
   $("end-sigh").textContent = c.sigh
     + (titleAch ? `\n\n封号 · ${titleAch}` : "")
     + `\n称号 · ${pickTitle(st.fac, h.kind)}`
