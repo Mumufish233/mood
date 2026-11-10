@@ -746,6 +746,12 @@ const HIDDEN_DECK = [
 
 /* 专属结局：引句 / 赞叹 / 感慨三段，史笔腔，一句阴阳 */
 const HIDDEN_ENDS = {
+  "换了人间": {
+    quote: "秦失其鹿，天下共逐之。然历代鼎革，不过易姓受命，未有布衣提三尺剑，专为黔首请命者。",
+    praise: "几千年来，皇帝换了无数个，姓刘、姓李、姓赵、姓朱……可你是个例外。你不是为了自己当皇帝，你是为了那些啃树皮的人能喝上一口热粥。你做到了大唐没做到的事。",
+    sigh: "他没有缔造万国来朝的盛世，但他让这片土地上的每一个老汉、每一个小儿，在冬天来临的时候，都能有一碗饱饭。\n史书上或许没有他的名字，但老百姓的饭碗里，都有他。",
+    seal: "封号 · 大衍",
+  },
   "大衍五十": {
     quote: "大衍之数五十，其用四十有九。你，就是遁去的那个一。",
     praise: "起于闾巷，不持尺籍，不奉朝请。分田者归心，识字者传檄，州县望风而自从。史臣翻遍旧例，寻不出一个现成的名目安置你，索性把那一笔空着。",
@@ -1067,7 +1073,7 @@ function checkAch(final) {
   if (st.hidden) {
     const usedCard = (id) => h.some((c) => c.id === id);
     if (usedCard("h_revolt2") && usedCard("h_revolt7")) unlock(HIDDEN_ACH.commune);
-    if (final && st.hiddenEnd === "大衍五十") unlock(HIDDEN_ACH.tang_zhu);
+    if (final && (st.hiddenEnd === "大衍五十" || st.hiddenEnd === "换了人间")) unlock(HIDDEN_ACH.tang_zhu);
     if (final && (st.hiddenEnd === "星火熄" || st.hiddenEnd === "被卖")) unlock(HIDDEN_ACH.martyr);
   }
 
@@ -1419,7 +1425,9 @@ function settleHiddenAfter() {
   st.hiddenRound = (st.hiddenRound || 0) + 1;
   if (st.army <= 2 && Math.random() < 0.35) return finishHidden("星火熄");
   if (st.name >= 10 && st.money <= 1 && Math.random() < 0.3) return finishHidden("被卖");
-  if (st.round >= 5 && st.name >= 12 && st.army >= 6) return finishHidden("大衍五十");
+  // 成事：名声满、兵还能拿住（兵软上限 5，所以门槛定 5）
+  if (st.round >= 5 && st.name >= 13 && st.army >= 5) return finishHidden("换了人间");
+  if (st.round >= 5 && st.name >= 12 && st.army >= 5) return finishHidden("大衍五十");
   if (st.hiddenRound >= 5) return finishHidden("洪王");
   hiddenDisperse();
   st.round += 1;
