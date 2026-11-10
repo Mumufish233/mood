@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.29-私事行式-20261110">
+<meta name="dsh-version" content="v0.30-结局顺序-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -1599,8 +1599,9 @@ function finish() {
   const privs = (st.priv || []).join("、") || "没折腾";
   const chron = `起居注 · 五回之间：${acts || "未成事"}。私事：${privs}。`;
   if ($("end-chron")) $("end-chron").textContent = chron;
-  const tail = (titleAch ? `\n\n封号 · ${titleAch}` : "")
-    + dualTitle(st.fac, h.kind)
+  // 顺序：史官记/庙号/野史/后世评价 → 封号 → 成就（封号不该抢在判词前面）
+  const tail = dualTitle(st.fac, h.kind)
+    + (titleAch ? `\n\n封号 · ${titleAch}` : "")
     + (achNames.length ? `\n成就 · ${achNames.join(" / ")}` : "")
     + (ep ? `\n\n三年后 · ${ep.praise}` : "")
     + ((st.flagLog && st.flagLog.length) ? `\n\n后来 · ${st.flagLog.join("；")}` : "");
