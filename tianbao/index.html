@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.26-封号表-20261110">
+<meta name="dsh-version" content="v0.27-目标清晰-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -114,7 +114,10 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
     <div class="log" style="flex:none;color:#9c9180;font-size:13px;line-height:2">
       天宝十四载。五回合，每回合：一件国事，一条私事。<br>
       钱、名、兵，三样都得撑住。<br>
-      撑不住的那一样，会替你写出结局。
+      撑不住的那一样，会替你写出结局。<br><br>
+      <span style="color:#c8bda6">本局目标：五回之后，钱、名、兵里最弱的那一项 ≥8，算赢；<br>
+      6 / 4 / 2 依次为偏安 / 割据 / 人亡政息。<br>
+      <b style="color:#b0806a">任何一项归零，当场结束。</b></span>
     </div>
         <div class="heavens">
       <div class="heavens-title">天命榜 · 看得见，够不着</div>
@@ -860,8 +863,8 @@ function showFacts() {
 const START = {
   // 身体：唐廷天子养尊（7）、河北胡将壮（8）、河朔牙帅耗（6）——见 health 字段
   "唐廷": { money: 4, name: 8, army: 6, health: 7 },   // 朝廷：名分最厚，钱最紧
-  "河北": { money: 4, name: 3, army: 8, health: 8 },   // 范阳：兵最多，名最薄
-  "河朔": { money: 6, name: 3, army: 4, health: 6 },   // 河东：钱粮稍厚，名兵都弱
+  "河北": { money: 4, name: 4, army: 8, health: 8 },   // 范阳：兵最多，名最薄
+  "河朔": { money: 6, name: 4, army: 4, health: 6 },   // 河东：钱粮稍厚，名兵都弱
 };
 
 function start(fac) {
@@ -892,7 +895,14 @@ function render() {
   $("round").textContent = st.hidden ? (st.hiddenRound + 1) : st.round;
   $("fac-pill").textContent = st.hidden ? "流寇" : st.fac;
   updateBars();
-  $("chronicle").innerHTML = "";
+  $("chronicle").innerHTML = (function () {
+    const lo = Math.min(st.money, st.name, st.army);
+    const names = { money: "钱", name: "名", army: "兵" };
+    const lowKey = ["money", "name", "army"].sort((a, b) => st[a] - st[b])[0];
+    const next = [8, 6, 4, 2].find((t) => t > lo);
+    const line = next ? `最低项 · ${names[lowKey]} ${lo}　距 ${next} 还差 ${next - lo}` : `最低项 · ${names[lowKey]} ${lo}　已达赢线`;
+    return `<div style="color:#8d8271;font-size:11.5px;letter-spacing:1px">${line}</div>`;
+  })();
   renderSlots();
   $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
 }
@@ -1581,6 +1591,8 @@ function finish() {
   if (zero) {
     const tk = { money: "粮尽", army: "兵变", name: "众叛" }[zero];
     $("end-title").textContent = tk;
+    markEnd(st.fac, tk);            // 归零结局也进图鉴（之前查无此项）
+    logRun({ endKind: "zero-" + zero });
     $("end-quote").textContent = c.quote;
     $("end-praise").textContent = c.praise;
     $("end-sigh").textContent = c.sigh + tail;
@@ -1677,7 +1689,8 @@ function renderJuan() {
   });
   const ebox = $("juan-end");
   ebox.innerHTML = "";
-  const titles = ["天命所归", "偏安", "割据", "人亡政息", "兵变", "乱臣贼子", "穷丘八", "驾崩", "粮仓", "信仰之刀", "嘴遁之子"];
+  const titles = ["天命所归", "换了人间", "偏安", "割据", "人亡政息", "兵变", "众叛", "粮尽", "乱臣贼子", "穷丘八",
+                  "暴毙", "驾崩", "粮仓", "信仰之刀", "嘴遁之子", "大衍五十", "洪王", "星火熄", "被卖"];
   titles.forEach((t) => {
     const got = d.ends.some((x) => x.split("|")[1] === t);
     const el = document.createElement("div");
