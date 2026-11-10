@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.31-天下表-20261110">
+<meta name="dsh-version" content="v0.32-邸报逼迫-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -132,6 +132,31 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .rival-row .a{width:34px}
 .rival-row .v{color:#b0806a}
 .rival-row .t{color:#6b6354}
+
+/* ===== 邸报：每回合结算后随机换一条，2 秒淡入（不用 marquee） ===== */
+.dibao{margin:0 0 10px;padding:8px 10px;border:1px solid #2f2a1f;border-left:3px solid #8a6b3f;border-radius:9px;background:#17140f;color:#a89c86;font-size:12px;line-height:1.8;letter-spacing:1px}
+.dibao .k{color:#b39a5f;letter-spacing:3px;margin-right:8px;font-size:11px}
+.dibao-line{display:inline-block;animation:dibaoFade 2s ease both}
+@keyframes dibaoFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== 逼迫式强插牌：右上角「逼」 ===== */
+.card.forced{border-color:#7d4a35;background:#1e1712}
+.card.forced:hover{border-color:#c8755a}
+.card .forced-mark{position:absolute;top:7px;right:9px;font-size:10.5px;color:#d39a7c;border:1px solid #8a4a35;border-radius:3px;padding:0 5px;line-height:1.7;letter-spacing:1px;background:#241713}
+.card.forced.on .forced-mark{right:36px}
+
+/* ===== 二选一确认弹层：两张后续牌 ===== */
+.forced-choice{position:fixed;inset:0;background:rgba(10,9,7,.88);z-index:20;display:flex;align-items:center;justify-content:center;padding:18px}
+.forced-choice.hide{display:none}
+.fc-box{width:100%;max-width:420px;border:1px solid #6f6244;border-radius:14px;background:#1d1b15;padding:20px 18px;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.fc-title{font-size:18px;letter-spacing:3px;color:#e5d6b4;font-weight:400;margin-bottom:8px}
+.fc-desc{font-size:12.5px;line-height:1.9;color:#9c9180;margin-bottom:16px}
+.fc-opts{display:flex;flex-direction:column;gap:9px}
+.fc-opt{border:1px solid #4a4436;border-radius:10px;padding:11px 13px;background:#191610;cursor:pointer;transition:border-color .15s,background .15s}
+.fc-opt:hover{border-color:#d9c589;background:#241f16}
+.fc-opt b{font-size:14px;color:#e5d6b4;font-weight:400;letter-spacing:2px}
+.fc-opt .eff{font-size:11.5px;color:#a89c86;margin-left:8px}
+.fc-opt .d{font-size:11.5px;color:#8d8271;margin-top:4px;line-height:1.7}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -197,6 +222,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <aside class="col-log">
         <div class="log-head">史官在记</div>
         <div id="chronicle" class="chronicle"></div>
+        <div id="dibao" class="dibao"></div>
     <div id="rivals" class="rivals"></div>
         <div class="log" id="log"></div>
       </aside>
@@ -214,6 +240,18 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <span class="btn gh" id="btn-share" style="margin-left:8px">复制这一局</span>
       <span class="btn gh" id="btn-juan-end" style="margin-left:8px">谥法簿</span>
       <div id="share-tip" style="font-size:12px;color:#8d8271;margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- 逼迫式选项：二选一确认弹层，不占国事三选一的位置 -->
+  <div id="forced-choice" class="forced-choice hide">
+    <div class="fc-box">
+      <div class="fc-title" id="forced-title"></div>
+      <div class="fc-desc" id="forced-desc"></div>
+      <div class="fc-opts">
+        <div class="fc-opt" id="forced-a"></div>
+        <div class="fc-opt" id="forced-b"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -867,6 +905,19 @@ function drawHand() {
   st.prevHandIds = Array.from(ids);
   // 展示过的 3 张移出剩余池；repeat 牌留池，但下一回合被 prev 挡住，不会连续出现
   st.pool = uniq(pool).filter((c) => !ids.has(c.id) || c.repeat);
+  /* 逼迫式强插牌：本回合 hand 第 3 张固定替换，插在随机抽牌之后 → 不会被随机换掉。
+     同一回合最多 1 张；被顶掉的那张退回剩余池，仍保证 3 张可选。 */
+  const fc = forcedCardForRound(prev);
+  if (fc) {
+    const dropped = st.hand[2];
+    st.hand = [st.hand[0], st.hand[1], fc];
+    if (dropped) st.pool = uniq(st.pool.concat([dropped]));
+    st.prevHandIds = st.hand.map((c) => c.id);
+    st.forcedRound = st.round;
+    st.forcedId = fc.id;
+    if (fc.id === "t_uprising") st.uprisingSeen = true;
+    return;   // 本回合已有强插牌，不再插隐藏线转线牌
+  }
   /* 第 3 回结算后民穷财尽 → 第 4 回国策里混入唯一一张转线牌；一局只出现一次 */
   if (st.round === 4 && st.rebelOffered && !st.rebelSeen) {
     const dropped = st.hand[2];
@@ -902,11 +953,16 @@ function start(fac) {
          pool: shuffle(deckOf(fac).slice()), hand: [], prevHandIds: [], skipPriv: 0, log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()),
-         hidden: false, hiddenRound: 0, hiddenEnd: null, rebelSeen: false, rebelOffered: false };
+         hidden: false, hiddenRound: 0, hiddenEnd: null, rebelSeen: false, rebelOffered: false,
+         threat: 0, edicts: 0, threatLocked: false, rebelLine: false, uprisingLocked: false,
+         forcedRound: 0, forcedId: "", forcedChoice: null, doubleCutRound: 0,
+         edictSeen: false, hChoiceSeen: false, uprisingSeen: false, dibao: "" };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
+  hideForcedChoice();
   drawHand();
+  rollDibao();
   render();
 }
 
@@ -932,6 +988,7 @@ function render() {
     const line = next ? `最低项 · ${names[lowKey]} ${lo}　距 ${next} 还差 ${next - lo}` : `最低项 · ${names[lowKey]} ${lo}　已达赢线`;
     return `<div style="color:#8d8271;font-size:11.5px;letter-spacing:1px">${line}</div>`;
   })();
+  renderDibao();
   renderSlots();
   if ($("rivals")) {
     const R = st.rivals || {};
@@ -977,8 +1034,8 @@ function renderSlots() {
   box.innerHTML = "";
   (st.hand || []).forEach((c, i) => {
     const el = document.createElement("div");
-    el.className = "card nat" + (st.pendingCard === i ? " on" : "");
-    const parts = c.rebel ? "无 · 遁去其一" : (function () {
+    el.className = "card nat" + (st.pendingCard === i ? " on" : "") + (c.forced ? " forced" : "");
+    const parts = c.rebel ? "无 · 遁去其一" : (c.forced && c.effText ? c.effText : (function () {
       const arr = Object.keys(c.e).map((k) => {
         const label = { money: "钱", name: "名", army: "兵" }[k];
         const v = c.e[k];
@@ -986,9 +1043,14 @@ function renderSlots() {
       });
       if (c.h) arr.push(`身${c.h > 0 ? "+" : ""}${c.h}`);   // 身体消耗以前没写
       return arr.join("　");
-    })();
-    el.innerHTML = `<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts}</div>`;
-    el.onclick = () => { st.pendingCard = i; render(); };
+    })());
+    const badge = c.forced ? `<span class="forced-mark">逼</span>` : "";
+    el.innerHTML = `${badge}<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts}</div>`;
+    el.onclick = () => {
+      st.pendingCard = i;
+      if (c.choices) { render(); openForcedChoice(c); }   // 逼迫式选项：立刻弹二选一
+      else { hideForcedChoice(); render(); }
+    };
     box.appendChild(el);
   });
 
@@ -1047,6 +1109,197 @@ const RIVAL_FACS = ["唐廷", "河北", "河朔"];
 const APPEASE_IDS = ["h_tribute", "h_confess", "s_marry", "s_jie"];   // 装孙子专用牌
 const CUT_IDS = ["t_cut", "t_purge"];                                 // 唐廷压制的牌
 
+/* ===== 邸报（滚动动向）：26 条文案池，按势力 / 回合挑选 ===== */
+const DIBAO_THREAT = "范阳的兵又在城外操练了，刀枪如林。";
+const DIBAO = [
+  { t: "邸报：卢龙节度使安禄山今日进贡宝马二十匹。", fac: ["唐廷", "河朔"] },
+  { t: "邸报：长安米价又涨了三成，两市闭坊甚早。", fac: ["唐廷"] },
+  { t: "密探来报：长安正在秘密调动禁军。", fac: ["河北", "河朔"] },
+  { t: "邸报：河北三镇使者同日至京，馆驿住不下。", fac: ["唐廷"] },
+  { t: "邸报：江淮漕船到陕州，沉了两艘。", fac: ["唐廷"] },
+  { t: "邸报：范阳新造甲仗三千领，工部照例登记在册。", fac: ["唐廷", "河朔"] },
+  { t: "密探来报：范阳城外又添了两座营，夜里灯火不熄。", fac: ["唐廷"] },
+  { t: "邸报：宰相奏请裁撤边镇冗兵，留中不发。", fac: ["唐廷"], from: 2 },
+  { t: "邸报：御史台有人上折子问河北兵籍，折子第二天就不见了。", fac: ["唐廷"], from: 3 },
+  { t: "邸报：陇右捷报至，赏格拖了两个月还没发下来。", fac: ["唐廷"] },
+  { t: "邸报：东市胡商今日罢市，说斗秤被人改过。", fac: ["唐廷"] },
+  { t: "邸报：潼关守将换了人，新来的带了自己的亲兵。", fac: ["唐廷", "河北"], from: 3 },
+  { t: "密探来报：朝廷的使者又到了范阳，这回带的是诏书，不是酒。", fac: ["河北"] },
+  { t: "邸报：户部催三镇补缴去岁赋税，公文走了十七天。", fac: ["河北", "河朔"] },
+  { t: "邸报：范阳边市马价跌了两成，胡人说是长安不再收马了。", fac: ["河北"] },
+  { t: "密探来报：长安在查各镇兵册，先查的是范阳。", fac: ["河北"], from: 2 },
+  { t: "邸报：营州今岁霜早，草料先紧着官马。", fac: ["河北"] },
+  { t: "邸报：三镇牙兵聚在魏博吃酒，席上没人提朝廷。", fac: ["河北", "河朔"], from: 3 },
+  { t: "邸报：河朔请旌节的使者到了长安，礼部让他先等着。", fac: ["河朔", "唐廷"], from: 2 },
+  { t: "密探来报：邻镇在界河上修了一座新桥，桥头设了卡。", fac: ["河朔"] },
+  { t: "邸报：晋阳盐价连涨三日，牙兵的饷照旧按月发。", fac: ["河朔"] },
+  { t: "邸报：牙兵有人领了饷就往南走，说是南边给的更多。", fac: ["河朔"], from: 3 },
+  { t: "邸报：三镇共立的界碑被人挪了半里，谁也不认是自己挪的。", fac: ["河朔", "河北"] },
+  { t: "邸报：今年科举取士三十人，榜上没有一个北边籍贯。", fac: ["唐廷", "河北"], from: 3 },
+  { t: "密探来报：宫里的鱼符换了一批，旧的那批还没缴回。", fac: ["唐廷"], from: 4 },
+  { t: "邸报：驿路断了三日，说是塌方；第四日通了，没人再说起。", fac: ["唐廷", "河北", "河朔"], from: 4 },
+];
+
+/* ===== 历史进程 / AI 倒计时：强插牌（forced:true，占第 3 张） ===== */
+const EDICT_GO = { id: "edict_go", t: "去", d: "车马备好了。这一去，长安的朱雀门就在眼前。", e: {}, forced: true, effText: "直入长安 · 结局" };
+const EDICT_STAY = { id: "edict_stay", t: "不去", d: "把原话交给使者带回去。话不长，够他记一路。", e: {}, forced: true, effText: "河北威胁 +1" };
+const H_REBEL = { id: "h_rebel", t: "起兵", d: "鼓先敲，表后写。写不写，其实都一样了。", e: { army: 4, name: -2, money: -2 }, forced: true, effText: "兵+4 名-2 钱-2" };
+const H_KOWTOW = { id: "h_kowtow", t: "装孙子认怂", d: "表写得比上一回更重，重到自己都不好意思念完。", e: { name: 2, army: -2 }, forced: true, effText: "名+2 兵-2 · 下回削藩加倍" };
+const FORCED = {
+  t_edict: { id: "t_edict", t: "宣节度使进京面圣", d: "诏书到了范阳。去，还是不去？使者就站在阶下等回话。", e: {}, forced: true, choices: [EDICT_GO, EDICT_STAY], safeIndex: 1, effText: "二选一 · 不可推" },
+  t_uprising: { id: "t_uprising", t: "起兵", d: "范阳的兵已经出城，旗上不再写唐字。这一回，谁也按不住了。", e: {}, forced: true, effText: "河北起兵 · 不可逆" },
+  h_choice: { id: "h_choice", t: "起兵，还是再忍一回", d: "朝廷的使者一趟比一趟勤。帐下的人都看着你，等你先开口。", e: {}, forced: true, choices: [H_REBEL, H_KOWTOW], safeIndex: 1, effText: "二选一 · 不可推" },
+};
+const KOWTOW_IDS = ["h_tribute", "h_confess", "h_kowtow"];   // 河北「装孙子」：抵掉一次诏书
+
+function pickDibao() {
+  if (st && st.fac === "唐廷" && (st.threat || 0) >= 2) return DIBAO_THREAT;
+  const fac = st ? st.fac : "唐廷";
+  const round = st ? st.round : 1;
+  const pool = DIBAO.filter((x) => (!x.fac || x.fac.indexOf(fac) >= 0) && (!x.from || round >= x.from));
+  const fresh = pool.filter((x) => x.t !== (st && st.dibao));
+  const use = fresh.length ? fresh : (pool.length ? pool : DIBAO);
+  return use[Math.floor(Math.random() * use.length)].t;
+}
+function rollDibao() { if (st) st.dibao = pickDibao(); }
+function renderDibao() {
+  const el = $("dibao");
+  if (!el || !st) return;
+  const text = st.dibao || pickDibao();
+  if (el._dibaoText === text) return;       // 选牌重绘时不重放淡入
+  el._dibaoText = text;
+  el.innerHTML = `<span class="k">邸报</span><span class="dibao-line">${text}</span>`;
+}
+
+/* 本回合该强插哪一张：同一回合最多 1 张，隐藏线不插。
+   prevIds = 上一回合展示过的牌；沿用 BUG-6 口径，强插牌也不连着两回重出。 */
+function forcedCardForRound(prevIds) {
+  if (!st || st.hidden || st.rebelLine || st.uprisingLocked) return null;
+  if (st.forcedRound === st.round && st.forcedId) return null;
+  let pick = null;
+  if (st.fac === "唐廷") {
+    if (st.round >= 5 && (st.threat || 0) >= 4 && !st.uprisingSeen) pick = FORCED.t_uprising;
+    else if ((st.threat || 0) >= 2 && !st.uprisingSeen) pick = FORCED.t_edict;
+  } else if (st.fac === "河北") {
+    if ((st.edicts || 0) >= 2) pick = FORCED.h_choice;
+  }
+  if (pick && (prevIds || []).indexOf(pick.id) >= 0) return null;
+  return pick;
+}
+
+/* 历史进程：唐廷威胁 / 河北诏书，按回合推进（只认本回合这张国事牌） */
+function historyTick(card) {
+  if (!card || st.hidden) return;
+  if (st.fac === "唐廷") {
+    if (st.round >= 3 && !st.threatLocked && CUT_IDS.indexOf(card.id) < 0) {
+      st.threat = Math.min(5, (st.threat || 0) + 1);
+      st.log.unshift(`🏛 天下 · 河北威胁 ${st.threat}/5${st.threat >= 2 ? " · 长安要你给个说法" : ""}`);
+    }
+  } else if (st.fac === "河北") {
+    if (st.round >= 2 && KOWTOW_IDS.indexOf(card.id) < 0) {
+      st.edicts = Math.min(3, (st.edicts || 0) + 1);
+      st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3`);
+    }
+  }
+}
+
+function openForcedChoice(card) {
+  const ov = $("forced-choice");
+  if (!ov) return false;
+  ov.classList.remove("hide");
+  $("forced-title").textContent = card.t;
+  $("forced-desc").textContent = card.d;
+  (card.choices || []).forEach((o, i) => {
+    const el = $(i === 0 ? "forced-a" : "forced-b");
+    el.innerHTML = `<b>${o.t}</b>${o.effText ? `<span class="eff">${o.effText}</span>` : ""}<div class="d">${o.d}</div>`;
+    el.onclick = () => chooseForced(o);
+  });
+  return true;
+}
+function hideForcedChoice() {
+  const ov = $("forced-choice");
+  if (ov) ov.classList.add("hide");
+}
+function chooseForced(opt) {
+  st.forcedChoice = opt;
+  hideForcedChoice();
+  settleRound();
+}
+
+/* 后续牌的特殊效果；返回 true = 本回合到此为止（结局 / 使者再来 / 起兵牌顶上） */
+function applyForcedChoice(c, auto) {
+  if (c.id === "edict_go") { finishEdict(); return true; }
+  if (c.id === "edict_stay") {
+    st.threat = Math.min(5, (st.threat || 0) + 1);
+    st.log.unshift("　使者回去了，带着你的原话。");
+    if (!auto && st.threat >= 4 && st.round >= 5 && !st.uprisingSeen) {
+      /* 河北起兵不可逆：本回合第 3 张直接顶成 t_uprising，必须玩家自己点 */
+      const i = (st.hand || []).findIndex((x) => x && x.id === "t_edict");
+      if (i >= 0) st.hand[i] = FORCED.t_uprising;
+      else if (st.hand.length >= 3) st.hand[2] = FORCED.t_uprising;
+      st.forcedId = "t_uprising";
+      st.forcedRound = st.round;
+      st.log.unshift("🏛 天下 · 河北：范阳起兵，诏书追不回来了。");
+      st.pendingCard = null;
+      render();
+      return true;
+    }
+    if (!auto) {
+      /* 真人：本回合先不结算，使者还站在阶下，可以再拒一次（威胁继续涨） */
+      st.pendingCard = null;
+      render();
+      return true;
+    }
+    return false;   // 无交互环境兜底：照常结算，绝不空转
+  }
+  if (c.id === "h_rebel") {
+    st.threatLocked = true;      // threat 锁死
+    st.rebelLine = true;         // 造反线：结局优先走 mutiny / hidden
+    st.log.unshift("　范阳起兵 · 已无回头路。");
+    return false;
+  }
+  if (c.id === "h_kowtow") {
+    st.edicts = 0;
+    st.doubleCutRound = st.round + 1;   // 下一回唐廷削藩加倍（兵-2）
+    st.log.unshift("　上表请罪 · 下一回削藩加倍。");
+    return false;
+  }
+  return false;
+}
+
+/* ===== 逼迫式专属结局：太君 / 兵变（复用 mutiny 池，不动原有 60 篇文案） ===== */
+function finishEdict() {
+  hideForcedChoice();
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  $("end-title").textContent = "太君";
+  markEnd(st.fac, "太君");
+  logRun({ endKind: "edict-go" });
+  $("end-quote").textContent = "「宣节度使进京面圣。」";
+  $("end-praise").textContent = "你去了长安。车马停在朱雀门前，再没出来。";
+  $("end-sigh").textContent = "使者回范阳复命，只带回去一句话：节度使已经进京了。\n\n史官记：那一年的邸报里，范阳两个字忽然少了。";
+  if ($("end-chron")) $("end-chron").textContent = `起居注 · 第${st.round}回：宣节度使进京面圣，去。`;
+  return true;
+}
+
+function finishMutinyLine(tag) {
+  hideForcedChoice();
+  st.uprisingLocked = true;
+  checkAch(true);
+  const pool = (COPY[st.fac] || COPY["唐廷"]).mutiny;
+  const c = pool[Math.floor(Math.random() * pool.length)];
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  $("end-title").textContent = "兵变";
+  markEnd(st.fac, "兵变");
+  logRun({ endKind: tag || "uprising" });
+  $("end-quote").textContent = c.quote;
+  $("end-praise").textContent = c.praise;
+  $("end-sigh").textContent = c.sigh + "\n\n史官记：河北起兵不可逆，此后不问长安。\n结局 · 乱臣贼子";
+  if ($("end-chron")) $("end-chron").textContent = `起居注 · ${(st.hist || []).map((x) => x.t).join("、") || "未成事"}。`;
+  return true;
+}
+
 function initRivals() {
   st.rivals = {};
   RIVAL_FACS.forEach((f) => { st.rivals[f] = { att: "观望", act: "—", val: "" }; });
@@ -1072,9 +1325,16 @@ function rivalTurn() {
   const usedAppease = (st.hist || []).some((c) => APPEASE_IDS.indexOf(c.id) >= 0);
   const usedCut = (st.hist || []).some((c) => CUT_IDS.indexOf(c.id) >= 0);
 
-  // 藩镇线：唐廷削藩压力（第 2 回起）
+  // 藩镇线：唐廷削藩压力（第 2 回起）；装孙子认怂后下一回加倍（兵-2）
   if ((p === "河北" || p === "河朔") && st.round >= 2 && !st.hidden) {
-    if (usedAppease) {
+    const dbl = st.doubleCutRound === st.round;
+    if (dbl) {
+      st.army = Math.max(0, st.army - 2);
+      R["唐廷"].act = "削藩加倍，兵马被点走两成";
+      R["唐廷"].val = "兵-2";
+      st.doubleCutRound = 0;
+      st.log.unshift("🏛 天下 · 唐廷：上回忍了，这回的折子加倍。");
+    } else if (usedAppease) {
       st.name = Math.min(MAXV, st.name + 1);
       R["唐廷"].act = "使者收了礼，削藩暂缓";
       R["唐廷"].val = "名+1";
@@ -1113,13 +1373,27 @@ function rivalTurn() {
 
   // 态度刷新
   RIVAL_FACS.forEach((f) => { if (f !== p) R[f].att = rivalAttitude(f); });
+  // 倒计时：唐廷线河北威胁 ≥1 → 天下表里河北固定敌视（压过默认刷新）
+  if (p === "唐廷" && (st.threat || 0) >= 1 && R["河北"]) {
+    R["河北"].att = "敌视";
+    if (!R["河北"].act || R["河北"].act === "—") R["河北"].act = "范阳按兵不动，眼睛盯着长安";
+  }
 }
 
 function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
-  const card = (st.hand || [])[st.pendingCard];
+  let card = (st.hand || [])[st.pendingCard];
   if (!card) { st.pendingCard = null; render(); toast("牌面已变，请重新选一件国事"); return; }
   if (card.rebel) return enterHiddenLine(card);   // 转线牌：点了就是转线，无数值
+  if (card.id === "t_uprising") { st.uprisingSeen = true; return finishMutinyLine("uprising"); }
+  /* 逼迫式选项：弹层二选一；无交互环境按安全项兜底，绝不空转 */
+  if (card.forced && card.choices) {
+    const auto = !st.forcedChoice;
+    card = st.forcedChoice || card.choices[card.safeIndex || 1];
+    st.forcedChoice = null;
+    hideForcedChoice();
+    if (applyForcedChoice(card, auto)) return;
+  }
   // 1) 国事
   Object.keys(card.e).forEach((k) => {
     st[k] = Math.max(0, Math.min(MAXV, st[k] + card.e[k]));
@@ -1127,6 +1401,7 @@ function settleRound() {
   if (card.h) applyHealth(card.h);
   st.hist.push(card);
   st.log.unshift(`第${st.round}回 · ${card.t}`);
+  historyTick(card);   // 历史进程：河北威胁 / 唐廷诏书随回合推进
   // BUG-6：本回合展示的 3 张已在 drawHand() 里移出剩余池；repeat 牌留池中可再抽到
   // 2) 私事
   const priv = (st.privPool || []).find((x) => x.id === st.pendingPriv) || null;
@@ -1160,6 +1435,7 @@ function settleRound() {
   if (st.round === 3 && !st.rebelSeen && st.money <= 2 && st.name <= 2) st.rebelOffered = true;
   rivalTurn();
   st.round += 1;
+  rollDibao();      // 每回合结算后随机换一条邸报
   drawHand();
   render();
 }
@@ -1660,6 +1936,9 @@ function finishHidden(kind) {
 
 function finish() {
   if (st.hidden) return finishHidden(st.hiddenEnd || "洪王");   // 隐藏线不进天命档
+  /* 造反线 / 河北起兵不可逆：结局优先收进兵变（乱臣贼子）池 */
+  if (st.rebelLine) return finishMutinyLine("rebel");
+  if (st.fac === "唐廷" && (st.threat || 0) >= 4 && !st.uprisingLocked) return finishMutinyLine("uprising");
   $("screen-play").classList.add("hide");
   $("screen-end").classList.remove("hide");
   settleHiddenFlags();
@@ -1806,7 +2085,7 @@ function renderJuan() {
   const ebox = $("juan-end");
   ebox.innerHTML = "";
   const titles = ["天命所归", "换了人间", "偏安", "割据", "人亡政息", "兵变", "众叛", "粮尽", "乱臣贼子", "穷丘八",
-                  "暴毙", "驾崩", "粮仓", "信仰之刀", "嘴遁之子", "大衍五十", "洪王", "星火熄", "被卖"];
+                  "暴毙", "驾崩", "粮仓", "信仰之刀", "嘴遁之子", "大衍五十", "洪王", "星火熄", "被卖", "太君"];
   titles.forEach((t) => {
     const got = d.ends.some((x) => x.split("|")[1] === t);
     const el = document.createElement("div");
@@ -1836,6 +2115,7 @@ function closeJuan() {
 }
 
 function backToPick() {
+  hideForcedChoice();
   $("screen-end").classList.add("hide");
   $("screen-play").classList.add("hide");
   $("screen-start").classList.remove("hide");
