@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.21-晋号-20261110">
+<meta name="dsh-version" content="v0.22-后世评价-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -908,7 +908,7 @@ function finishSick() {
   $("end-title").textContent = "暴毙";
   $("end-quote").textContent = "「帝春秋鼎盛，遽崩于内寝。」";
   $("end-praise").textContent = "丹药是道士炼的，你是信了的那个。太医到的时候，人已经凉了。";
-  $("end-sigh").textContent = dualTitle(st.fac, "fade") + `\n\n后世评价 · ${EVALS.sick[Math.floor(Math.random() * EVALS.sick.length)]}`;
+  $("end-sigh").textContent = dualTitle(st.fac, "fade") + `\n\n后世评价 · ${(EVALS[st.fac] || EVALS["唐廷"]).sick[0]}`;
   markEnd(st.fac, "暴毙");
 }
 
@@ -1055,7 +1055,7 @@ function finishCarnal() {
   markEnd(st.fac, "驾崩");
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
-  $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n后世评价 · ${EVALS.carnal[0]}\n\n百姓谢谢你，史官只写了半页。`;
+  $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n后世评价 · ${(EVALS[st.fac] || EVALS["唐廷"]).carnal[0]}\n\n百姓谢谢你，史官只写了半页。`;
 }
 
 function monoKind() {
@@ -1120,16 +1120,48 @@ const OFFICIAL = {
 
 
 /* ===== 后世评价（第三层：正史庙号 / 民间野史 / 后世评价） ===== */
+/* ===== 后世评价（按势力 × 档位；主人 2026-11-10 重写：好结局抬高、烂结局往死里阴阳） ===== */
 const EVALS = {
-  win: ["后世史论：说他运气好的人不少，但同一件事能连做五次都做对的，运气从来不够用。",
-        "后世史论：那一朝的账，后人查了三百年，只查出他批过的折子上字都写得很小。"],
-  mid: ["后世史论：守成之君，说他的人最少——好话没人记得，坏话也没人记得。",
-        "后世史论：他在位那些年，史书翻过去只要两页，两页里还夹着一场旱灾。"],
-  low: ["后世史论：亡国的账都记在他头上。可账本翻开，前头那几页不是他写的。",
-        "后世史论：后人骂他时很痛快，骂完接着过自己的日子——这大概是他最后的作用。"],
-  sick: ["后世史论：死得太早，什么都没来得及做，所以什么错也轮不到他。",
-         "后世史论：太医的方子还在，人没了。史官只写了一句：帝崩，年四十二。"],
-  carnal: ["后世野记：说他死在前头，其实是死在后宫；野史写得更难听，史官删了。"],
+  "唐廷": {
+    win: ["山河破碎两京陷，风雨飘摇帝位衔。苦心孤诣持危局，信得白衣唐风归。\n\
+——你选了历史中最苦的那条路，忍住了一段没有人替你忍的日子。安史之乱在你手里只是安禄山之乱；你走了唐肃宗因为短视和恐惧没敢走的那条路。大唐在你手里不及盛世，可你把一艘漏水的船开回了正常水位，还替后来的人攒下了船板。史笔秉持，谨慎地称你「复宗」；而后人私下里说：唐族，是从你这一朝开始叫起来的。"],
+    mid: ["后世评：守成两字，写在史书上只有半行，落在人身上是二十年。你没做成什么大事，可你也没让哪件大事坏在你手上。"],
+    fade: ["后世评：暮气这东西，比叛军难打。叛军来了能跑，暮气来了，人还在殿上坐着，国已经走了。"],
+    low: ["牛！真牛！你要真是皇帝，历史上就没隋炀帝什么事了；秦宗权、石虎、纣王排你后边，都只能自愧不如。您完美解释了什么叫类人群星闪耀之时。"],
+    sick: ["后世评：丹药是道士炼的，你是信了的那个。史官落笔只八个字：春秋鼎盛，遽崩内寝。"],
+    carnal: ["后世野记：说他死在前头，其实是死在后宫。野史写得难听，史官删了——删之前先笑了半炷香。"],
+  },
+  "河北": {
+    win: ["渔阳鼓动地来，燕山铁骑入云开。胡汉同城三十年，关东子弟唱唐来。\n\
+——起兵那年你被写成贼，收场那年你被写成祖。你让胡人的马跑进了中原的路，也让中原的字写进了胡人的碑。史官一边骂你，一边不得不承认：燕地的百姓，此后有了姓氏。"],
+    mid: ["后世评：范阳的兵强，范阳的账乱。你撑住了场面，没撑住名分——乱世里，这两样从来不是一回事。"],
+    fade: ["后世评：胡马过了河，马还在，人散了。燕地的老人后来只说一句：那年冬天，城里的狗叫得比人凶。"],
+    low: ["牛！真牛！安禄山史思明在你面前都算小辈，侯景见了你得喊一声祖师爷。你把一手好牌打成这样，也是种本事——史书上管这叫「兵强而不知纪」。"],
+    sick: ["后世评：酒喝多了，刀就握不住；丹炼多了，人就握不住。三十六岁上，连名字都没写完。"],
+    carnal: ["后世野记：胡旋舞跳到第三圈，帐外的兵就开始商量换谁了。你说再跳一圈，他们说不必了。"],
+  },
+  "河朔": {
+    win: ["晋阳城外雪如沙，牙帐三更听胡笳。莫问长安谁作主，魏博之外我为家。\n\
+——三镇的人不认朝廷，只认饷；你把饷发足了，他们就认你。史书说你「无君」，可你给了这片地上最实在的东西：兵有粮，民有田，城不被抢。安史之后，是你在晋地替大唐续了半口气。"],
+    mid: ["后世评：牙兵认饷不认人。你让他们吃饱了，他们叫你一声帅；你让他们饿了一顿，他们就换一个帅。"],
+    fade: ["后世评：晋地的风硬，人心更硬。你死之后，牙兵把你儿子扶上台，三个月后又换了人。"],
+    low: ["牛！真牛！刘守光、石敬瑭都得给你让路，你这身子骨要是生在唐初，玄武门那事都不用李世民动手。史家只敢写四个字：晋地大乱。"],
+    sick: ["后世评：晋地冷，酒烈，人短寿。你死在冬天，牙兵在城头喝了三天酒，说是给你送行。"],
+    carnal: ["后世野记：帐里的事传到营里，牙兵只问一句：帅还有没有力气加饷？" ],
+  },
+};
+
+/* 胜局的三年后（长段后日谈，主人要求「主要放三年后」） */
+const WIN_EPI = {
+  "唐廷": "三年后，长安西市的胡商又回来了。有个老胡人问起当年那支驼队，市署的人翻了簿子，说那批货没到。老胡人哦了一声，把新驼队往北牵了。\n\
+那年冬天，户部把新造的户籍送进宫，册子摞起来比人高。您在殿上翻到第七册，抬头问：「江淮的田，今年种上了吗？」底下说种上了。您点点头，接着翻。\n\
+后来有人说，那一朝只有一件事做对了——把该写完的册子写完了。",
+  "河北": "三年后，渔阳的校场上多了个汉人教头，教胡人子弟写「关关雎鸠」。写不出的，罚站半个时辰；写出一个的，赏一壶酒。\n\
+有个孩子在土墙上歪歪扭扭地写了自己的姓，写完回头看，发现身后站着节度使。节度使看了半天，说：「写错了。」拿树枝替他改了一笔。\n\
+那天没有下雪。",
+  "河朔": "三年后，晋阳城外的屯田连成片。牙兵不再是兵，成了半兵半农；饷照发，粮也自己种。\n\
+有个老牙兵在田头喝酒，跟人说他这辈子跟过三个帅，第一个死了，第二个跑了，第三个居然让他种地。他把酒洒在地上，说：「也行。」\n\
+城里的碑上刻着名字，刻的人没刻完，剩下的地方空着。",
 };
 
 const HISTORIAN_LINES = [
@@ -1172,7 +1204,12 @@ function dualTitle(fac, kind) {
   const off = officialTitle(fac, kind);
   const folk = pickTitle(fac, kind);
   const line = HISTORIAN_LINES[Math.floor(Math.random() * HISTORIAN_LINES.length)];
-  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}` + ((fac === "唐廷" && folk === "慈善家") ? "（后世尊称 ATM）" : "");
+  const table = EVALS[fac] || EVALS["唐廷"];
+  const key = kind === "partial" || kind === "split" ? "mid" : kind;
+  const pool = table[key] || table.low;
+  const ev = pool[Math.floor(Math.random() * pool.length)];
+  const atm = (fac === "唐廷" && folk === "大唐慈善家") ? "（后世尊称 ATM）" : "";
+  return `\n\n史官记：${line}\n正史庙号 · ${off}\n民间野史 · ${folk}${atm}\n${ev}`;
 }
 
 function playDeathLine(kind) {
@@ -1287,7 +1324,8 @@ function finish() {
   const pool = COPY[st.fac][h.kind];
   const c = pool[Math.floor(Math.random() * pool.length)];
   const epi = (COPY[st.fac].epilogue || []);
-  const ep = epi.length ? epi[Math.floor(Math.random() * epi.length)] : null;
+  let ep = epi.length ? epi[Math.floor(Math.random() * epi.length)] : null;
+  if (h.kind === "win" && WIN_EPI[st.fac]) ep = { title: "三年后", praise: WIN_EPI[st.fac] };
   const achNames = st.ach.filter((x) => x.id !== "consort3").map((x) => x.name);
   const titleAch = st.ach.length ? facTitle(st.ach[st.ach.length - 1].title) : "";
   // 本局起居注：把国策与私事串成一段
