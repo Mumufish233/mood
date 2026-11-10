@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.15-选中反馈对齐-20261110">
+<meta name="dsh-version" content="v0.17-谥法簿-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -91,6 +91,19 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .heavens li{font-size:12.5px;color:#a89c86;line-height:1.9}
 .heavens li b{color:#e5d6b4;font-weight:400}
 .heavens-note{margin-top:8px;font-size:11.5px;color:#6b6354}
+
+/* ===== 图鉴 ===== */
+.juan-head h2{font-size:19px;letter-spacing:4px;font-weight:400;margin:6px 0 4px;color:#e5d6b4}
+.juan-sub{font-size:12px;color:#8d8271;margin:0 0 12px;line-height:1.8}
+.juan-list{display:grid;grid-template-columns:1fr;gap:8px}
+.juan-item{border:1px solid #34322a;border-radius:10px;padding:10px 12px;background:#1b1913}
+.juan-item.on{border-color:#6b5a33;background:#201d15}
+.juan-item .n{font-size:14px;color:#e5d6b4;letter-spacing:1px}
+.juan-item .t{font-size:12px;color:#b39a5f;margin-left:8px}
+.juan-item .d{font-size:12px;color:#8d8271;margin-top:6px;line-height:1.8}
+.juan-item.off .n{color:#5b6472;letter-spacing:2px}
+.juan-item .hint{color:#6b6354}
+@media (min-width:720px){.juan-list{grid-template-columns:1fr 1fr}}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -115,9 +128,24 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div class="heavens-note">打不出来不丢人，这游戏里赢是例外。</div>
     </div>
 <div class="cards" id="facts" style="margin-top:16px"></div>
+    <span class="btn gh" id="btn-juan" style="margin-top:12px">谥法簿</span>
   </div>
 
-  <div id="screen-play" class="hide">
+  
+  <div id="screen-juan" class="hide">
+    <div class="juan-head">
+      <h2>谥法簿 · 成就图鉴</h2>
+      <p class="juan-sub" id="juan-sub">见过的封号划了勾，没见过的留着空——补齐它，比赢一局有意思。</p>
+    </div>
+    <div id="juan-ach" class="juan-list"></div>
+    <div class="juan-head" style="margin-top:22px">
+      <h2>结局图鉴</h2>
+      <p class="juan-sub">这五种死法，慢慢会认全的。</p>
+    </div>
+    <div id="juan-end" class="juan-list"></div>
+    <span class="btn gh" id="btn-juan-back" style="margin-top:18px">回去玩</span>
+  </div>
+<div id="screen-play" class="hide">
     <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span></div>
     <div class="bars">
       <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div><span class="v" id="val-money">5</span></div>
@@ -149,6 +177,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div id="end-chron" class="chron"></div>
       <span class="btn" id="btn-again">再来一局</span>
       <span class="btn gh" id="btn-share" style="margin-left:8px">复制这一局</span>
+      <span class="btn gh" id="btn-juan-end" style="margin-left:8px">谥法簿</span>
       <div id="share-tip" style="font-size:12px;color:#8d8271;margin-top:10px"></div>
     </div>
   </div>
@@ -898,6 +927,7 @@ function settleRound() {
 function unlock(a) {
   if (st.ach.some((x) => x.id === a.id)) return;
   st.ach.push(a);
+  markAch(a);
   toast(`成就解锁 · ${a.name}　封号 ${facTitle(a.title)}`);
 }
 
@@ -944,6 +974,33 @@ function checkAch(final) {
 }
 
 let toastTimer = null;
+/* ===== 图鉴用的本地存档（沙箱里 localStorage 会抛错，兜底存在内存） ===== */
+const MEM = {};
+function storeGet(k, d) {
+  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }
+  catch (e) { return k in MEM ? MEM[k] : d; }
+}
+function storeSet(k, v) {
+  MEM[k] = v;
+  try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* 沙箱：只存内存 */ }
+}
+const JUAN_KEY = "tb.juan.v1";
+
+function juanData() {
+  return storeGet(JUAN_KEY, { ach: [], ends: [] });
+}
+function juanSave(d) { storeSet(JUAN_KEY, d); }
+
+function markAch(a) {
+  const d = juanData();
+  if (d.ach.indexOf(a.id) < 0) { d.ach.push(a.id); juanSave(d); }
+}
+function markEnd(fac, title) {
+  const d = juanData();
+  const key = fac + "|" + title;
+  if (d.ends.indexOf(key) < 0) { d.ends.push(key); juanSave(d); }
+}
+
 function toast(text) {
   let el = document.getElementById("toast");
   if (!el) {
@@ -964,6 +1021,7 @@ function finishCarnal() {
   $("screen-end").classList.remove("hide");
   const a = ACH.find((x) => x.id === "consort3");
   $("end-title").textContent = "驾崩";
+  markEnd(st.fac, "驾崩");
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
   $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n百姓谢谢你，史官只写了半页。`;
@@ -1079,6 +1137,7 @@ function playDeathLine(kind) {
   $("screen-play").classList.add("hide");
   $("screen-end").classList.remove("hide");
   $("end-title").textContent = kind === "poor" ? "穷丘八" : "乱臣贼子";
+  markEnd(st.fac, $("end-title").textContent);
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
   const PIG = { "唐廷": "唐脍宗", "河北": "燕猪公", "河朔": "魏酱公" };
@@ -1218,6 +1277,7 @@ function finish() {
   }
 
   $("end-title").textContent = h.title;
+  markEnd(st.fac, h.title);
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
   $("end-sigh").textContent = c.sigh + tail;
@@ -1265,6 +1325,62 @@ function copyShare() {
   }
 }
 
+function hintOf(a) {
+  const map = {
+    money5: "跟钱有关", name5: "跟名望有关", army5: "跟兵有关", nomoney: "跟省钱有关",
+    forget: "跟民心有关", consort2: "跟宫里有关", consort3: "跟宫里有关",
+    balanced: "三项都得稳", lopsided: "有一项特别高", freesoldier: "跟白拿有关",
+    prosper: "三项都得高", scapecat: "跟倒霉有关", fengxian: "名高兵少",
+    nomoney2: "钱见底", gentle: "你太客气了", survive5: "活满五回",
+    pardon3: "跟开仓有关", mc_lushan: "跳着舞攒兵",
+  };
+  return map[a.id] || "自己摸";
+}
+
+function renderJuan() {
+  const d = juanData();
+  const box = $("juan-ach");
+  box.innerHTML = "";
+  ACH.forEach((a) => {
+    const got = d.ach.indexOf(a.id) >= 0;
+    const el = document.createElement("div");
+    el.className = "juan-item " + (got ? "on" : "off");
+    el.innerHTML = got
+      ? `<div><span class="n">${a.name}</span><span class="t">${a.title}</span></div><div class="d">${a.desc || ""}</div>`
+      : `<div><span class="n">？？？</span></div><div class="d hint">${hintOf(a)}　·　还没解锁</div>`;
+    box.appendChild(el);
+  });
+  const ebox = $("juan-end");
+  ebox.innerHTML = "";
+  const titles = ["天命所归", "偏安", "割据", "人亡政息", "兵变", "乱臣贼子", "穷丘八", "驾崩", "粮仓", "信仰之刀", "嘴遁之子"];
+  titles.forEach((t) => {
+    const got = d.ends.some((x) => x.split("|")[1] === t);
+    const el = document.createElement("div");
+    el.className = "juan-item " + (got ? "on" : "off");
+    el.innerHTML = got ? `<div><span class="n">${t}</span></div>` : `<div><span class="n">？？？</span></div><div class="d hint">还没走到这个结局</div>`;
+    ebox.appendChild(el);
+  });
+  const total = ACH.length;
+  const gotN = d.ach.length;
+  $("juan-sub").textContent =
+    `见过的封号划了勾，没见过的留着空——${gotN} / ${total}，补齐它，比赢一局有意思。`;
+}
+
+function openJuan() {
+  $("screen-start").classList.add("hide");
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.add("hide");
+  $("screen-juan").classList.remove("hide");
+  renderJuan();
+  window.scrollTo(0, 0);
+}
+
+function closeJuan() {
+  $("screen-juan").classList.add("hide");
+  if (st) { $("screen-play").classList.remove("hide"); render(); }
+  else { $("screen-start").classList.remove("hide"); showFacts(); }
+}
+
 function backToPick() {
   $("screen-end").classList.add("hide");
   $("screen-play").classList.add("hide");
@@ -1275,6 +1391,9 @@ function backToPick() {
 $("btn-again").onclick = backToPick;
 bindSettle();
 $("btn-share").onclick = copyShare;
+$("btn-juan").onclick = openJuan;
+$("btn-juan-end").onclick = openJuan;
+$("btn-juan-back").onclick = closeJuan;
 showFacts();
 </script>
 </body></html>
