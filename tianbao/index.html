@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.27-目标清晰-20261110">
+<meta name="dsh-version" content="v0.28-私事卡片-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -104,6 +104,13 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .juan-item.off .n{color:#5b6472;letter-spacing:2px}
 .juan-item .hint{color:#6b6354}
 @media (min-width:720px){.juan-list{grid-template-columns:1fr 1fr}}
+
+/* 国事 / 私事：视觉分开，别混成一锅 */
+.card.priv{border-left:3px solid #8a6b3f;background:#191610}
+.card.priv::before{content:"私";position:absolute;top:7px;left:10px;font-size:10.5px;color:#8a6b3f;letter-spacing:1px}
+.card.priv h3{padding-left:14px}
+.card.nat::before{content:"国";position:absolute;top:7px;left:10px;font-size:10.5px;color:#5b6472;letter-spacing:1px}
+.card.nat h3{padding-left:14px}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -939,12 +946,16 @@ function renderSlots() {
   box.innerHTML = "";
   (st.hand || []).forEach((c, i) => {
     const el = document.createElement("div");
-    el.className = "card" + (st.pendingCard === i ? " on" : "");
-    const parts = c.rebel ? "无 · 遁去其一" : Object.keys(c.e).map((k) => {
-      const label = { money: "钱", name: "名", army: "兵" }[k];
-      const v = c.e[k];
-      return `${label}${v > 0 ? "+" : ""}${v}`;
-    }).join("　");
+    el.className = "card nat" + (st.pendingCard === i ? " on" : "");
+    const parts = c.rebel ? "无 · 遁去其一" : (function () {
+      const arr = Object.keys(c.e).map((k) => {
+        const label = { money: "钱", name: "名", army: "兵" }[k];
+        const v = c.e[k];
+        return `${label}${v > 0 ? "+" : ""}${v}`;
+      });
+      if (c.h) arr.push(`身${c.h > 0 ? "+" : ""}${c.h}`);   // 身体消耗以前没写
+      return arr.join("　");
+    })();
     el.innerHTML = `<h3>${c.t}</h3><p>${c.d}</p><div class="eff">${parts}</div>`;
     el.onclick = () => { st.pendingCard = i; render(); };
     box.appendChild(el);
@@ -960,12 +971,16 @@ function renderSlots() {
   const opts = st.privPool.slice(0, 3);
   opts.forEach((p) => {
     const el = document.createElement("div");
-    el.className = "card" + (st.pendingPriv === p.id ? " on" : "");
-    const parts = Object.keys(p.eff).map((k) => {
-      const label = { money: "钱", name: "名", army: "兵" }[k];
-      const v = p.eff[k];
-      return `${label}${v > 0 ? "+" : ""}${v}`;
-    }).join("　");
+    el.className = "card priv" + (st.pendingPriv === p.id ? " on" : "");
+    const parts = (function () {
+      const arr = Object.keys(p.eff).map((k) => {
+        const label = { money: "钱", name: "名", army: "兵" }[k];
+        const v = p.eff[k];
+        return `${label}${v > 0 ? "+" : ""}${v}`;
+      });
+      if (p.h) arr.push(`身${p.h > 0 ? "+" : ""}${p.h}`);   // 身体消耗以前没写
+      return arr.join("　");
+    })();
     const VAGUE = ["朝中有人盯着", "驿路上不太平", "有人在记这笔账", "营里传了闲话", "宫里递了话"];
     const hint = p.flag ? `<div class="eff" style="color:#b0806a">隐约觉得：${VAGUE[(p.name.length + p.note.length) % VAGUE.length]}</div>` : "";
     el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>${hint}`;
@@ -976,7 +991,7 @@ function renderSlots() {
   $("privCards").classList.toggle("has-sel", st.pendingPriv !== null);
   updateSettle();
   const skip = document.createElement("div");
-  skip.className = "card" + (st.pendingPriv === null ? " on" : "");
+  skip.className = "card priv" + (st.pendingPriv === null ? " on" : "");
   skip.innerHTML = "<h3>这次不折腾</h3><p>把心思都放在国事上。</p>";
   skip.onclick = () => { st.pendingPriv = null; render(); };
   pbox.appendChild(skip);
