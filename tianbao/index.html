@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.22-后世评价-20261110">
+<meta name="dsh-version" content="v0.23-大衍五十-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -730,6 +730,55 @@ const COPY = {
   },
 };
 
+/* ===== 隐藏线「大衍五十」· 流寇：转线牌 / 线内牌池 / 专属结局 / 三条成就 ===== */
+const REBEL_CARD = { id: "t_dyn_rebel", t: "上不公，下星火", d: "《大衍历》云：大衍之数五十，其用四十有九。遁去其一，是为生机。", e: {}, rebel: true };
+
+/* 线内牌池：每回合从剩余池抽 3，池空洗回；全部 hidden，不进天命档牌库 */
+const HIDDEN_DECK = [
+  { id: "h_revolt1", t: "官逼民反", d: "饥民蜂起，入富室，启廪仓，掠其金帛，焚其地契。曰：均平。", e: { army: 3, money: -2, name: 1 }, hidden: true },
+  { id: "h_revolt2", t: "均田同富", d: "分田，照着《均田令》抄；抄错的地方，自己改。", e: { name: 3, money: -1 }, hidden: true },
+  { id: "h_revolt3", t: "天街踏骨", d: "天街踏尽公卿骨，内库烧为锦绣灰。", e: { army: 2, name: -3, money: 2 }, hidden: true },
+  { id: "h_revolt4", t: "解放同胞", d: "开仓放粮，先放自己镇的；官仓也是仓。", e: { name: 2, army: 1, money: -1 }, hidden: true },
+  { id: "h_revolt5", t: "保境安民", d: "不抢百姓，抢官仓。", e: { army: 1, name: 2, money: -1 }, hidden: true },
+  { id: "h_revolt6", t: "星星之火", d: "一人传一人，一村传一村。", e: { army: 2, name: 1 }, hidden: true },
+  { id: "h_revolt7", t: "知识普及", d: "教人识字，第一课写自己的名字。", e: { name: 3, money: -1 }, hidden: true },
+];
+
+/* 专属结局：引句 / 赞叹 / 感慨三段，史笔腔，一句阴阳 */
+const HIDDEN_ENDS = {
+  "大衍五十": {
+    quote: "大衍之数五十，其用四十有九。你，就是遁去的那个一。",
+    praise: "起于闾巷，不持尺籍，不奉朝请。分田者归心，识字者传檄，州县望风而自从。史臣翻遍旧例，寻不出一个现成的名目安置你，索性把那一笔空着。",
+    sigh: "四十九皆有其位，唯余其一，不在册，不入历。后世纪年仍从旧朔；只是乡里孩子开蒙，头一个写的，已不是官家的姓。",
+    seal: "封号 · 大衍",
+  },
+  "洪王": {
+    quote: "你占了州，没占天下。史书叫你洪王，野史叫你洪帮主。",
+    praise: "据一州之城，行均田之令，仓廪再开，四境稍安。檄文传出去，应者寥寥；邻镇各自闭门，只遣人来问盐价。他后来也懒得再写第二封。",
+    sigh: "州志给你立了传，篇幅不长，夹在灾异与循吏之间。庙前那块碑是本地匠人刻的，字口很浅，几十年后便看不清了。",
+    seal: "封号 · 洪王",
+  },
+  "星火熄": {
+    quote: "粮尽而散，首领伏诛。你死之后，那首童谣还在传。",
+    praise: "聚也以饥，散也以饥。仓空三日，人各归乡，帐前只剩一面旗。官府行文报捷，措辞极简，纸却用了上好的。",
+    sigh: "童谣里没写你的名字，孩子唱时也不知唱的是谁。年年春荒，调子照旧，一句没改。",
+    seal: "封号 · 义宗",
+  },
+  "被卖": {
+    quote: "你教他们识字，他们用这笔字，写了你的罪状。",
+    praise: "开仓、分田、设学，凡你所行，皆有簿可查。后来簿子换了封皮，抬进官署，字还是那笔字。呈状的人，先前在你学堂里坐过头一排。",
+    sigh: "状纸末尾列了一串名字，一个个写得端正。上头只批了四个字：知道了，办。",
+    seal: "封号 · 义宗",
+  },
+};
+
+/* 隐藏线三条成就：独立挂载，不动现有 18 条 ACH */
+const HIDDEN_ACH = {
+  tang_zhu: { id: "tang_zhu", name: "唐代朱洪武", title: "洪武帝", hidden: true, desc: "走完流寇线，终成大衍五十。布衣提剑，五回而定，史官翻遍旧例也寻不出安置你的名目。" },
+  martyr:   { id: "martyr",   name: "献身的英雄", title: "义宗",   hidden: true, desc: "流寇线内，星火熄于围剿，或没于自己教会识字的人笔下。事未成，名字倒留下了。" },
+  commune:  { id: "commune",  name: "人民公社",   title: "同田宗", hidden: true, desc: "一局之内，既行均田同富，又行知识普及。此公社非彼公社，然均田同富之意，千古皆同。" },
+};
+
 let st = null;
 
 function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
@@ -743,6 +792,18 @@ const $ = (id) => document.getElementById(id);
    隔一回合还能再抽到，爱妃三连仍然可达。 */
 function drawHand() {
   const prev = st.prevHandIds || [];
+  /* 隐藏线 · 流寇：独立牌池，每回抽 3，池空洗回，不许连续两回重牌 */
+  if (st.hidden) {
+    const uniqH = (arr) => { const seen = new Set(), out = []; arr.forEach((c) => { if (!seen.has(c.id)) { seen.add(c.id); out.push(c); } }); return out; };
+    let pool = (st.pool || []).slice();
+    let fresh = uniqH(pool).filter((c) => prev.indexOf(c.id) < 0);
+    if (fresh.length < 3) { pool = uniqH(pool.concat(shuffle(HIDDEN_DECK))); fresh = uniqH(pool).filter((c) => prev.indexOf(c.id) < 0); }
+    const picks = shuffle(fresh).slice(0, 3);
+    const ids = new Set(picks.map((c) => c.id));
+    st.hand = picks; st.prevHandIds = Array.from(ids);
+    st.pool = uniqH(pool).filter((c) => !ids.has(c.id));
+    return;
+  }
   let pool = (st.pool || []).slice();
   const uniq = (arr) => {
     const seen = new Set(); const out = [];
@@ -766,6 +827,14 @@ function drawHand() {
   st.prevHandIds = Array.from(ids);
   // 展示过的 3 张移出剩余池；repeat 牌留池，但下一回合被 prev 挡住，不会连续出现
   st.pool = uniq(pool).filter((c) => !ids.has(c.id) || c.repeat);
+  /* 第 3 回结算后民穷财尽 → 第 4 回国策里混入唯一一张转线牌；一局只出现一次 */
+  if (st.round === 4 && st.rebelOffered && !st.rebelSeen) {
+    const dropped = st.hand[2];
+    st.hand = [REBEL_CARD, st.hand[0], st.hand[1]];
+    if (dropped) st.pool = uniq(st.pool.concat([dropped]));
+    st.prevHandIds = st.hand.map((c) => c.id);
+    st.rebelSeen = true;
+  }
 }
 
 function showFacts() {
@@ -792,7 +861,8 @@ function start(fac) {
   st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, health: (s0.health || 7), combo: 0,
          pool: shuffle(deckOf(fac).slice()), hand: [], prevHandIds: [], skipPriv: 0, log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
-         privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
+         privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()),
+         hidden: false, hiddenRound: 0, hiddenEnd: null, rebelSeen: false, rebelOffered: false };
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
@@ -811,8 +881,8 @@ function updateBars() {
 
 function render() {
   bindSettle();
-  $("round").textContent = st.round;
-  $("fac-pill").textContent = st.fac;
+  $("round").textContent = st.hidden ? (st.hiddenRound + 1) : st.round;
+  $("fac-pill").textContent = st.hidden ? "流寇" : st.fac;
   updateBars();
   $("chronicle").innerHTML = "";
   renderSlots();
@@ -852,7 +922,7 @@ function renderSlots() {
   (st.hand || []).forEach((c, i) => {
     const el = document.createElement("div");
     el.className = "card" + (st.pendingCard === i ? " on" : "");
-    const parts = Object.keys(c.e).map((k) => {
+    const parts = c.rebel ? "无 · 遁去其一" : Object.keys(c.e).map((k) => {
       const label = { money: "钱", name: "名", army: "兵" }[k];
       const v = c.e[k];
       return `${label}${v > 0 ? "+" : ""}${v}`;
@@ -916,6 +986,7 @@ function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
   const card = (st.hand || [])[st.pendingCard];
   if (!card) { st.pendingCard = null; render(); toast("牌面已变，请重新选一件国事"); return; }
+  if (card.rebel) return enterHiddenLine(card);   // 转线牌：点了就是转线，无数值
   // 1) 国事
   Object.keys(card.e).forEach((k) => {
     st[k] = Math.max(0, Math.min(MAXV, st[k] + card.e[k]));
@@ -942,6 +1013,8 @@ function settleRound() {
   st.pendingCard = null;
   st.pendingPriv = null;
   checkAch(false);   // 过程型成就 + 驾崩判定
+  /* 隐藏线 · 流寇：豁免斩杀线、穷丘八、归零与天命档，一律走线内判定 */
+  if (st.hidden) return settleHiddenAfter();
   if (st.health <= 0) return finishSick();
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
@@ -950,6 +1023,8 @@ function settleRound() {
   const dl = deathLine();
   if (dl) return playDeathLine(dl);
   if (st.round >= ROUNDS) return finish();
+  /* 第 3 回结算后民穷财尽 → 只在这一刻挂起转线牌（窄触发） */
+  if (st.round === 3 && !st.rebelSeen && st.money <= 2 && st.name <= 2) st.rebelOffered = true;
   st.round += 1;
   drawHand();
   render();
@@ -959,7 +1034,7 @@ function unlock(a) {
   if (st.ach.some((x) => x.id === a.id)) return;
   st.ach.push(a);
   markAch(a);
-  toast(`成就解锁 · ${a.name}　封号 ${facTitle(a.title)}`);
+  toast(`成就解锁 · ${a.name}　封号 ${a.hidden ? a.title : facTitle(a.title)}`);
 }
 
 /* 成就判定分两段。BUG-4：数值型成就必须在暗雷 + 所有扣减之后用终局值判，
@@ -987,6 +1062,14 @@ function checkAch(final) {
   const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length;
   if (privLove >= 2) unlock(ACH.find((a) => a.id === "consort2"));
   if (privLove >= 3) { unlock(ACH.find((a) => a.id === "consort3")); st.godown = true; }
+
+  /* —— 隐藏线 · 大衍五十：三条历史型成就，只看走过的路与用过的牌，不写死 random —— */
+  if (st.hidden) {
+    const usedCard = (id) => h.some((c) => c.id === id);
+    if (usedCard("h_revolt2") && usedCard("h_revolt7")) unlock(HIDDEN_ACH.commune);
+    if (final && st.hiddenEnd === "大衍五十") unlock(HIDDEN_ACH.tang_zhu);
+    if (final && (st.hiddenEnd === "星火熄" || st.hiddenEnd === "被卖")) unlock(HIDDEN_ACH.martyr);
+  }
 
   /* —— 数值型：只在终局判，用的必须是扣减完的终局值 —— */
   if (!final) return;
@@ -1070,6 +1153,7 @@ function monoKind() {
 
 /* 斩杀线判定：兵/名/钱的红线 */
 function deathLine() {
+  if (st.hidden) return null;   // 流寇线豁免斩杀线
   // 兵见底才是硬红线；名高兵低走"朝廷来人"事件，不一刀切
   if (st.army <= 1) return "behead";
   return null;
@@ -1236,6 +1320,7 @@ const RESCUE = [
 ];
 
 function poorTick() {
+  if (st.hidden) { st.poor = false; return false; }   // 流寇线中断穷丘八
   const lows = [st.money, st.name, st.army].filter((v) => v <= 2).length;
   const broke = Math.min(st.money, st.name) <= 1;   // 钱或名见底也算绝境
   if (!st.poor && st.army > 1 && (lows >= 2 || broke)) {
@@ -1299,7 +1384,71 @@ function settleHiddenFlags() {
   });
 }
 
+/* ===== 隐藏线 · 大衍五十（流寇）：转线、线内结算、四篇专属结局 ===== */
+function enterHiddenLine(card) {
+  st.hidden = true;
+  st.hiddenRound = 0;
+  st.rebelSeen = true;          // 一局只出现一次
+  st.poor = false;              // 穷丘八中断
+  st.fameWarn = false;
+  st.pool = [];
+  st.prevHandIds = [];
+  st.pendingCard = null;
+  st.pendingPriv = null;
+  st.hist.push(card);
+  st.log.unshift(`第${st.round}回 · ${card.t}`);
+  st.log.unshift("　遁去其一 · 不入历，不入册，自今日起称流寇。");
+  toast("转线 · 流寇");
+  st.round += 1;
+  drawHand();
+  render();
+  return true;
+}
+
+/* 钱、兵过五，散给饥民；名不受此限（上限仍是 MAXV=14） */
+function hiddenDisperse() {
+  const spill = [];
+  ["money", "army"].forEach((k) => {
+    if (st[k] > 5) { spill.push(`${k === "money" ? "钱" : "兵"}${st[k] - 5}`); st[k] = 5; }
+  });
+  if (spill.length) st.log.unshift(`　散给饥民 · ${spill.join("、")}尽散，只留五分。`);
+}
+
+/* 每回合结算后判定，顺序固定：围剿 → 被卖 → 成事 → 走完五回 */
+function settleHiddenAfter() {
+  st.hiddenRound = (st.hiddenRound || 0) + 1;
+  if (st.army <= 2 && Math.random() < 0.35) return finishHidden("星火熄");
+  if (st.name >= 10 && st.money <= 1 && Math.random() < 0.3) return finishHidden("被卖");
+  if (st.round >= 5 && st.name >= 12 && st.army >= 6) return finishHidden("大衍五十");
+  if (st.hiddenRound >= 5) return finishHidden("洪王");
+  hiddenDisperse();
+  st.round += 1;
+  drawHand();
+  render();
+  return true;
+}
+
+/* 专属结局：不取 COPY，不进天命档 */
+function finishHidden(kind) {
+  const e = HIDDEN_ENDS[kind] || HIDDEN_ENDS["洪王"];
+  st.hiddenEnd = kind;
+  checkAch(true);
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  $("end-title").textContent = kind;
+  markEnd(st.fac, kind);
+  $("end-quote").textContent = e.quote;
+  $("end-praise").textContent = e.praise;
+  const acts = (st.hist || []).map((c) => c.t).join("、");
+  if ($("end-chron")) $("end-chron").textContent = `流寇起居注 · ${acts || "未成事"}。`;
+  const got = (st.ach || []).filter((a) => a.hidden).map((a) => a.name);
+  $("end-sigh").textContent = e.sigh + `\n\n${e.seal}` + (got.length ? `\n成就 · ${got.join(" / ")}` : "");
+  if (typeof window !== "undefined") window.__lastHiddenEnd = kind;
+  return true;
+}
+
 function finish() {
+  if (st.hidden) return finishHidden(st.hiddenEnd || "洪王");   // 隐藏线不进天命档
   $("screen-play").classList.add("hide");
   $("screen-end").classList.remove("hide");
   settleHiddenFlags();
@@ -1421,6 +1570,7 @@ function hintOf(a) {
     prosper: "三项都得高", scapecat: "跟倒霉有关", fengxian: "名高兵少",
     nomoney2: "钱见底", gentle: "你太客气了", survive5: "活满五回",
     pardon3: "跟开仓有关", mc_lushan: "跳着舞攒兵",
+    tang_zhu: "遁去其一", martyr: "线内殉身", commune: "均田与识字",
   };
   return map[a.id] || "自己摸";
 }
@@ -1429,7 +1579,7 @@ function renderJuan() {
   const d = juanData();
   const box = $("juan-ach");
   box.innerHTML = "";
-  ACH.forEach((a) => {
+  ACH.concat(Object.keys(HIDDEN_ACH).map((k) => HIDDEN_ACH[k])).forEach((a) => {
     const got = d.ach.indexOf(a.id) >= 0;
     const el = document.createElement("div");
     el.className = "juan-item " + (got ? "on" : "off");
@@ -1448,7 +1598,7 @@ function renderJuan() {
     el.innerHTML = got ? `<div><span class="n">${t}</span></div>` : `<div><span class="n">？？？</span></div><div class="d hint">还没走到这个结局</div>`;
     ebox.appendChild(el);
   });
-  const total = ACH.length;
+  const total = ACH.length + Object.keys(HIDDEN_ACH).length;
   const gotN = d.ach.length;
   $("juan-sub").textContent =
     `见过的封号划了勾，没见过的留着空——${gotN} / ${total}，补齐它，比赢一局有意思。`;
