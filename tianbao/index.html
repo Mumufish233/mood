@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.30-结局顺序-20261110">
+<meta name="dsh-version" content="v0.31-天下表-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -123,6 +123,15 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .priv-row .eff{font-size:11.5px;color:#a89c86;margin-left:auto}
 .priv-row .desc{font-size:11.5px;color:#8d8271;margin-top:3px;line-height:1.7}
 .priv-row .flag{color:#b0806a;margin-left:8px}
+
+/* 天下：三势力反应表 */
+.rivals{margin:10px 0 4px;border:1px solid #2f2a1f;border-radius:10px;padding:8px 10px;background:#17140f}
+.rivals .rt{font-size:11px;color:#b39a5f;letter-spacing:3px;margin-bottom:6px}
+.rival-row{display:flex;align-items:baseline;gap:8px;font-size:12px;color:#a89c86;line-height:1.9}
+.rival-row .n{width:38px;color:#d8c9a8}
+.rival-row .a{width:34px}
+.rival-row .v{color:#b0806a}
+.rival-row .t{color:#6b6354}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -188,6 +197,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <aside class="col-log">
         <div class="log-head">史官在记</div>
         <div id="chronicle" class="chronicle"></div>
+    <div id="rivals" class="rivals"></div>
         <div class="log" id="log"></div>
       </aside>
     </div>
@@ -923,6 +933,15 @@ function render() {
     return `<div style="color:#8d8271;font-size:11.5px;letter-spacing:1px">${line}</div>`;
   })();
   renderSlots();
+  if ($("rivals")) {
+    const R = st.rivals || {};
+    const rows = RIVAL_FACS.map((f) => {
+      const r = R[f] || { att: "—", act: "—", val: "" };
+      const ic = r.att === "本家" ? "◆" : (r.att === "敌视" ? "🗡" : (r.att === "拉拢" ? "🤝" : "👀"));
+      return `<div class="rival-row"><span class="n">${f}</span><span class="a">${ic}${r.att}</span><span class="t">${r.act}</span><span class="v">${r.val || ""}</span></div>`;
+    }).join("");
+    $("rivals").innerHTML = `<div class="rt">天下</div>${rows}`;
+  }
   $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
 }
 
@@ -1022,6 +1041,80 @@ function finishSick() {
   logRun({ endKind: "sick" });
 }
 
+
+/* ===== 天下反应表：三势力互动 v1 ===== */
+const RIVAL_FACS = ["唐廷", "河北", "河朔"];
+const APPEASE_IDS = ["h_tribute", "h_confess", "s_marry", "s_jie"];   // 装孙子专用牌
+const CUT_IDS = ["t_cut", "t_purge"];                                 // 唐廷压制的牌
+
+function initRivals() {
+  st.rivals = {};
+  RIVAL_FACS.forEach((f) => { st.rivals[f] = { att: "观望", act: "—", val: "" }; });
+  st.appeased = false;
+  st.attitude = {};
+}
+
+function rivalAttitude(f) {
+  if (f === st.fac) return "本家";
+  const power = st.army;
+  if (power >= 8 || st.name >= 8) return "敌视";
+  if (st.money >= 8) return "拉拢";
+  return "观望";
+}
+
+function rivalTurn() {
+  if (!st.rivals) initRivals();
+  const p = st.fac;
+  const R = st.rivals;
+  RIVAL_FACS.forEach((f) => { if (f !== p) R[f].act = "—"; });
+
+  // 装孙子：本回合用过献马/请罪/联姻/请旌节 → 唐廷压力转为名+1
+  const usedAppease = (st.hist || []).some((c) => APPEASE_IDS.indexOf(c.id) >= 0);
+  const usedCut = (st.hist || []).some((c) => CUT_IDS.indexOf(c.id) >= 0);
+
+  // 藩镇线：唐廷削藩压力（第 2 回起）
+  if ((p === "河北" || p === "河朔") && st.round >= 2 && !st.hidden) {
+    if (usedAppease) {
+      st.name = Math.min(MAXV, st.name + 1);
+      R["唐廷"].act = "使者收了礼，削藩暂缓";
+      R["唐廷"].val = "名+1";
+      st.log.unshift("🏛 天下 · 唐廷：收了你的礼，刀子先放下。");
+    } else {
+      st.army = Math.max(0, st.army - 1);
+      R["唐廷"].act = "削藩使者已到，兵马被点名";
+      R["唐廷"].val = "兵-1";
+      st.log.unshift("🏛 天下 · 唐廷：削藩的折子下来了。");
+    }
+  }
+
+  // 唐廷线：河北起兵（第 3 回）
+  if (p === "唐廷" && st.round === 3 && !st.hidden) {
+    if (usedCut) {
+      R["河北"].act = "暂时按住了范阳";
+      R["河北"].val = "兵+0";
+      st.log.unshift("🏛 天下 · 河北：被你的削藩折子按住了一手。");
+    } else {
+      st.army = Math.max(0, st.army - 1);
+      st.name = Math.max(0, st.name - 1);
+      R["河北"].act = "安禄山起兵，渔阳鼙鼓";
+      R["河北"].val = "兵-1 名-1";
+      st.log.unshift("🏛 天下 · 河北：渔阳鼙鼓动地来。");
+    }
+  }
+
+  // 第 4 回：另一个藩镇侵吞你（唐廷线是河朔；藩镇线是另一镇）
+  if (st.round === 4 && !st.hidden) {
+    const other = p === "河朔" ? "河北" : "河朔";
+    st.money = Math.max(0, st.money - 2);
+    R[other].act = "趁乱吞了你两处边镇";
+    R[other].val = "钱-2";
+    st.log.unshift(`🏛 天下 · ${other}：趁乱吞了你两处边镇。`);
+  }
+
+  // 态度刷新
+  RIVAL_FACS.forEach((f) => { if (f !== p) R[f].att = rivalAttitude(f); });
+}
+
 function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
   const card = (st.hand || [])[st.pendingCard];
@@ -1065,6 +1158,7 @@ function settleRound() {
   if (st.round >= ROUNDS) return finish();
   /* 第 3 回结算后民穷财尽 → 只在这一刻挂起转线牌（窄触发） */
   if (st.round === 3 && !st.rebelSeen && st.money <= 2 && st.name <= 2) st.rebelOffered = true;
+  rivalTurn();
   st.round += 1;
   drawHand();
   render();
