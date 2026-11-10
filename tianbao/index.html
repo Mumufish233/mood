@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.20-门阀与均田-20261110">
+<meta name="dsh-version" content="v0.21-晋号-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -591,7 +591,7 @@ const POOR_SOLDIER = {
   quote: "朱门酒肉臭，路有冻死骨。",
   praise: "你们穷得连刀都磨不起。三个数字一降，人就开始烂；摔一跤就是暴击，-5，直接躺下。\n我天朝上国，大唐盛世不杀无名之辈——因为你们连被杀的资格都没有。",
   sigh: "老爷心善，见不得穷人。来人啊，把这些臭要饭的丘八，全部给杀了。\n史书上没留你们的名字，只写了一句：营中饥，亡者众。",
-  ach: "大唐帝国斩杀线下的丘八", titleAch: "魏丘公",
+  ach: "大唐帝国斩杀线下的丘八", titleAch: "晋丘公",
 };
 
 
@@ -1114,7 +1114,7 @@ const OFFICIAL = {
             low: ["唐哀帝", "唐僖宗"], funny: ["唐灵宗", "唐炀宗"] },
   "河北": { win: ["燕武烈王", "燕昭成王"], mid: ["范阳郡王", "卢龙节度使"],
             low: ["燕地野人", "燕都将"], funny: ["见燕地见闻录：衣冠沐猴，窥视大宝，杀之，献级长安", "赐铁券"] },
-  "河朔": { win: ["魏武公", "魏昭公"], mid: ["魏国公", "魏郡公"],
+  "河朔": { win: ["晋武公", "晋昭公"], mid: ["晋国公", "晋郡公"],
             low: ["晋地一匹夫", "军头"], funny: ["晋阳泼皮", "晋地一游侠"] },
 };
 
@@ -1141,7 +1141,7 @@ const HISTORIAN_LINES = [
 function facTitle(t) {
   if (!t) return t;
   if (st.fac === "河北") return t.replace(/^唐/, "燕").replace(/宗$/, "帝");
-  if (st.fac === "河朔") return t.replace(/^唐/, "魏").replace(/宗$/, "帝");
+  if (st.fac === "河朔") return t.replace(/^唐/, "晋").replace(/宗$/, "帝");
   return t;
 }
 
@@ -1185,7 +1185,7 @@ function playDeathLine(kind) {
   markEnd(st.fac, $("end-title").textContent);
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
-  const PIG = { "唐廷": "唐脍宗", "河北": "燕猪公", "河朔": "魏酱公" };
+  const PIG = { "唐廷": "唐脍宗", "河北": "燕猪公", "河朔": "晋酱公" };
   const pigTitle = (kind === "behead") ? (PIG[st.fac] || "唐豚宗") : facTitle(c.titleAch);
   $("end-sigh").textContent = c.sigh + `\n\n称号 · ${pickTitle(st.fac, "low")}　成就 · ${c.ach}　封号 · ${pigTitle}`;
   return true;
