@@ -157,6 +157,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .fc-opt b{font-size:14px;color:#e5d6b4;font-weight:400;letter-spacing:2px}
 .fc-opt .eff{font-size:11.5px;color:#a89c86;margin-left:8px}
 .fc-opt .d{font-size:11.5px;color:#8d8271;margin-top:4px;line-height:1.7}
+.rival-cnt{margin-top:5px;font-size:11px;color:#b0806a;letter-spacing:1px}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -997,7 +998,10 @@ function render() {
       const ic = r.att === "本家" ? "◆" : (r.att === "敌视" ? "🗡" : (r.att === "拉拢" ? "🤝" : "👀"));
       return `<div class="rival-row"><span class="n">${f}</span><span class="a">${ic}${r.att}</span><span class="t">${r.act}</span><span class="v">${r.val || ""}</span></div>`;
     }).join("");
-    $("rivals").innerHTML = `<div class="rt">天下</div>${rows}`;
+    const cnt = [];
+    if (st.fac === "唐廷") cnt.push(`河北威胁 ${st.threat || 0}/5`);
+    else cnt.push(`唐廷诏书 ${st.edicts || 0}/3`);
+    $("rivals").innerHTML = `<div class="rt">天下</div>${rows}` + `<div class="rival-cnt">${cnt.join(" · ")}</div>`;
   }
   $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
 }
@@ -1190,15 +1194,31 @@ function forcedCardForRound(prevIds) {
 /* 历史进程：唐廷威胁 / 河北诏书，按回合推进（只认本回合这张国事牌） */
 function historyTick(card) {
   if (!card || st.hidden) return;
+  /* 倒计时是压力表，不是死刑：玩家的国策选择能加速也能减速 */
   if (st.fac === "唐廷") {
-    if (st.round >= 3 && !st.threatLocked && CUT_IDS.indexOf(card.id) < 0) {
-      st.threat = Math.min(5, (st.threat || 0) + 1);
-      st.log.unshift(`🏛 天下 · 河北威胁 ${st.threat}/5${st.threat >= 2 ? " · 长安要你给个说法" : ""}`);
+    if (st.round >= 3 && !st.threatLocked) {
+      let d = 0;
+      if (CUT_IDS.indexOf(card.id) >= 0) d -= 2;          // 削藩/党狱：吓住它
+      if (st.army >= 9) d -= 1;                            // 兵强，它不敢动
+      if (st.name >= 9) d -= 1;                            // 人心向背
+      if (d === 0) d = 1;                                  // 什么都不做才会涨
+      st.threat = Math.max(0, Math.min(5, (st.threat || 0) + d));
+      st.log.unshift(`🏛 天下 · 河北威胁 ${st.threat}/5${d < 0 ? "（压下去了）" : ""}${st.threat >= 2 && d > 0 ? " · 长安要你给个说法" : ""}`);
     }
-  } else if (st.fac === "河北") {
-    if (st.round >= 2 && KOWTOW_IDS.indexOf(card.id) < 0) {
-      st.edicts = Math.min(3, (st.edicts || 0) + 1);
-      st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3`);
+  } else if (st.fac === "河北" || st.fac === "河朔") {
+    if (st.round >= 2) {
+      if (KOWTOW_IDS.indexOf(card.id) >= 0) {
+        st.edicts = Math.max(0, (st.edicts || 0) - 1);     // 装孙子：诏书减一
+        st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3（礼到了，话软了）`);
+      } else if (st.name <= 4) {
+        st.log.unshift("🏛 天下 · 唐廷：一个不成气候的藩镇，懒得管。");   // 名太低，增速归零
+      } else if (st.army >= 9) {
+        st.edicts = Math.min(3, (st.edicts || 0) + 1);
+        st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3（它怕你，但骂得更凶）`);
+      } else {
+        st.edicts = Math.min(3, (st.edicts || 0) + 1);
+        st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3`);
+      }
     }
   }
 }
