@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.18-主人定稿-20261110">
+<meta name="dsh-version" content="v0.19-身体与后世评价-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -151,6 +151,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div><span class="v" id="val-money">5</span></div>
       <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div><span class="v" id="val-name">5</span></div>
       <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div><span class="v" id="val-army">5</span></div>
+      <div class="bar-row"><span class="n">身</span><div class="bar"><i class="r" id="bar-health"></i></div><span class="v" id="val-health">7</span></div>
     </div>
     <div class="play-grid">
       <div class="col-opt">
@@ -200,10 +201,10 @@ const DECKS = {
     { id: "t_cut",    t: "削藩",       d: "一纸诏书往河北去。使者带了两百骑，回来只剩一百八——回来的都说是迷路了。", e: { army: 2, name: -1, money: -1 } },
     { id: "t_school", t: "开科取士",   d: "曲江边新进士簪花跨马，被扔了一路果子。", e: { name: 3, money: -1 } },
     { id: "t_post",   t: "修驿站",     d: "驿马跑起来，边关的军报早到三天，也早被人看见三天。", e: { army: 1, money: -2, name: 1 } },
-    { id: "t_eunuch", t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
+    { id: "t_eunuch", h: -1, t: "用宦官",     d: "宫里的人比外头的官听话，也更记得住谁欠了他人情。", e: { army: 2, name: -2 } },
     { id: "t_relief", t: "江淮漕运",   d: "粮船顺着运河上来，京城的米价压下去两成。", e: { money: 2, name: 1, army: -1 } },
     { id: "t_purge",  t: "党狱",       d: "名单念到第七个，殿上没人抬头；念到第十二个，有人开始背自己的履历。", e: { army: 2, name: -3, money: 1 } },
-    { id: "t_consort",t: "贵妃省亲",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
+    { id: "t_consort", h: -1,t: "贵妃省亲",   d: "陛下只问这一句。殿上没人敢答，也没人敢不答。", e: { name: 2, army: -1, money: -1 }, repeat: true },
   ],
   "河北": [
     { id: "h_horse",  t: "收马",       d: "边市开到西域，一匹马换三匹绢，今年多了三千匹。", e: { army: 2, money: -1 } },
@@ -302,6 +303,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_fftq",
+      "h": -2,
       "name": "发愤图强",
       "note": "通宵理政，还要炼个丹",
       "eff": {
@@ -338,6 +340,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_afei",
+      "h": -1,
       "name": "爱妃何在？",
       "note": "国事明天再说",
       "eff": {
@@ -356,6 +359,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_lizhi",
+      "h": -1,
       "name": "爱妃的荔枝呢！",
       "note": "八百里加急，只为一颗果",
       "eff": {
@@ -374,6 +378,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_furen",
+      "h": -1,
       "name": "城中可有妇人？",
       "note": "军心需要一点娱乐",
       "eff": {
@@ -412,6 +417,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_tiaowu",
+      "h": 1,
       "name": "咱老胡人，今儿必须跳个舞！",
       "note": "胡旋一转，军心就散",
       "eff": {
@@ -448,6 +454,7 @@ const PRIVATE_LITE = {
     },
     {
       "id": "p_tucheng",
+      "h": -1,
       "name": "屠城立威",
       "note": "以杀止疑",
       "eff": {
@@ -770,14 +777,15 @@ function showFacts() {
 }
 
 const START = {
-  "唐廷": { money: 4, name: 8, army: 6 },   // 朝廷：名分最厚，钱最紧
-  "河北": { money: 4, name: 3, army: 8 },   // 范阳：兵最多，名最薄
-  "河朔": { money: 6, name: 3, army: 4 },   // 河东：钱粮稍厚，名兵都弱
+  // 身体：唐廷天子养尊（7）、河北胡将壮（8）、河朔牙帅耗（6）——见 health 字段
+  "唐廷": { money: 4, name: 8, army: 6, health: 7 },   // 朝廷：名分最厚，钱最紧
+  "河北": { money: 4, name: 3, army: 8, health: 8 },   // 范阳：兵最多，名最薄
+  "河朔": { money: 6, name: 3, army: 4, health: 6 },   // 河东：钱粮稍厚，名兵都弱
 };
 
 function start(fac) {
   const s0 = START[fac] || { money: 5, name: 5, army: 5 };
-  st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, combo: 0,
+  st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, health: (s0.health || 7), combo: 0,
          pool: shuffle(deckOf(fac).slice()), hand: [], prevHandIds: [], skipPriv: 0, log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()) };
@@ -789,7 +797,7 @@ function start(fac) {
 }
 
 function updateBars() {
-  ["money", "name", "army"].forEach((k) => {
+  ["money", "name", "army", "health"].forEach((k) => {
     const el = $("bar-" + k);
     if (el) el.style.width = Math.max(2, Math.min(100, (st[k] / MAXV) * 100)) + "%";
     const v = $("val-" + k);
@@ -884,6 +892,22 @@ function renderSlots() {
 
 function pick(c) { /* 兼容旧调用：直接当作已选国事 */ }
 
+function applyHealth(delta) {
+  if (!delta) return;
+  st.health = Math.max(0, Math.min(10, st.health + delta));
+  st.log.unshift(`　身体 · ${delta > 0 ? "+" : ""}${delta}`);
+}
+
+function finishSick() {
+  $("screen-play").classList.add("hide");
+  $("screen-end").classList.remove("hide");
+  $("end-title").textContent = "暴毙";
+  $("end-quote").textContent = "「帝春秋鼎盛，遽崩于内寝。」";
+  $("end-praise").textContent = "丹药是道士炼的，你是信了的那个。太医到的时候，人已经凉了。";
+  $("end-sigh").textContent = dualTitle(st.fac, "fade") + `\n\n后世评价 · ${EVALS.sick[Math.floor(Math.random() * EVALS.sick.length)]}`;
+  markEnd(st.fac, "暴毙");
+}
+
 function settleRound() {
   if (st.pendingCard === null) { toast("先选一件国事"); return; }
   const card = (st.hand || [])[st.pendingCard];
@@ -892,6 +916,7 @@ function settleRound() {
   Object.keys(card.e).forEach((k) => {
     st[k] = Math.max(0, Math.min(MAXV, st[k] + card.e[k]));
   });
+  if (card.h) applyHealth(card.h);
   st.hist.push(card);
   st.log.unshift(`第${st.round}回 · ${card.t}`);
   // BUG-6：本回合展示的 3 张已在 drawHand() 里移出剩余池；repeat 牌留池中可再抽到
@@ -901,6 +926,7 @@ function settleRound() {
     Object.keys(priv.eff).forEach((k) => {
       st[k] = Math.max(0, Math.min(MAXV, st[k] + priv.eff[k]));
     });
+    if (priv.h) applyHealth(priv.h);
     st.priv.push(priv.name);
     st.log.unshift(`　私事 · ${priv.name}`);
     if (priv.flag) { st.flags.push(priv.flag); st.log.unshift(`　└ 埋下隐患：${priv.flag.name}`); }
@@ -912,6 +938,7 @@ function settleRound() {
   st.pendingCard = null;
   st.pendingPriv = null;
   checkAch(false);   // 过程型成就 + 驾崩判定
+  if (st.health <= 0) return finishSick();
   if (st.godown) return finishCarnal();
   if (st.money <= 0 || st.army <= 0 || st.name <= 0) return finish();
   if (highFameEvent()) return playDeathLine("behead");
@@ -1024,7 +1051,7 @@ function finishCarnal() {
   markEnd(st.fac, "驾崩");
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
-  $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n百姓谢谢你，史官只写了半页。`;
+  $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n后世评价 · ${EVALS.carnal[0]}\n\n百姓谢谢你，史官只写了半页。`;
 }
 
 function monoKind() {
@@ -1085,6 +1112,20 @@ const OFFICIAL = {
             low: ["燕地野人", "燕都将"], funny: ["见燕地见闻录：衣冠沐猴，窥视大宝，杀之，献级长安", "赐铁券"] },
   "河朔": { win: ["魏武公", "魏昭公"], mid: ["魏国公", "魏郡公"],
             low: ["晋地一匹夫", "军头"], funny: ["晋阳泼皮", "晋地一游侠"] },
+};
+
+
+/* ===== 后世评价（第三层：正史庙号 / 民间野史 / 后世评价） ===== */
+const EVALS = {
+  win: ["后世史论：说他运气好的人不少，但同一件事能连做五次都做对的，运气从来不够用。",
+        "后世史论：那一朝的账，后人查了三百年，只查出他批过的折子上字都写得很小。"],
+  mid: ["后世史论：守成之君，说他的人最少——好话没人记得，坏话也没人记得。",
+        "后世史论：他在位那些年，史书翻过去只要两页，两页里还夹着一场旱灾。"],
+  low: ["后世史论：亡国的账都记在他头上。可账本翻开，前头那几页不是他写的。",
+        "后世史论：后人骂他时很痛快，骂完接着过自己的日子——这大概是他最后的作用。"],
+  sick: ["后世史论：死得太早，什么都没来得及做，所以什么错也轮不到他。",
+         "后世史论：太医的方子还在，人没了。史官只写了一句：帝崩，年四十二。"],
+  carnal: ["后世野记：说他死在前头，其实是死在后宫；野史写得更难听，史官删了。"],
 };
 
 const HISTORIAN_LINES = [
@@ -1166,7 +1207,7 @@ function poorTick() {
   if (!st.poor) return false;
 
   st.poorRounds += 1;
-  ["money", "name", "army"].forEach((k) => { st[k] = Math.max(0, st[k] - 1); });
+  ["money", "name", "army", "health"].forEach((k) => { st[k] = Math.max(0, st[k] - 1); });
   st.log.unshift("📉 穷困蔓延：三样各 -1。");
 
   if (!st.rescueGiven) {
@@ -1177,7 +1218,7 @@ function poorTick() {
 
   if (Math.random() < 0.45) {
     const ev = MISERIES[Math.floor(Math.random() * MISERIES.length)];
-    ["money", "name", "army"].forEach((k) => {
+    ["money", "name", "army", "health"].forEach((k) => {
       if (ev.e[k]) st[k] = Math.max(0, st[k] + ev.e[k]);
     });
     if (ev.g) {
@@ -1209,7 +1250,7 @@ function poorTick() {
 function settleHiddenFlags() {
   (st.flags || []).forEach((fl) => {
     if (Math.random() < fl.chance) {
-      ["money", "name", "army"].forEach((k) => {
+      ["money", "name", "army", "health"].forEach((k) => {
         if (fl.eff && fl.eff[k]) st[k] = Math.max(0, Math.min(MAXV, st[k] + fl.eff[k]));
       });
       st.flagLog.push(fl.text || fl.name);
