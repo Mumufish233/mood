@@ -922,13 +922,10 @@ function checkAch(final) {
   if ((st.skipPriv || 0) >= 3) unlock(ACH.find((a) => a.id === "gentle"));
 
   // BUG-3：国策牌 id 前缀是 t_，原来的 "consort" / "relief" 在 DECKS 里根本不存在
-  const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length + count("t_consort");
+  // 「爱妃三连」只算私事（国策牌「贵妃省亲」是另一回事，不能三张就驾崩）
+  const privLove = (st.priv || []).filter((n) => n.indexOf("爱妃") >= 0).length;
   if (privLove >= 2) unlock(ACH.find((a) => a.id === "consort2"));
   if (privLove >= 3) { unlock(ACH.find((a) => a.id === "consort3")); st.godown = true; }
-  if (count("t_consort") >= 3) {
-    unlock(ACH.find((a) => a.id === "consort3"));
-    st.godown = true;
-  }
 
   /* —— 数值型：只在终局判，用的必须是扣减完的终局值 —— */
   if (!final) return;
