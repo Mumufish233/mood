@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.23-大衍五十-20261110">
+<meta name="dsh-version" content="v0.24-埋点-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -144,6 +144,8 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
     </div>
     <div id="juan-end" class="juan-list"></div>
     <span class="btn gh" id="btn-juan-back" style="margin-top:18px">回去玩</span>
+    <span class="btn gh" id="btn-export" style="margin-top:18px;margin-left:8px">导出我的数据</span>
+    <span class="btn gh" id="btn-clear" style="margin-top:18px;margin-left:8px">清空本机数据</span>
   </div>
 <div id="screen-play" class="hide">
     <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span></div>
@@ -864,7 +866,7 @@ const START = {
 
 function start(fac) {
   const s0 = START[fac] || { money: 5, name: 5, army: 5 };
-  st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, health: (s0.health || 7), combo: 0,
+  st = { round: 1, fac, money: s0.money, name: s0.name, army: s0.army, health: (s0.health || 7), startedAt: Date.now(), combo: 0,
          pool: shuffle(deckOf(fac).slice()), hand: [], prevHandIds: [], skipPriv: 0, log: [], ach: [], hist: [],
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()),
@@ -986,6 +988,7 @@ function finishSick() {
   $("end-praise").textContent = "丹药是道士炼的，你是信了的那个。太医到的时候，人已经凉了。";
   $("end-sigh").textContent = dualTitle(st.fac, "fade") + `\n\n后世评价 · ${(EVALS[st.fac] || EVALS["唐廷"]).sick[0]}`;
   markEnd(st.fac, "暴毙");
+  logRun({ endKind: "sick" });
 }
 
 function settleRound() {
@@ -1121,6 +1124,69 @@ function markEnd(fac, title) {
   if (d.ends.indexOf(key) < 0) { d.ends.push(key); juanSave(d); }
 }
 
+
+/* ===== 零后端埋点：每局摘要存本地，可一键导出（不发网络请求） ===== */
+const RUNS_KEY = "tb.runs.v1";
+const REF_KEY = "tb.ref.v1";
+
+function captureRef() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const ref = p.get("ref") || p.get("from") || "";
+    if (ref) storeSet(REF_KEY, ref);
+    return storeGet(REF_KEY, "");
+  } catch (e) { return ""; }
+}
+
+function logRun(extra) {
+  try {
+    const rec = Object.assign({
+      ts: Date.now(),
+      v: (document.querySelector('meta[name="dsh-version"]') || {}).content || "?",
+      uid: (function () {
+        let u = storeGet("tb.uid.v1", "");
+        if (!u) { u = "u" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); storeSet("tb.uid.v1", u); }
+        return u;
+      })(),
+      ref: captureRef(),
+      durationMs: Date.now() - (st && st.startedAt ? st.startedAt : Date.now()),
+      fac: st ? st.fac : "",
+      rounds: st ? st.round : 0,
+      endKind: st ? (st.endKind || "") : "",
+      vals: st ? { money: st.money, name: st.name, army: st.army, health: st.health } : {},
+      picks: st ? (st.hist || []).map((c) => c.id) : [],
+      privs: st ? (st.priv || []) : [],
+      hidden: st ? !!st.hidden : false,
+    }, extra || {});
+    const arr = storeGet(RUNS_KEY, []);
+    arr.push(rec);
+    while (arr.length > 50) arr.shift();
+    storeSet(RUNS_KEY, arr);
+  } catch (e) { /* 埋点失败绝不影响游戏 */ }
+}
+
+function exportRuns() {
+  const data = { exportedAt: new Date().toISOString(), runs: storeGet(RUNS_KEY, []) };
+  const txt = JSON.stringify(data, null, 1);
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    if ($("share-tip")) $("share-tip").textContent = "数据已复制，粘给木木就行。";
+  } catch (e) {
+    if ($("share-tip")) $("share-tip").textContent = "复制失败，控制台里能拷。";
+    console.log(txt);
+  }
+}
+
+function clearRuns() {
+  storeSet(RUNS_KEY, []);
+  toast("本机数据已清空");
+}
+
 function toast(text) {
   let el = document.getElementById("toast");
   if (!el) {
@@ -1142,6 +1208,7 @@ function finishCarnal() {
   const a = ACH.find((x) => x.id === "consort3");
   $("end-title").textContent = "驾崩";
   markEnd(st.fac, "驾崩");
+  logRun({ endKind: "carnal" });
   $("end-quote").textContent = "春宵苦短日高起，从此君王不早朝。";
   $("end-praise").textContent = "你天天宠信爱妃，没几年就死了。大唐还是盛世的那个大唐——以你的行为，大概率是昏君。";
   $("end-sigh").textContent = `封号 · 唐社宗。成就 · 色是刮骨刀，驾崩吧！陛下！\n\n后世评价 · ${(EVALS[st.fac] || EVALS["唐廷"]).carnal[0]}\n\n百姓谢谢你，史官只写了半页。`;
@@ -1310,6 +1377,7 @@ function playDeathLine(kind) {
   $("screen-end").classList.remove("hide");
   $("end-title").textContent = kind === "poor" ? "穷丘八" : "乱臣贼子";
   markEnd(st.fac, $("end-title").textContent);
+  logRun({ endKind: kind });
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
   const PIG = { "唐廷": "唐脍宗", "河北": "燕猪公", "河朔": "晋酱公" };
@@ -1445,6 +1513,7 @@ function finishHidden(kind) {
   $("screen-end").classList.remove("hide");
   $("end-title").textContent = kind;
   markEnd(st.fac, kind);
+  logRun({ endKind: "hidden-" + kind });
   $("end-quote").textContent = e.quote;
   $("end-praise").textContent = e.praise;
   const acts = (st.hist || []).map((c) => c.t).join("、");
@@ -1523,6 +1592,7 @@ function finish() {
 
   $("end-title").textContent = h.title;
   markEnd(st.fac, h.title);
+  logRun({});
   $("end-quote").textContent = c.quote;
   $("end-praise").textContent = c.praise;
   $("end-sigh").textContent = c.sigh + tail;
@@ -1640,6 +1710,8 @@ $("btn-share").onclick = copyShare;
 $("btn-juan").onclick = openJuan;
 $("btn-juan-end").onclick = openJuan;
 $("btn-juan-back").onclick = closeJuan;
+$("btn-export").onclick = exportRuns;
+$("btn-clear").onclick = clearRuns;
 showFacts();
 </script>
 </body></html>
