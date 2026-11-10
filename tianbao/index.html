@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.28-私事卡片-20261110">
+<meta name="dsh-version" content="v0.29-私事行式-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -111,6 +111,18 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .card.priv h3{padding-left:14px}
 .card.nat::before{content:"国";position:absolute;top:7px;left:10px;font-size:10.5px;color:#5b6472;letter-spacing:1px}
 .card.nat h3{padding-left:14px}
+
+/* 私事：是「行」不是「卡」，和国事彻底分开 */
+.priv-list{display:flex;flex-direction:column;gap:7px}
+.priv-row{border:1px solid #35301f;border-left:3px solid #8a6b3f;border-radius:9px;padding:9px 12px;background:#191610;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.priv-row:active{transform:scale(.995)}
+.priv-row.on{border-color:#d9c589;background:#241f16;box-shadow:0 0 0 1px rgba(217,197,137,.35) inset}
+.row-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.priv-row .seal{font-size:10px;color:#8a6b3f;border:1px solid #5a462a;border-radius:3px;padding:0 4px;line-height:1.5}
+.priv-row b{font-size:14px;color:#e5d6b4;font-weight:400;letter-spacing:1px}
+.priv-row .eff{font-size:11.5px;color:#a89c86;margin-left:auto}
+.priv-row .desc{font-size:11.5px;color:#8d8271;margin-top:3px;line-height:1.7}
+.priv-row .flag{color:#b0806a;margin-left:8px}
 </style></head><body>
 <div class="wrap">
   <h1>天宝模拟器</h1>
@@ -961,40 +973,34 @@ function renderSlots() {
     box.appendChild(el);
   });
 
-  // 下：私人事件（独立槽）
+  // 下：私人事件——用「行」不用「卡」，和国事彻底分开
   const pbox = $("privCards");
   pbox.innerHTML = "";
+  pbox.className = "priv-list";
   if (st.privPool.length < 3) {
     const pool = (PRIVATE_LITE[privKey(st.fac)] || []).filter((x) => (st.priv || []).indexOf(x.name) < 0);
     st.privPool = shuffle((pool.length >= 3 ? pool : (PRIVATE_LITE[privKey(st.fac)] || [])).slice());
   }
-  const opts = st.privPool.slice(0, 3);
-  opts.forEach((p) => {
+  const rows = st.privPool.slice(0, 3).concat([{ id: "__skip", name: "这次不折腾", note: "把心思都放在国事上。", eff: {}, h: 0 }]);
+  rows.forEach((p) => {
     const el = document.createElement("div");
-    el.className = "card priv" + (st.pendingPriv === p.id ? " on" : "");
-    const parts = (function () {
-      const arr = Object.keys(p.eff).map((k) => {
-        const label = { money: "钱", name: "名", army: "兵" }[k];
-        const v = p.eff[k];
-        return `${label}${v > 0 ? "+" : ""}${v}`;
-      });
-      if (p.h) arr.push(`身${p.h > 0 ? "+" : ""}${p.h}`);   // 身体消耗以前没写
-      return arr.join("　");
-    })();
+    const selected = p.id === "__skip" ? st.pendingPriv === null : st.pendingPriv === p.id;
+    el.className = "priv-row" + (selected ? " on" : "");
+    const eff = Object.keys(p.eff || {}).map((kk) => {
+      const label = { money: "钱", name: "名", army: "兵" }[kk];
+      const v = p.eff[kk];
+      return `${label}${v > 0 ? "+" : ""}${v}`;
+    });
+    if (p.h) eff.push(`身${p.h > 0 ? "+" : ""}${p.h}`);
     const VAGUE = ["朝中有人盯着", "驿路上不太平", "有人在记这笔账", "营里传了闲话", "宫里递了话"];
-    const hint = p.flag ? `<div class="eff" style="color:#b0806a">隐约觉得：${VAGUE[(p.name.length + p.note.length) % VAGUE.length]}</div>` : "";
-    el.innerHTML = `<h3>${p.name}</h3><p>${p.note}</p><div class="eff">${parts}</div>${hint}`;
-    el.onclick = () => { st.pendingPriv = (st.pendingPriv === p.id ? null : p.id); render(); };
+    const hint = p.flag ? `<span class="flag">隐约觉得：${VAGUE[(p.name.length + (p.note || "").length) % VAGUE.length]}</span>` : "";
+    el.innerHTML = `<div class="row-top"><span class="seal">私</span><b>${p.name}</b><span class="eff">${eff.join("　")}</span></div>`
+      + `<div class="desc">${p.note || ""}${hint}</div>`;
+    el.onclick = () => { st.pendingPriv = (p.id === "__skip" ? null : (st.pendingPriv === p.id ? null : p.id)); render(); };
     pbox.appendChild(el);
   });
-  $("cards").classList.toggle("has-sel", st.pendingCard !== null);
-  $("privCards").classList.toggle("has-sel", st.pendingPriv !== null);
+
   updateSettle();
-  const skip = document.createElement("div");
-  skip.className = "card priv" + (st.pendingPriv === null ? " on" : "");
-  skip.innerHTML = "<h3>这次不折腾</h3><p>把心思都放在国事上。</p>";
-  skip.onclick = () => { st.pendingPriv = null; render(); };
-  pbox.appendChild(skip);
 }
 
 function pick(c) { /* 兼容旧调用：直接当作已选国事 */ }
