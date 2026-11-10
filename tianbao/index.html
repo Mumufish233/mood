@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.19-身体与后世评价-20261110">
+<meta name="dsh-version" content="v0.20-门阀与均田-20261110">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -215,6 +215,8 @@ const DECKS = {
     { id: "h_swallow",t: "吞邻镇",     d: "陛下忠诚的范阳公，用铁与血教育那些桀骜不驯的藩镇，什么是「忠诚」——顺便把他们的粮仓也「忠诚」到了自己兜里。", e: { army: 2, name: -2, money: -1 } },
     { id: "h_cut",    t: "截留赋税",   d: "三镇的税款自己留下，户部只能附和。", e: { money: 3, name: -1 } },
     { id: "h_confess",t: "上表请罪",   d: "折子里把自己骂得很重，重到皇帝不好意思再问。", e: { name: 2, army: -1, money: -1 } },
+    { id: "t_menfa_hb", h: -1, t: "屠门阀", d: "范阳城里的崔卢郑王，一夜之间都成了「通敌」。抄出来的地契装了四十车。", e: { money: 3, name: -3 } },
+    { id: "t_juntian_hb", h: 0, t: "均田亩", d: "把无主的地分给流民，一人三十亩。分到第三天才发现，有些地是士族的。", e: { name: 2, money: -1, army: 1 } }
   ],
   "河朔": [
     { id: "s_hold",   t: "保境",       d: "四门一闭，谁来都说不清是谁的地界。", e: { army: 1, name: 1, money: -1 } },
@@ -225,6 +227,8 @@ const DECKS = {
     { id: "s_hoard",  t: "囤钱",       d: "库房加了两道锁，钥匙挂在你自己腰间。", e: { money: 3, name: -1 } },
     { id: "s_drill",  t: "练兵",       d: "校场上尘土不落，士绅的帖子来得比往年勤。", e: { army: 2, money: -1, name: -1 } },
     { id: "s_sell",   t: "卖马",       d: "马卖给了南边。第二年，南边的官军骑着你的马、拿着你的粮、来打你的城。", e: { money: 2, army: -2 } },
+    { id: "t_menfa_hs", h: -1, t: "屠门阀", d: "晋阳几家大姓，先请来喝酒，酒过三巡，刀就架在脖子上。", e: { money: 3, name: -3 } },
+    { id: "t_juntian_hs", h: 0, t: "均田亩", d: "牙兵不种地，地给百姓种；秋收的粮先紧着军营，剩下的才是自己的。", e: { name: 2, money: -1, army: 1 } }
   ],
 };
 
@@ -486,7 +490,7 @@ const PRIVATE_LITE = {
         },
         "text": "刚刻完玉玺，两个老部下就开始商量您的身后事了。"
       }
-    }
+    },
   ],
   "河朔": [
     {
