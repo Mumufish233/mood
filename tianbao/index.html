@@ -1142,10 +1142,11 @@ function render() {
     const rows = RIVAL_FACS.map((f) => {
       const r = R[f] || { att: "—", act: "—", val: "" };
       const GLY = { "本家": "◆", "敌视": "▲", "拉拢": "◇", "观望": "○" };
-      const ic = GLY[r.att] || "○";
+      const att = f === st.fac ? "本家" : (r.att || "观望");
+      const ic = GLY[att] || "○";
       const act = r.act && r.act !== "—" ? `<span class="t">${r.act}</span>` : "";
       const val = r.val ? `<span class="v">${r.val}</span>` : "";
-      return `<div class="rival-row"><span class="n">${f}</span><span class="a"><b>${ic}</b>${r.att}</span>${act}${val}</div>`;
+      return `<div class="rival-row"><span class="n">${f}</span><span class="a"><b>${ic}</b>${att}</span>${act}${val}</div>`;
     }).join("");
     $("rivals").innerHTML = `<div class="rt">天下</div>${rows}`;
   }
@@ -1532,7 +1533,8 @@ function finishMutinyLine(tag) {
 
 function initRivals() {
   st.rivals = {};
-  RIVAL_FACS.forEach((f) => { st.rivals[f] = { att: "观望", act: "—", val: "" }; });
+  // 本家单独标「本家」，否则天下面板里自己那家永远停在「观望」
+  RIVAL_FACS.forEach((f) => { st.rivals[f] = { att: f === st.fac ? "本家" : "观望", act: "—", val: "" }; });
   st.appeased = false;
   st.attitude = {};
 }
