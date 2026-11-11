@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.35-本家标记-20261111">
+<meta name="dsh-version" content="v0.36-时间说明框-20261111">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -53,7 +53,10 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .bar i.q{background:#7f9a86 !important}
 .bar i.r{background:#a5765a !important}
 .bar-row .v{width:36px;text-align:right;color:#c8bda6;font-size:12px;font-variant-numeric:tabular-nums}
-.chronicle{font-size:12.5px;line-height:1.8;color:#a89c86;margin:0 0 10px}
+.chronicle-main{border:1px solid #34322a;border-left:2px solid #b39a5f;border-radius:10px;background:#1b1913;padding:11px 14px;margin:12px 0 4px}
+.chronicle-main .ct{font-size:11px;color:#b39a5f;letter-spacing:3px;margin-bottom:5px}
+.chronicle-main .cx{font-size:13.5px;line-height:1.95;color:#d8c9a8}
+.chronicle-main .low{font-size:11px;color:#8d8271;margin-top:7px;letter-spacing:1px}
 .btn.gh{border-color:#4a4436;color:#a89c86}
 .btn.gh:hover{background:#4a4436;color:#e5d6b4}
 .slot-title{font-size:11.5px;color:#8d8271;letter-spacing:3px;margin:14px 0 6px}
@@ -267,6 +270,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       <div class="bar-row"><span class="n">兵</span><div class="bar"><i class="r" id="bar-army"></i></div><span class="v" id="val-army">5</span></div>
       <div class="bar-row"><span class="n">身</span><div class="bar"><i class="r" id="bar-health"></i></div><span class="v" id="val-health">7</span></div>
     </div>
+    <div id="chronicle" class="chronicle-main"></div>
     <div class="play-grid">
       <div class="col-opt">
         <div class="slot-title">国事 · 三选一</div>
@@ -277,7 +281,6 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
       </div>
       <aside class="col-log">
         <div class="log-head">史官在记</div>
-        <div id="chronicle" class="chronicle"></div>
         <div id="dibao" class="dibao"></div>
     <div id="rivals" class="rivals"></div>
         <div class="log" id="log"></div>
@@ -1127,14 +1130,15 @@ function render() {
   const wp = $("wind-pill");
   if (wp) wp.textContent = "风向 " + windOf();
   updateBars();
-  $("chronicle").innerHTML = (function () {
-    const lo = Math.min(st.money, st.name, st.army);
-    const names = { money: "钱", name: "名", army: "兵" };
-    const lowKey = ["money", "name", "army"].sort((a, b) => st[a] - st[b])[0];
-    const next = [8, 6, 4, 2].find((t) => t > lo);
-    const line = next ? `最低项 · ${names[lowKey]} ${lo}　距 ${next} 还差 ${next - lo}` : `最低项 · ${names[lowKey]} ${lo}　已达赢线`;
-    return `<div style="color:#8d8271;font-size:11.5px;letter-spacing:1px">${line}</div>`;
-  })();
+  const chArr = CHRONICLE[st.hidden ? "流寇" : st.fac] || CHRONICLE["唐廷"];
+  const chIdx = st.hidden ? (st.hiddenRound || 0) : (st.round - 1);
+  const chc = chArr[chIdx % chArr.length] || chArr[0];
+  const lo = Math.min(st.money, st.name, st.army);
+  const names = { money: "钱", name: "名", army: "兵" };
+  const lowKey = ["money", "name", "army"].sort((a, b) => st[a] - st[b])[0];
+  const next = [8, 6, 4, 2].find((t) => t > lo);
+  const lowLine = next ? `最低项 · ${names[lowKey]} ${lo}　距 ${next} 还差 ${next - lo}` : `最低项 · ${names[lowKey]} ${lo}　已达赢线`;
+  $("chronicle").innerHTML = `<div class="ct">${chc.t}</div><div class="cx">${chc.x}</div><div class="low">${lowLine}</div>`;
   renderDibao();
   renderSlots();
   if ($("rivals")) {
@@ -1290,6 +1294,38 @@ const DIBAO = [
   { t: "密探来报：宫里的鱼符换了一批，旧的那批还没缴回。", fac: ["唐廷"], from: 4 },
   { t: "邸报：驿路断了三日，说是塌方；第四日通了，没人再说起。", fac: ["唐廷", "河北", "河朔"], from: 4 },
 ];
+
+/* ===== 时间说明框：每回合「时间 + 史官旁白」长文，随势力换视角（5 回合 = 天宝十四载冬→十五载夏） ===== */
+const CHRONICLE = {
+  "唐廷": [
+    { t: "天宝十四载 · 冬十月", x: "长安的贵人还在赏菊，范阳的粮草已经备了三年。史官在史馆里誊前朝旧档，笔尖忽然发凉。" },
+    { t: "天宝十四载 · 冬十一月", x: "渔阳鼙鼓动地来，霓裳羽衣舞没跳完。禁军点兵，府库却拿不出三个月的饷。" },
+    { t: "天宝十四载 · 腊月", x: "洛阳失守的信使连夜入京，满朝的人都在看舆图，谁也不敢先开口说「西狩」。" },
+    { t: "天宝十五载 · 正月", x: "贼在洛阳黄袍加身，改元圣武。长安的贵人开始往袖子里藏细软。" },
+    { t: "天宝十五载 · 夏", x: "潼关破了，车驾西行。史官背着国史，混在逃难的人群里往剑南走。" }
+  ],
+  "河北": [
+    { t: "天宝十四载 · 冬十月", x: "禄山在帐里看地图，手指从渔阳划到长安。三镇的粮仓满得流油。" },
+    { t: "天宝十四载 · 冬十一月", x: "起兵了，十五万人南下。河北的太守们开城门，比翻书还快。" },
+    { t: "天宝十四载 · 腊月", x: "洛阳拿下。禄山坐在龙椅上，忽然不知道下一步该往哪走。" },
+    { t: "天宝十五载 · 正月", x: "称帝，国号大燕。可燕地的牙兵开始想家，想渔阳的冷和酒。" },
+    { t: "天宝十五载 · 夏", x: "眼疾重了，脾气也重了。帐下的人开始互相看，谁也不看禄山。" }
+  ],
+  "河朔": [
+    { t: "天宝十四载 · 冬十月", x: "三镇的牙兵在魏博吃酒，席上没人提朝廷，也没人提禄山。都在等。" },
+    { t: "天宝十四载 · 冬十一月", x: "渔阳起兵了。牙兵们把刀擦了又擦，等着看风往哪边吹。" },
+    { t: "天宝十四载 · 腊月", x: "洛阳陷了。河朔的使者分两拨上路——一拨去长安请旌节，一拨去洛阳递名帖。" },
+    { t: "天宝十五载 · 正月", x: "大燕立了。三镇没人去朝贺，也没人去讨贼，都在算自己那点兵粮。" },
+    { t: "天宝十五载 · 夏", x: "天下越乱，牙兵越值钱。饷照发，刀照磨，谁的价高跟谁。" }
+  ],
+  "流寇": [
+    { t: "天宝十四载 · 冬十月", x: "天下的粮价又涨了。流民在路上走，方向说不清，只知道往有炊烟的地方去。" },
+    { t: "天宝十四载 · 冬十一月", x: "渔阳的兵过境，抓走了村里最后的壮丁。你混在流民里，怀里揣着一把锈刀。" },
+    { t: "天宝十四载 · 腊月", x: "洛阳的大火映红了半边天。有人在火里捡到半块官印，有人捡到半袋粮。" },
+    { t: "天宝十五载 · 正月", x: "大燕的告示贴在残墙上，说天下易主。流民们围着看，谁也不识字，只看那方红印。" },
+    { t: "天宝十五载 · 夏", x: "官军和叛军在路上互杀，流民在两军之间求生。你开始带着人走，有人喊你「头领」。" }
+  ]
+};
 
 /* ===== 历史进程 / AI 倒计时：强插牌（forced:true，占第 3 张） ===== */
 const EDICT_GO = { id: "edict_go", t: "去", d: "车马备好了。这一去，长安的朱雀门就在眼前。", e: {}, forced: true, effText: "直入长安 · 结局" };
