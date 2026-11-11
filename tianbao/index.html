@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="dsh-version" content="v0.32-邸报逼迫-20261110">
+<meta name="dsh-version" content="v0.34-短板抽牌-20261111">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>天宝模拟器 · 轻量版</title>
 <style>
@@ -34,6 +34,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .quote{font-size:15px;line-height:2;color:#c3b494;letter-spacing:1px;margin:0 auto 16px;max-width:420px}
 .praise{font-size:14.5px;line-height:1.95;color:#dccfb2;margin:0 auto 12px;max-width:420px}
 .sigh{font-size:12.5px;line-height:1.9;color:#8d8271;margin:0 auto;max-width:420px}
+.praise,.sigh{text-align:left;letter-spacing:.3px}
 .btn{margin-top:22px;display:inline-block;padding:11px 26px;border:1px solid #b39a5f;border-radius:99px;color:#e5d6b4;font-size:14px;letter-spacing:3px;cursor:pointer;background:transparent}
 .btn:hover{background:#b39a5f;color:#151712}
 .hide{display:none}
@@ -84,7 +85,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .btn.ready:hover{background:linear-gradient(180deg,#f0dfae,#d3b870);color:#151712}
 .btn:not(.off):active{transform:scale(.97)}
 .log div.latest{color:#e5d6b4;border-left:2px solid #d9c589;padding-left:8px;margin-left:-2px}
-.chron{margin-top:14px;font-size:12.5px;color:#8d8271;letter-spacing:1px;line-height:1.9}
+.chron{margin-top:14px;font-size:12.5px;color:#8d8271;letter-spacing:1px;line-height:1.9;text-align:left}
 
 .heavens{margin:14px 0 2px;padding:12px 14px;border:1px solid #34322a;border-radius:12px;background:#1b1913}
 .heavens-title{font-size:11.5px;color:#b39a5f;letter-spacing:3px;margin-bottom:8px}
@@ -130,7 +131,8 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .rivals .rt{font-size:11px;color:#b39a5f;letter-spacing:3px;margin-bottom:6px}
 .rival-row{display:flex;align-items:baseline;gap:8px;font-size:12px;color:#a89c86;line-height:1.9}
 .rival-row .n{width:38px;color:#d8c9a8}
-.rival-row .a{width:34px}
+.rival-row .a{white-space:nowrap;letter-spacing:1px}
+.rival-row .a b{font-weight:400;margin-right:3px;color:#b0806a}
 .rival-row .v{color:#b0806a}
 .rival-row .t{color:#6b6354}
 
@@ -162,18 +164,65 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .fc-opt .eff{font-size:11.5px;color:#a89c86;margin-left:8px}
 .fc-opt .d{font-size:11.5px;color:#8d8271;margin-top:4px;line-height:1.7}
 .rival-cnt{margin-top:5px;font-size:11px;color:#b0806a;letter-spacing:1px}
+
+/* ===== 首屏：封面（缓慢推镜） + 势力卡 ===== */
+.hero{position:relative;margin:-20px -18px 0;height:min(58vh,430px);overflow:hidden;border-bottom:1px solid #2a2620}
+.hero .art{position:absolute;inset:-6%;background:url(img/bg-start-900.jpg) 50% 20%/cover no-repeat;
+ filter:saturate(.9) contrast(1.03) brightness(.9);animation:drift 30s ease-in-out infinite alternate;will-change:transform}
+.hero .mist{position:absolute;inset:0;pointer-events:none;opacity:.7;
+ background:radial-gradient(58% 38% at 18% 28%,rgba(206,220,214,.10),transparent 72%),
+            radial-gradient(48% 32% at 82% 62%,rgba(206,220,214,.07),transparent 72%);
+ animation:mist 20s ease-in-out infinite alternate}
+.hero .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,23,18,.46) 0%,rgba(21,23,18,.04) 28%,rgba(21,23,18,.62) 76%,#151712 100%)}
+.hero .cap{position:absolute;left:18px;right:18px;bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.hero .cap .k{font-size:11px;letter-spacing:4px;color:#b1a288}
+.hero .cap .t{font-size:12.5px;color:#c8bda6;letter-spacing:1px}
+@keyframes drift{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.10) translate3d(-1.5%,-2%,0)}}
+@keyframes mist{from{opacity:.5;transform:translateX(-2%)}to{opacity:.85;transform:translateX(2%)}}
+@media (prefers-reduced-motion:reduce){.hero .art,.hero .mist{animation:none}}
+
+.lead{text-align:center;font-size:13px;letter-spacing:2px;color:#a89c86;margin:16px 0 2px}
+.lead b{color:#d8c9a8;font-weight:400}
+.fac-cards{margin-top:12px}
+.fact{position:relative;overflow:hidden;transition:transform .18s,border-color .2s,box-shadow .2s}
+.fact::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,#b39a5f);opacity:.8}
+.fact[data-fac="唐廷"]{--ac:#c9a24e}
+.fact[data-fac="河北"]{--ac:#b0624a}
+.fact[data-fac="河朔"]{--ac:#6f8f7c}
+.fact:hover{transform:translateY(-1px);border-color:#6f6244;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.fact:active{transform:scale(.985)}
+.fact .go{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;letter-spacing:2px;color:#8d8271;transition:color .2s,transform .2s}
+.fact:hover .go{color:#e5d6b4;transform:translate(3px,-50%)}
+.fact.hit{animation:hit .22s ease-out forwards;pointer-events:none}
+.fact.hit .go{opacity:0}
+@keyframes hit{to{transform:scale(.97);border-color:#b39a5f;background:#22241d}}
+.howto{margin-top:14px;text-align:center}
+.howto-body{margin-top:12px;text-align:left}
+.howto-body .log{text-align:left}
+.play-hint{font-size:11.5px;color:#6b6354;letter-spacing:2px;text-align:center;margin-top:12px}
+.bar-row .v{display:inline-block}
+.bar-row .v.bump{animation:bump .45s ease-out;color:#e5d6b4}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.3)}100%{transform:scale(1)}}
 </style></head><body>
 <div class="wrap">
-  <h1>天宝模拟器</h1>
-  <div class="sub">一局五分钟 · 在平行世界里改写天命</div>
-  <div class="sub" style="margin-top:6px"><a href="./ai-report.html" style="color:#b39a5f;text-decoration:none">AI 试玩报告 →</a></div>
-
   <div id="screen-start">
+    <div class="hero">
+      <div class="art"></div>
+      <div class="mist"></div>
+      <div class="veil"></div>
+      <div class="cap"><div class="k">天宝十四载 · 长安</div><div class="t">一局五分钟</div></div>
+    </div>
+    <div class="lead">钱、名、兵 —— <b>三样都撑住</b>，才叫活下来</div>
+    <div class="cards fac-cards" id="facts"></div>
+    <div class="howto">
+      <span class="btn gh" id="btn-howto">怎么玩</span>
+      <div id="howto-body" class="hide">
     <div class="log" style="flex:none;color:#9c9180;font-size:13px;line-height:2">
       天宝十四载。五回合，每回合：一件国事，一条私事。<br>
       钱、名、兵，三样都得撑住。<br>
-      撑不住的那一样，会替你写出结局。<br><br>
-      <span style="color:#c8bda6">本局目标：五回之后，钱、名、兵里最弱的那一项 ≥8，算赢；<br>
+      撑不住的那一样，会替你写出结局。<br>
+      另有第四项「身」：身子骨。不进输赢，归零了照样当场收场。<br><br>
+      <span style="color:#c8bda6">本局目标：五回之后，钱、名、兵里最弱的那一项 ≥7，算赢；<br>
       6 / 4 / 2 依次为偏安 / 割据 / 人亡政息。<br>
       <b style="color:#b0806a">任何一项归零，当场结束。</b></span>
     </div>
@@ -186,10 +235,12 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
         <li><b>MC 禄山</b>：跳着舞把兵攒到八万</li>
         <li><b>撑到第五回</b>：活着走完，也算本事</li>
       </ul>
-      <div class="heavens-note">打不出来不丢人，这游戏里赢是例外。</div>
+      <div class="heavens-note">赢一局不难；赢到史书上写得好看，难。</div>
     </div>
-<div class="cards" id="facts" style="margin-top:16px"></div>
-    <span class="btn gh" id="btn-juan" style="margin-top:12px">谥法簿</span>
+      </div>
+    </div>
+    <div class="howto" style="margin-top:6px"><span class="btn gh" id="btn-juan">谥法簿</span></div>
+    <div class="sub" style="margin-top:18px"><a href="./ai-report.html" style="color:#b39a5f;text-decoration:none">AI 试玩报告 →</a></div>
   </div>
 
   
@@ -687,7 +738,7 @@ const MISERIES = [
 ];
 
 const HARD = [
-  { min: 8, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
+  { min: 7, kind: "win",     title: "\u5929\u547d\u6240\u5f52" },
   { min: 6, kind: "partial", title: "\u504f\u5b89" },
   { min: 4, kind: "split",   title: "\u5272\u636e" },
   { min: 2, kind: "fade",    title: "\u4eba\u4ea1\u653f\u606f" },
@@ -701,7 +752,7 @@ const COPY = {
       { quote: "「九天阊阖开宫殿，万国衣冠拜冕旒。」", praise: "献俘那天您没穿甲，一身衮冕坐在含元殿上，河北来的降将跪了半庭。开元年间那套排场，隔了几十年又摆出来，还是那座殿，还是那个日头。干杯，新一代的天可汗。", sigh: "散朝后您一人在丹墀上站了会儿，风把乐声吹散一半。听惯了马蹄的耳朵，忽然这么静，倒有些不惯。" },
       { quote: "「忆昔开元全盛日，小邑犹藏万家室。」", praise: "您没急着动刀，先把江淮的漕运疏开，把市舶的税厘清，胡商从广州一路排进了长安西市。钱袋鼓起来那天，边将说话的声音都低了三分。中兴的路数原该如此——先让锅里有米，再谈天威。", sigh: "西市的胡姬还唱旧曲，曲子里混进了新词。盛世这东西，往往是在没人留意的午后，悄悄返场的。" },
       { quote: "「春风得意马蹄疾，一日看尽长安花。」", praise: "重开科场那年，曲江边挤得走不动，新进士簪花跨马，一路被人扔果子。您坐在楼上看了整场，比看捷报还认真。士人说朝廷回来了——这些人闻气数，比钦天监准。", sigh: "散场时落了场小雨，榜下的墨还没干透。有人哭，有人笑，都挤在一处。" },
-      { quote: "「中兴诸将收山东，捷书夜报清昼同。」", praise: "捷报三更递进宫，您已睡下，披衣起来读到天亮。帐下那几位老将，胡子比旗子还白，一提马鞍还是翻得上去。唐廷这口气，是您同他们一起从土里刨出来的。", sigh: "庆功酒喝到后半夜，有人趴在案上睡着了，鼾声压过丝竹。这一次，没人再喊他起来。" },
+      { quote: "「中兴诸将收山东，捷书夜报清昼同。」", praise: "捷报三更递进宫，您已睡下，披衣起来读到天亮。帐下那几位老将，胡子比旗子还白，一提马鞍还是翻得上去。您把捷报叠起，压在镇纸底下；换过一枝烛，天还没亮。", sigh: "庆功酒喝到后半夜，有人趴在案上睡着了，鼾声压过丝竹。这一次，没人再喊他起来。" },
     ],
     partial: [
       { quote: "日暮苍山远，天寒白屋贫。", praise: "潼关的守将照例递了请援的折子，驿马跑到华阴便换了人。折子递进中书，一位老吏抄了副本，在援兵二字旁边画了个圈，又拿墨涂掉。批复下来只三个字，抄在本上，原件压在案角。", sigh: "案角的折子积了一摞，纸边被手肘磨得起了毛。" },
@@ -750,7 +801,7 @@ const COPY = {
       { quote: "兄弟阋于墙，外御其侮。", praise: "老家主下葬那日，几支人马各举各的旗，旗色换了，字还是旧字。灵柩出城门，队伍在岔路口散开，一队往北，一队往西，剩下的进了城。坟头的土是各家派人一起堆的。", sigh: "堆完土，各回各的营，路上没人说话。" },
       { quote: "邦分崩离析而不能守也。", praise: "两个镇在官道上各设了一道卡，赶车的备两份钱，走到第二道时摸摸口袋，只剩一串铜。守卡的牙兵看了看，把横木抬起来一半，让他过去了。", sigh: "那半截横木没放下来，后面的车跟着过去了。" },
       { quote: "渔阳鼙鼓动地来。", praise: "招兵的旗插在集市口，两家各招各的。一个妇人把两个儿子拉到旗底下问，管事的翻名册，说一家只收一个。她指了小的，小的被牵走时回头看了三次。", sigh: "大的那个站在原地，手里还攥着半个饼。" },
-      { quote: "凉州七里十万家，胡人半解弹琵琶。", praise: "市集落在两镇的夹缝里，谁都不来管。胡商把毡子铺在土上，摆出盐块、硫黄和旧铜镜，汉人拿布和茶砖来换。入夜后有人在帐外弹琵琶，调子不准，弹了半宿。", sigh: "第二天收摊，毡子上的沙抖不干净，就那么卷起来驮走了。" },
+      { quote: "渔阳鼙鼓动地来，惊破霓裳羽衣曲。", praise: "市集落在两镇的夹缝里，谁都不来管。胡商把毡子铺在土上，摆出盐块、硫黄和旧铜镜，汉人拿布和茶砖来换。入夜后有人在帐外弹琵琶，调子不准，弹了半宿。", sigh: "第二天收摊，毡子上的沙抖不干净，就那么卷起来驮走了。" },
     ],
     fade: [
       { quote: "皮之不存，毛将焉附。", praise: "老家主一死，他定的赏格没人再提。几个旧部来讨欠的饷，管事的翻了簿子，说账在上一任手里，人已经走了。他们在衙门口站到天黑，各自散了。", sigh: "门房把那盏灯吹灭，锁门时发现门轴松了，用脚顶了一下。" },
@@ -912,6 +963,29 @@ function drawHand() {
   st.prevHandIds = Array.from(ids);
   // 展示过的 3 张移出剩余池；repeat 牌留池，但下一回合被 prev 挡住，不会连续出现
   st.pool = uniq(pool).filter((c) => !ids.has(c.id) || c.repeat);
+  /* 短板加权：结局只看 min(钱,名,兵)，纯随机时约半数回合三张牌一张都抬不动最短板 → 选择空转。
+     抽完若没有「抬 min」的牌，以 92% 概率从剩余池换一张进来；约 8% 故意保留凑合回合，
+     免得每回合都被喂好牌。换进来的牌只占前两位，第 3 位留给逼迫强插，不会被顶掉。 */
+  const liftsMin = (c) => {
+    const now = Math.min(st.money, st.name, st.army);
+    const e = c.e || {};
+    const t = { money: st.money, name: st.name, army: st.army };
+    for (const k in e) t[k] = Math.max(0, Math.min(MAXV, t[k] + e[k]));
+    return Math.min(t.money, t.name, t.army) > now;
+  };
+  if (st.hand.length && !st.hand.some(liftsMin) && Math.random() < 0.92) {
+    const cands = st.pool.filter((c) => prev.indexOf(c.id) < 0 && liftsMin(c));
+    if (cands.length) {
+      const card = cands[Math.floor(Math.random() * cands.length)];
+      const slot = Math.floor(Math.random() * Math.min(2, st.hand.length));
+      const out = st.hand[slot];
+      st.hand[slot] = card;
+      ids.add(card.id);
+      ids.delete(out.id);
+      st.prevHandIds = st.hand.map((c) => c.id);
+      st.pool = uniq(st.pool.concat([out])).filter((c) => !ids.has(c.id) || c.repeat);
+    }
+  }
   /* 逼迫式强插牌：本回合 hand 第 3 张固定替换，插在随机抽牌之后 → 不会被随机换掉。
      同一回合最多 1 张；被顶掉的那张退回剩余池，仍保证 3 张可选。 */
   const fc = forcedCardForRound(prev);
@@ -944,17 +1018,55 @@ function showFacts() {
   Object.keys(FACS).forEach((name) => {
     const el = document.createElement("div");
     el.className = "fact";
-    el.innerHTML = `<h3>${name} \u00b7 ${FACS[name].tag}</h3><p>${FACS[name].desc}</p>`;
-    el.onclick = () => start(name);
+    el.dataset.fac = name;
+    el.innerHTML = `<h3>${name} \u00b7 ${FACS[name].tag}</h3><p>${FACS[name].desc}</p><span class="go">开局 \u203a</span>`;
+    el.onclick = () => {
+      if (el.classList.contains("hit")) return;
+      el.classList.add("hit");
+      sfx("seal");
+      setTimeout(() => start(name), 200);
+    };
     box.appendChild(el);
   });
+}
+
+/* 极简合成音：印章闷响 / 轻跳两种。没有 AudioContext 就静默降级。 */
+let AC = null;
+function sfx(kind) {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return;
+    if (!AC) AC = new C();
+    if (AC.state === "suspended") AC.resume();
+    const t = AC.currentTime;
+    const seal = kind === "seal";
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(seal ? 168 : 640, t);
+    o.frequency.exponentialRampToValueAtTime(seal ? 58 : 900, t + 0.12);
+    g.gain.setValueAtTime(seal ? 0.2 : 0.045, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (seal ? 0.28 : 0.1));
+    o.connect(g); g.connect(AC.destination);
+    o.start(t); o.stop(t + 0.3);
+    if (seal) {
+      const n = AC.createBufferSource();
+      const buf = AC.createBuffer(1, 2048, AC.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      n.buffer = buf;
+      const ng = AC.createGain(); ng.gain.value = 0.11;
+      const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 820;
+      n.connect(lp); lp.connect(ng); ng.connect(AC.destination);
+      n.start(t);
+    }
+  } catch (e) { /* 静默 */ }
 }
 
 const START = {
   // 身体：唐廷天子养尊（7）、河北胡将壮（8）、河朔牙帅耗（6）——见 health 字段
   "唐廷": { money: 4, name: 8, army: 6, health: 7 },   // 朝廷：名分最厚，钱最紧
   "河北": { money: 4, name: 4, army: 8, health: 8 },   // 范阳：兵最多，名最薄
-  "河朔": { money: 6, name: 4, army: 4, health: 6 },   // 河东：钱粮稍厚，名兵都弱
+  "河朔": { money: 5, name: 4, army: 5, health: 6 },   // 河东：钱粮稍厚，名兵都弱（兵 4→5 防天花板；钱 6→5 因河朔天命偏易）
 };
 
 function start(fac) {
@@ -967,6 +1079,7 @@ function start(fac) {
          threat: 0, edicts: 0, threatLocked: false, rebelLine: false, uprisingLocked: false, edictDone: false,
          forcedRound: 0, forcedId: "", forcedChoice: null, doubleCutRound: 0,
          edictSeen: false, hChoiceSeen: false, uprisingSeen: false, dibao: "" };
+  initRivals();
   $("screen-start").classList.add("hide");
   $("screen-end").classList.add("hide");
   $("screen-play").classList.remove("hide");
@@ -998,7 +1111,12 @@ function updateBars() {
     const el = $("bar-" + k);
     if (el) el.style.width = Math.max(2, Math.min(100, (st[k] / MAXV) * 100)) + "%";
     const v = $("val-" + k);
-    if (v) v.textContent = st[k];
+    if (v && v.textContent !== String(st[k])) {
+      v.textContent = st[k];
+      v.classList.remove("bump");
+      void v.offsetWidth;
+      v.classList.add("bump");
+    }
   });
 }
 
@@ -1023,11 +1141,13 @@ function render() {
     const R = st.rivals || {};
     const rows = RIVAL_FACS.map((f) => {
       const r = R[f] || { att: "—", act: "—", val: "" };
-      const ic = r.att === "本家" ? "◆" : (r.att === "敌视" ? "🗡" : (r.att === "拉拢" ? "🤝" : "👀"));
-      return `<div class="rival-row"><span class="n">${f}</span><span class="a">${ic}${r.att}</span><span class="t">${r.act}</span><span class="v">${r.val || ""}</span></div>`;
+      const GLY = { "本家": "◆", "敌视": "▲", "拉拢": "◇", "观望": "○" };
+      const ic = GLY[r.att] || "○";
+      const act = r.act && r.act !== "—" ? `<span class="t">${r.act}</span>` : "";
+      const val = r.val ? `<span class="v">${r.val}</span>` : "";
+      return `<div class="rival-row"><span class="n">${f}</span><span class="a"><b>${ic}</b>${r.att}</span>${act}${val}</div>`;
     }).join("");
-    const cnt = [`风向 ${windOf()}`];
-    $("rivals").innerHTML = `<div class="rt">天下</div>${rows}` + `<div class="rival-cnt">${cnt.join(" · ")}</div>`;
+    $("rivals").innerHTML = `<div class="rt">天下</div>${rows}`;
   }
   $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
 }
@@ -1205,7 +1325,8 @@ function rollDibao() { if (st) st.dibao = pickDibao(); }
 function renderDibao() {
   const el = $("dibao");
   if (!el || !st) return;
-  const text = st.dibao || pickDibao();
+  const raw = st.dibao || pickDibao();
+  const text = raw.replace(/^邸报[：:]\s*/, "");   // 文案池自带「邸报：」前缀，标签已有一份，去掉避免重复
   if (el._dibaoText === text) return;       // 选牌重绘时不重放淡入
   el._dibaoText = text;
   el.innerHTML = `<span class="k">邸报</span><span class="dibao-line">${text}</span>`;
@@ -2235,6 +2356,13 @@ $("btn-again").onclick = backToPick;
 bindSettle();
 $("btn-share").onclick = copyShare;
 $("btn-juan").onclick = openJuan;
+$("btn-howto").onclick = () => {
+  const body = $("howto-body");
+  body.classList.toggle("hide");
+  const open = !body.classList.contains("hide");
+  $("btn-howto").textContent = open ? "收起" : "怎么玩";
+  sfx("tick");
+};
 $("btn-juan-end").onclick = openJuan;
 $("btn-juan-back").onclick = closeJuan;
 $("btn-export").onclick = exportRuns;
