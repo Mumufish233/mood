@@ -15,6 +15,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .pill{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
 .pill span{font-size:12px;padding:4px 10px;border:1px solid #3a362c;border-radius:99px;color:#a89c86}
 .pill b{color:#d8c9a8;font-weight:400}
+.pill span.wind{color:#c2a978;border-color:#4a4335;letter-spacing:2px}
 .bars{margin:6px 0 16px}
 .bar-row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px;color:#a89c86}
 .bar-row .n{width:34px;letter-spacing:2px}
@@ -152,6 +153,9 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
 .fc-title{font-size:18px;letter-spacing:3px;color:#e5d6b4;font-weight:400;margin-bottom:8px}
 .fc-desc{font-size:12.5px;line-height:1.9;color:#9c9180;margin-bottom:16px}
 .fc-opts{display:flex;flex-direction:column;gap:9px}
+/* 弹窗图位：先占位，图片接进来换成真图（v7 修订2） */
+.pop-img{width:100%;height:118px;border:1px dashed #6f6244;border-radius:10px;background:#141210;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-size:10.5px;letter-spacing:1.5px;color:#6a5f4c}
+.pop-img.has-img{border-style:solid;border-color:#8a7752;background-size:cover;background-position:center;color:transparent}
 .fc-opt{border:1px solid #4a4436;border-radius:10px;padding:11px 13px;background:#191610;cursor:pointer;transition:border-color .15s,background .15s}
 .fc-opt:hover{border-color:#d9c589;background:#241f16}
 .fc-opt b{font-size:14px;color:#e5d6b4;font-weight:400;letter-spacing:2px}
@@ -205,7 +209,7 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
     <span class="btn gh" id="btn-clear" style="margin-top:18px;margin-left:8px">清空本机数据</span>
   </div>
 <div id="screen-play" class="hide">
-    <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span></div>
+    <div class="pill"><span>第 <b id="round">1</b> / 5 回</span><span id="fac-pill">唐廷</span><span id="wind-pill" class="wind">风向 平</span></div>
     <div class="bars">
       <div class="bar-row"><span class="n">钱</span><div class="bar"><i id="bar-money"></i></div><span class="v" id="val-money">5</span></div>
       <div class="bar-row"><span class="n">名</span><div class="bar"><i class="q" id="bar-name"></i></div><span class="v" id="val-name">5</span></div>
@@ -248,10 +252,12 @@ h1{font-size:30px;letter-spacing:8px;text-align:center;margin:14px 0 2px;font-we
   <div id="forced-choice" class="forced-choice hide">
     <div class="fc-box">
       <div class="fc-title" id="forced-title"></div>
+      <div class="pop-img" id="forced-img"></div>
       <div class="fc-desc" id="forced-desc"></div>
       <div class="fc-opts">
         <div class="fc-opt" id="forced-a"></div>
         <div class="fc-opt" id="forced-b"></div>
+        <div class="fc-opt" id="forced-c"></div>
       </div>
     </div>
   </div>
@@ -958,7 +964,7 @@ function start(fac) {
          step: "card", pendingCard: null, pendingPriv: null, priv: [], flags: [], flagLog: [],
          privPool: shuffle((PRIVATE_LITE[privKey(fac)] || []).slice()),
          hidden: false, hiddenRound: 0, hiddenEnd: null, rebelSeen: false, rebelOffered: false,
-         threat: 0, edicts: 0, threatLocked: false, rebelLine: false, uprisingLocked: false,
+         threat: 0, edicts: 0, threatLocked: false, rebelLine: false, uprisingLocked: false, edictDone: false,
          forcedRound: 0, forcedId: "", forcedChoice: null, doubleCutRound: 0,
          edictSeen: false, hChoiceSeen: false, uprisingSeen: false, dibao: "" };
   $("screen-start").classList.add("hide");
@@ -968,6 +974,23 @@ function start(fac) {
   drawHand();
   rollDibao();
   render();
+}
+
+/* 势：0–10 暗条，玩家只看得见"风向"两个字，看不到数字（v7 第八节：猜不准才有味）。
+   唐廷看河北威胁(0–5)，河北/河朔看唐廷诏书(0–3)，两套压力表映射到同一根势。 */
+const WIND_T = [0, 2, 4, 6, 8, 10];      // threat 0–5 → 势
+const WIND_E = [0, 3, 6, 10];            // edicts 0–3 → 势
+function shiOf() {
+  if (!st) return 0;
+  if (st.fac === "唐廷") return WIND_T[Math.max(0, Math.min(5, st.threat || 0))];
+  return WIND_E[Math.max(0, Math.min(3, st.edicts || 0))];
+}
+function windOf() {
+  const v = shiOf();
+  if (v <= 2) return "松";
+  if (v <= 4) return "平";
+  if (v <= 6) return "紧";
+  return "危";
 }
 
 function updateBars() {
@@ -983,6 +1006,8 @@ function render() {
   bindSettle();
   $("round").textContent = st.hidden ? (st.hiddenRound + 1) : st.round;
   $("fac-pill").textContent = st.hidden ? "流寇" : st.fac;
+  const wp = $("wind-pill");
+  if (wp) wp.textContent = "风向 " + windOf();
   updateBars();
   $("chronicle").innerHTML = (function () {
     const lo = Math.min(st.money, st.name, st.army);
@@ -1001,9 +1026,7 @@ function render() {
       const ic = r.att === "本家" ? "◆" : (r.att === "敌视" ? "🗡" : (r.att === "拉拢" ? "🤝" : "👀"));
       return `<div class="rival-row"><span class="n">${f}</span><span class="a">${ic}${r.att}</span><span class="t">${r.act}</span><span class="v">${r.val || ""}</span></div>`;
     }).join("");
-    const cnt = [];
-    if (st.fac === "唐廷") cnt.push(`河北威胁 ${st.threat || 0}/5`);
-    else cnt.push(`唐廷诏书 ${st.edicts || 0}/3`);
+    const cnt = [`风向 ${windOf()}`];
     $("rivals").innerHTML = `<div class="rt">天下</div>${rows}` + `<div class="rival-cnt">${cnt.join(" · ")}</div>`;
   }
   $("log").innerHTML = st.log.map((x, i) => `<div class="${i === 0 ? "latest" : ""}">${x}</div>`).join("");
@@ -1152,6 +1175,16 @@ const EDICT_GO = { id: "edict_go", t: "去", d: "车马备好了。这一去，�
 const EDICT_STAY = { id: "edict_stay", t: "不去", d: "把原话交给使者带回去。话不长，够他记一路。", e: {}, forced: true, effText: "河北威胁 +1" };
 const H_REBEL = { id: "h_rebel", t: "起兵", d: "鼓先敲，表后写。写不写，其实都一样了。", e: { army: 4, name: -2, money: -2 }, forced: true, effText: "兵+4 名-2 钱-2" };
 const H_KOWTOW = { id: "h_kowtow", t: "装孙子认怂", d: "表写得比上一回更重，重到自己都不好意思念完。", e: { name: 2, army: -2 }, forced: true, effText: "名+2 兵-2 · 下回削藩加倍" };
+/* 河北「不反」→ 诏书到营门：回合内插曲，不额外吃回合（v7 二·这条线最骚） */
+const ED_GOTO = { id: "ed_goto", t: "进京", d: "车马已经在营门外排好。去，还是不去，其实只差一步。", e: {}, forced: true, effText: "结局 · 太君" };
+const ED_REFUSE = { id: "ed_refuse", t: "抗命", d: "诏书扔回给使者。帐下的兵看着你，眼里没多少服气。", e: {}, forced: true, effText: "兵跌两成 名跌三成 · 被迫起兵" };
+const ED_SICK = { id: "ed_sick", t: "装病", d: "帐里熬着药，帘子不放。使者站在外面，闻了一路的苦味。", e: {}, forced: true, effText: "五成蒙过 · 五成被识破" };
+const H_EDICT = {
+  id: "h_edict", imgKey: "h_edict", t: "诏书到营门",
+  d: "使者念完诏书，没走。他压低嗓子补一句：太君，杨国舅托我给您带句话。",
+  e: {}, forced: true, choices: [ED_GOTO, ED_REFUSE, ED_SICK], safeIndex: 2,
+  onPick: (o) => resolveEdictPick(o),
+};
 const FORCED = {
   t_edict: { id: "t_edict", t: "宣节度使进京面圣", d: "诏书到了范阳。去，还是不去？使者就站在阶下等回话。", e: {}, forced: true, choices: [EDICT_GO, EDICT_STAY], safeIndex: 1, effText: "二选一 · 不可推" },
   t_uprising: { id: "t_uprising", t: "起兵", d: "范阳的兵已经出城，旗上不再写唐字。这一回，谁也按不住了。", e: {}, forced: true, effText: "河北起兵 · 不可逆" },
@@ -1203,20 +1236,20 @@ function historyTick(card) {
     if (st.round >= 3 && !st.threatLocked) {
       if (CUT_IDS.indexOf(card.id) >= 0) {
         st.threat = Math.max(0, (st.threat || 0) - 2);     // 削藩/党狱：按住一手
-        st.log.unshift(`🏛 天下 · 河北威胁 ${st.threat}/5（削藩折子压下去了）`);
+        st.log.unshift(`🏛 天下 · 风向转${windOf()}（削藩折子压下去了）`);
       } else {
         st.threat = Math.min(5, (st.threat || 0) + 1);
-        st.log.unshift(`🏛 天下 · 河北威胁 ${st.threat}/5${st.threat >= 2 ? " · 长安要你给个说法" : ""}`);
+        st.log.unshift(`🏛 天下 · 风向转${windOf()}${st.threat >= 2 ? " · 长安要你给个说法" : ""}`);
       }
     }
   } else if (st.fac === "河北" || st.fac === "河朔") {
     if (st.round >= 2 && !st.rebelLine) {
       if (KOWTOW_IDS.indexOf(card.id) >= 0) {
         st.edicts = Math.max(0, (st.edicts || 0) - 1);     // 装孙子：抵掉一次诏书
-        st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3（礼到了，话软了）`);
+        st.log.unshift(`🏛 天下 · 风向转${windOf()}（礼到了，话软了）`);
       } else {
         st.edicts = Math.min(3, (st.edicts || 0) + 1);
-        st.log.unshift(`🏛 天下 · 唐廷诏书 ${st.edicts}/3`);
+        st.log.unshift(`🏛 天下 · 风向转${windOf()}`);
       }
     }
   }
@@ -1228,10 +1261,31 @@ function openForcedChoice(card) {
   ov.classList.remove("hide");
   $("forced-title").textContent = card.t;
   $("forced-desc").textContent = card.d;
-  (card.choices || []).forEach((o, i) => {
-    const el = $(i === 0 ? "forced-a" : "forced-b");
+  /* 图位：图片没进就一直是虚线占位框（v7 修订2） */
+  const box = $("forced-img");
+  if (box) {
+    const src = `img/popups/${card.imgKey || card.id || "popup"}.png`;
+    box.className = "pop-img";
+    box.style.backgroundImage = "";
+    box.textContent = `图位 · ${src}`;
+    try {
+      if (typeof Image === "function") {
+        const probe = new Image();
+        probe.onload = () => { box.className = "pop-img has-img"; box.textContent = ""; box.style.backgroundImage = `url("${src}")`; };
+        probe.src = src;
+      }
+    } catch (e) { /* 无头环境没有 Image：保持占位 */ }
+  }
+  const slots = ["forced-a", "forced-b", "forced-c"];
+  const pick = card.onPick || ((o) => chooseForced(o));
+  slots.forEach((sid, i) => {
+    const el = $(sid);
+    if (!el) return;
+    const o = (card.choices || [])[i];
+    if (!o) { el.style.display = "none"; el.onclick = null; return; }
+    el.style.display = "";
     el.innerHTML = `<b>${o.t}</b>${o.effText ? `<span class="eff">${o.effText}</span>` : ""}<div class="d">${o.d}</div>`;
-    el.onclick = () => chooseForced(o);
+    el.onclick = () => pick(o);
   });
   return true;
 }
@@ -1281,9 +1335,45 @@ function applyForcedChoice(c, auto) {
     st.edicts = 0;
     st.doubleCutRound = st.round + 1;   // 下一回唐廷削藩加倍（兵-2）
     st.log.unshift("　上表请罪 · 下一回削藩加倍。");
+    /* 怂了反而被点名要人：诏书到营门，三选一（本回合内插曲，不额外吃回合） */
+    if (!auto && !st.edictDone) { openForcedChoice(H_EDICT); return true; }
     return false;
   }
   return false;
+}
+
+/* 诏书到营门：进京＝太君结局；抗命＝兵名各跌后被迫起兵；装病＝五成蒙过（势清零）／五成被识破 */
+function resolveEdictPick(opt) {
+  hideForcedChoice();
+  const cut = (k, ratio, flat) => {
+    const v = st[k] || 0;
+    st[k] = Math.max(0, Math.min(MAXV, flat ? v + flat : Math.round(v * ratio)));
+  };
+  if (opt.id === "ed_goto") { finishEdict(); return; }
+  if (opt.id === "ed_refuse") {
+    cut("army", 0.8); cut("name", 0.7);        // 兵少两成、名少三成（属下不服你）
+    st.rebelLine = true;                        // 抗诏 = 被迫起兵
+    st.log.unshift("　抗命 · 属下不服，兵走了两成，名掉了三成。");
+    finishMutinyLine("edict-refuse");
+    return;
+  }
+  let caught = false;
+  if (Math.random() < 0.5) {                    // 装病：五成蒙过去
+    st.threat = 0; st.edicts = 0;
+    st.log.unshift("　装病蒙过去了 · 使者回去复命，风向转松。");
+  } else {                                      // 五成被识破：唐廷提前削藩
+    /* 名 -3 是为了抵掉下面 h_kowtow 自带的 +2，净结果仍是「名跌」，界面才和文案对得上 */
+    cut("army", 0, -1); cut("money", 0, -1); cut("name", 0, -3);
+    caught = true;
+    st.log.unshift("　装病被识破 · 唐廷提前削藩，兵钱名各跌。");
+  }
+  /* 回到本回合结算：照 h_kowtow 的常规效果走完这一回，插曲不重复弹 */
+  st.forcedChoice = H_KOWTOW;
+  st.edictDone = true;
+  settleRound();
+  st.edictDone = false;
+  /* 削藩压力要在 h_kowtow「抵一次诏书」把 edicts 清零之后再记，否则被盖掉 */
+  if (caught) st.edicts = Math.min(3, (st.edicts || 0) + 1);
 }
 
 /* ===== 逼迫式专属结局：太君 / 兵变（复用 mutiny 池，不动原有 60 篇文案） ===== */
